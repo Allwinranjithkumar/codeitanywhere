@@ -1,0 +1,336 @@
+[
+  {
+    "id": 0,
+    "title": "Two Sum",
+    "description": "<p>Given an array of integers <code>nums</code> and an integer <code>target</code>, return <strong>indices of the two numbers</strong> such that they add up to <code>target</code>.</p><p>You may assume that each input would have <strong>exactly one solution</strong>, and you may not use the same element twice.</p><p>You can return the answer in any order.</p><p><strong>Example 1:</strong></p><pre>Input: nums = [2,7,11,15], target = 9\nOutput: [0,1]\nExplanation: nums[0] + nums[1] == 9, so return [0, 1].</pre><p><strong>Example 2:</strong></p><pre>Input: nums = [3,2,4], target = 6\nOutput: [1,2]</pre><p><strong>Constraints:</strong></p><ul><li>2 ≤ nums.length ≤ 10<sup>4</sup></li><li>-10<sup>9</sup> ≤ nums[i] ≤ 10<sup>9</sup></li><li>Only one valid answer exists.</li></ul>",
+    "difficulty": "Easy",
+    "points": 10,
+    "functionName": "twoSum",
+    "starterCode": {
+      "python": "def twoSum(nums, target):\n    # Write your code here\n    return [0, 1]",
+      "javascript": "function twoSum(nums, target) {\n    // Write your code here\n    return [0, 1];\n}",
+      "java": "class Solution {\n    public int[] twoSum(int[] nums, int target) {\n        // Write your code here\n        return new int[]{0, 1};\n    }\n}",
+      "cpp": "class Solution {\npublic:\n    vector<int> twoSum(vector<int>& nums, int target) {\n        \n    }\n};"
+    },
+    "testCases": [
+      {
+        "input": {
+          "nums": [
+            2,
+            7,
+            11,
+            15
+          ],
+          "target": 9
+        },
+        "output": [
+          0,
+          1
+        ]
+      },
+      {
+        "input": {
+          "nums": [
+            3,
+            2,
+            4
+          ],
+          "target": 6
+        },
+        "output": [
+          1,
+          2
+        ]
+      },
+      {
+        "input": {
+          "nums": [
+            3,
+            3
+          ],
+          "target": 6
+        },
+        "output": [
+          0,
+          1
+        ]
+      },
+      {
+        "input": {
+          "nums": [
+            1,
+            5,
+            3,
+            7,
+            9
+          ],
+          "target": 12
+        },
+        "output": [
+          2,
+          4
+        ]
+      },
+      {
+        "input": {
+          "nums": [
+            10,
+            20,
+            30,
+            40,
+            50
+          ],
+          "target": 70
+        },
+        "output": [
+          2,
+          3
+        ]
+      }
+    ]
+  },
+  {
+    "id": 1,
+    "title": "Palindrome String",
+    "description": "<p>Given a string <code>s</code>, return <code>true</code> if it is a palindrome, otherwise return <code>false</code>.</p><p>A palindrome is a string that reads the same forward and backward. Ignore spaces, punctuation, and case.</p><p><strong>Example 1:</strong></p><pre>Input: s = \"racecar\"\nOutput: true</pre><p><strong>Example 2:</strong></p><pre>Input: s = \"A man a plan a canal Panama\"\nOutput: true</pre><p><strong>Example 3:</strong></p><pre>Input: s = \"hello\"\nOutput: false</pre>",
+    "difficulty": "Easy",
+    "points": 10,
+    "functionName": "isPalindrome",
+    "starterCode": {
+      "python": "def isPalindrome(s):\n    # Write your code here\n    return True",
+      "javascript": "function isPalindrome(s) {\n    // Write your code here\n    return true;\n}",
+      "java": "class Solution {\n    public boolean isPalindrome(String s) {\n        // Write your code here\n        return true;\n    }\n}",
+      "cpp": "class Solution {\npublic:\n    bool isPalindrome(string s) {\n        \n    }\n};"
+    },
+    "testCases": [
+      {
+        "input": {
+          "s": "racecar"
+        },
+        "output": true
+      },
+      {
+        "input": {
+          "s": "A man a plan a canal Panama"
+        },
+        "output": true
+      },
+      {
+        "input": {
+          "s": "hello"
+        },
+        "output": false
+      },
+      {
+        "input": {
+          "s": "Was it a car or a cat I saw"
+        },
+        "output": true
+      },
+      {
+        "input": {
+          "s": "python"
+        },
+        "output": false
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "title": "Fibonacci Number",
+    "description": "<p>The Fibonacci numbers form a sequence where each number is the sum of the two preceding ones, starting from 0 and 1.</p><p>Given <code>n</code>, calculate <code>F(n)</code>.</p><p><strong>Example 1:</strong></p><pre>Input: n = 5\nOutput: 5\nExplanation: F(5) = F(4) + F(3) = 3 + 2 = 5</pre><p><strong>Example 2:</strong></p><pre>Input: n = 10\nOutput: 55</pre><p><strong>Constraints:</strong></p><ul><li>0 ≤ n ≤ 30</li></ul>",
+    "difficulty": "Easy",
+    "points": 10,
+    "functionName": "fibonacci",
+    "starterCode": {
+      "python": "def fibonacci(n):\n    # Write your code here\n    return 0",
+      "javascript": "function fibonacci(n) {\n    // Write your code here\n    return 0;\n}",
+      "java": "class Solution {\n    public int fibonacci(int n) {\n        // Write your code here\n        return 0;\n    }\n}",
+      "cpp": "class Solution {\npublic:\n    int fibonacci(int n) {\n        \n    }\n};"
+    },
+    "testCases": [
+      {
+        "input": {
+          "n": 5
+        },
+        "output": 5
+      },
+      {
+        "input": {
+          "n": 10
+        },
+        "output": 55
+      },
+      {
+        "input": {
+          "n": 0
+        },
+        "output": 0
+      },
+      {
+        "input": {
+          "n": 1
+        },
+        "output": 1
+      },
+      {
+        "input": {
+          "n": 15
+        },
+        "output": 610
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "title": "Remove Duplicates from Sorted Array",
+    "description": "<p>Given an integer array <code>nums</code> sorted in non-decreasing order, remove the duplicates in-place such that each unique element appears only once.</p><p>Return the number of unique elements.</p><p><strong>Example 1:</strong></p><pre>Input: nums = [1,1,2]\nOutput: 2\nExplanation: nums becomes [1,2,_]</pre><p><strong>Example 2:</strong></p><pre>Input: nums = [0,0,1,1,1,2,2,3,3,4]\nOutput: 5\nExplanation: nums becomes [0,1,2,3,4,_,_,_,_,_]</pre>",
+    "difficulty": "Easy",
+    "points": 10,
+    "functionName": "removeDuplicates",
+    "starterCode": {
+      "python": "def removeDuplicates(nums):\n    # Write your code here\n    return 0",
+      "javascript": "function removeDuplicates(nums) {\n    // Write your code here\n    return 0;\n}",
+      "java": "class Solution {\n    public int removeDuplicates(int[] nums) {\n        // Write your code here\n        return 0;\n    }\n}",
+      "cpp": "class Solution {\npublic:\n    int removeDuplicates(vector<int>& nums) {\n        \n    }\n};"
+    },
+    "testCases": [
+      {
+        "input": {
+          "nums": [
+            1,
+            1,
+            2
+          ]
+        },
+        "output": 2
+      },
+      {
+        "input": {
+          "nums": [
+            0,
+            0,
+            1,
+            1,
+            1,
+            2,
+            2,
+            3,
+            3,
+            4
+          ]
+        },
+        "output": 5
+      },
+      {
+        "input": {
+          "nums": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        },
+        "output": 5
+      },
+      {
+        "input": {
+          "nums": [
+            1
+          ]
+        },
+        "output": 1
+      },
+      {
+        "input": {
+          "nums": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "output": 1
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "title": "Best Time to Buy and Sell Stock",
+    "description": "<p>You are given an array <code>prices</code> where <code>prices[i]</code> is the price of a stock on the <code>i<sup>th</sup></code> day.</p><p>Find the maximum profit you can achieve. You may buy on one day and sell on a different day. If you cannot achieve any profit, return 0.</p><p><strong>Example 1:</strong></p><pre>Input: prices = [7,1,5,3,6,4]\nOutput: 5\nExplanation: Buy on day 2 (price = 1) and sell on day 5 (price = 6)</pre><p><strong>Example 2:</strong></p><pre>Input: prices = [7,6,4,3,1]\nOutput: 0\nExplanation: No profit can be made</pre>",
+    "difficulty": "Easy",
+    "points": 15,
+    "functionName": "maxProfit",
+    "starterCode": {
+      "python": "def maxProfit(prices):\n    # Write your code here\n    return 0",
+      "javascript": "function maxProfit(prices) {\n    // Write your code here\n    return 0;\n}",
+      "java": "class Solution {\n    public int maxProfit(int[] prices) {\n        // Write your code here\n        return 0;\n    }\n}",
+      "cpp": "class Solution {\npublic:\n    int maxProfit(vector<int>& prices) {\n        \n    }\n};"
+    },
+    "testCases": [
+      {
+        "input": {
+          "prices": [
+            7,
+            1,
+            5,
+            3,
+            6,
+            4
+          ]
+        },
+        "output": 5
+      },
+      {
+        "input": {
+          "prices": [
+            7,
+            6,
+            4,
+            3,
+            1
+          ]
+        },
+        "output": 0
+      },
+      {
+        "input": {
+          "prices": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        },
+        "output": 4
+      },
+      {
+        "input": {
+          "prices": [
+            2,
+            4,
+            1
+          ]
+        },
+        "output": 2
+      },
+      {
+        "input": {
+          "prices": [
+            3,
+            3,
+            5,
+            0,
+            0,
+            3,
+            1,
+            4
+          ]
+        },
+        "output": 4
+      }
+    ]
+  }
+]

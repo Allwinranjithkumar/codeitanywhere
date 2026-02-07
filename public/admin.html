@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Coding Contest</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: #e0e0e0;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .tab:hover {
+            background: #d0d0d0;
+        }
+
+        .tab.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+
+        tr:hover {
+            background: #f9f9f9;
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .badge-success {
+            background: #4caf50;
+            color: white;
+        }
+
+        .badge-warning {
+            background: #ff9800;
+            color: white;
+        }
+
+        .badge-danger {
+            background: #f44336;
+            color: white;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .stat-card h3 {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .refresh-btn {
+            background: #667eea;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .refresh-btn:hover {
+            background: #5568d3;
+        }
+
+        code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .violation-high {
+            color: #f44336;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Contest Admin Panel</h1>
+
+        <div class="stats" id="stats">
+            <!-- Stats will be loaded here -->
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('leaderboard')">📊 Leaderboard</button>
+            <button class="tab" onclick="switchTab('submissions')">📝 Submissions</button>
+            <button class="tab" onclick="switchTab('violations')">⚠️ Violations</button>
+        </div>
+
+        <button class="refresh-btn" onclick="loadData()">🔄 Refresh Data</button>
+
+        <div id="leaderboard" class="tab-content active">
+            <h2>Leaderboard</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Name</th>
+                        <th>Roll Number</th>
+                        <th>Score</th>
+                        <th>Problems Solved</th>
+                        <th>Violations</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboardBody">
+                    <tr><td colspan="6" style="text-align: center;">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div id="submissions" class="tab-content">
+            <h2>All Submissions</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Roll Number</th>
+                        <th>Problem</th>
+                        <th>Language</th>
+                        <th>Test Cases</th>
+                        <th>Score</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody id="submissionsBody">
+                    <tr><td colspan="7" style="text-align: center;">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div id="violations" class="tab-content">
+            <h2>Violation Log</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Roll Number</th>
+                        <th>Total Violations</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody id="violationsBody">
+                    <tr><td colspan="4" style="text-align: center;">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Update content
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        async function loadData() {
+            await Promise.all([
+                loadLeaderboard(),
+                loadSubmissions(),
+                loadViolations(),
+                loadStats()
+            ]);
+        }
+
+        async function loadLeaderboard() {
+            try {
+                const response = await fetch('/api/leaderboard');
+                const data = await response.json();
+
+                const tbody = document.getElementById('leaderboardBody');
+                if (data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No submissions yet</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = data.map((entry, i) => `
+                    <tr>
+                        <td><strong>${i + 1}</strong></td>
+                        <td>${entry.name}</td>
+                        <td><code>${entry.rollNumber}</code></td>
+                        <td><strong>${entry.score}</strong></td>
+                        <td><span class="badge badge-success">${entry.problemsSolved}</span></td>
+                        <td><span class="badge ${entry.violations > 3 ? 'badge-danger' : 'badge-warning'}">${entry.violations}</span></td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading leaderboard:', error);
+            }
+        }
+
+        async function loadSubmissions() {
+            try {
+                const response = await fetch('/api/admin/submissions');
+                const data = await response.json();
+
+                const tbody = document.getElementById('submissionsBody');
+                if (data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No submissions yet</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = data.map(sub => `
+                    <tr>
+                        <td>${sub.studentName}</td>
+                        <td><code>${sub.rollNumber}</code></td>
+                        <td>Problem ${sub.problemId + 1}</td>
+                        <td>${sub.language}</td>
+                        <td>${sub.passed}/${sub.total} <span class="badge ${sub.passed === sub.total ? 'badge-success' : 'badge-warning'}">${sub.passed === sub.total ? 'AC' : 'WA'}</span></td>
+                        <td><strong>${sub.score}</strong></td>
+                        <td>${new Date(sub.timestamp).toLocaleTimeString()}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading submissions:', error);
+            }
+        }
+
+        async function loadViolations() {
+            try {
+                const response = await fetch('/api/admin/violations');
+                const data = await response.json();
+
+                const tbody = document.getElementById('violationsBody');
+                if (data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No violations logged</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = data.map(v => `
+                    <tr>
+                        <td>${v.name}</td>
+                        <td><code>${v.rollNumber}</code></td>
+                        <td class="${v.violations.length > 5 ? 'violation-high' : ''}">${v.violations.length}</td>
+                        <td>${v.violations.map(viol => 
+                            `${viol.type} at ${new Date(viol.timestamp).toLocaleTimeString()}`
+                        ).join('<br>')}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading violations:', error);
+            }
+        }
+
+        async function loadStats() {
+            try {
+                const [leaderboard, submissions, violations] = await Promise.all([
+                    fetch('/api/leaderboard').then(r => r.json()),
+                    fetch('/api/admin/submissions').then(r => r.json()),
+                    fetch('/api/admin/violations').then(r => r.json())
+                ]);
+
+                const totalStudents = leaderboard.length;
+                const totalSubmissions = submissions.length;
+                const totalViolations = violations.reduce((sum, v) => sum + v.violations.length, 0);
+                const avgScore = leaderboard.length > 0 
+                    ? (leaderboard.reduce((sum, s) => sum + s.score, 0) / leaderboard.length).toFixed(1)
+                    : 0;
+
+                document.getElementById('stats').innerHTML = `
+                    <div class="stat-card">
+                        <h3>Total Students</h3>
+                        <div class="number">${totalStudents}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Submissions</h3>
+                        <div class="number">${totalSubmissions}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Violations</h3>
+                        <div class="number">${totalViolations}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Average Score</h3>
+                        <div class="number">${avgScore}</div>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        // Auto-refresh every 10 seconds
+        setInterval(loadData, 10000);
+
+        // Initial load
+        loadData();
+    </script>
+</body>
+</html>
