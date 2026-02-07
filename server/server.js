@@ -492,19 +492,46 @@ app.get('/api/admin/submissions', (req, res) => {
 
 // Admin: Export violations as CSV
 app.get('/api/admin/export', (req, res) => {
-    let csv = 'Timestamp,Student Name,Roll Number,Violation Type\n';
+    let csv = 'Roll Number,Student Name,Score,Problems Solved,Tab Switches,AI/Copy-Paste Detected,Status\n';
 
-    for (const [rollNumber, violationList] of violations.entries()) {
+    // Get all students (even those without violations)
+    const allRolls = new Set([...students.keys(), ...submissions.keys()]);
+
+    for (const rollNumber of allRolls) {
         const student = students.get(rollNumber);
         const name = student ? student.name : 'Unknown';
 
-        violationList.forEach(v => {
-            csv += `${new Date(v.timestamp).toLocaleString()},${name},${rollNumber},${v.type}\n`;
+        // Calculate Score
+        let score = 0;
+        let solved = 0;
+        for (const [key, sub] of submissions.entries()) {
+            if (sub.rollNumber === rollNumber && sub.score > 0) {
+                score += sub.score;
+                solved++;
+            }
+        }
+
+        // Count Violations
+        const studentViolations = violations.get(rollNumber) || [];
+        let tabSwitches = 0;
+        let aiDetected = 0;
+
+        studentViolations.forEach(v => {
+            if (v.type === 'tab_switch' || v.type === 'status_tab_switched') tabSwitches++;
+            if (v.type === 'ai_used') aiDetected++;
         });
+
+        // Determine Status
+        let status = 'Clean';
+        if (tabSwitches >= 5) status = 'Disqualified (Tab Switching)';
+        else if (aiDetected > 0) status = 'Flagged (AI/Copy-Paste)';
+        else if (tabSwitches > 0) status = 'Warning (Minor Tab Switching)';
+
+        csv += `${rollNumber},${name},${score},${solved},${tabSwitches},${aiDetected},${status}\n`;
     }
 
     res.header('Content-Type', 'text/csv');
-    res.attachment('contest_violations.csv');
+    res.attachment('contest_report.csv');
     return res.send(csv);
 });
 
