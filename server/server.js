@@ -490,6 +490,24 @@ app.get('/api/admin/submissions', (req, res) => {
     res.json(allSubmissions);
 });
 
+// Admin: Export violations as CSV
+app.get('/api/admin/export', (req, res) => {
+    let csv = 'Timestamp,Student Name,Roll Number,Violation Type\n';
+
+    for (const [rollNumber, violationList] of violations.entries()) {
+        const student = students.get(rollNumber);
+        const name = student ? student.name : 'Unknown';
+
+        violationList.forEach(v => {
+            csv += `${new Date(v.timestamp).toLocaleString()},${name},${rollNumber},${v.type}\n`;
+        });
+    }
+
+    res.header('Content-Type', 'text/csv');
+    res.attachment('contest_violations.csv');
+    return res.send(csv);
+});
+
 // Start server
 async function startServer() {
     await loadProblems();

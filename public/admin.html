@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -35,7 +36,7 @@
             background: white;
             padding: 10px;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .tab {
@@ -62,7 +63,7 @@
             background: white;
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
         .tab-content.active {
@@ -75,7 +76,8 @@
             margin-top: 20px;
         }
 
-        th, td {
+        th,
+        td {
             padding: 12px;
             text-align: left;
             border-bottom: 1px solid #e0e0e0;
@@ -124,7 +126,7 @@
             background: white;
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .stat-card h3 {
@@ -167,6 +169,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h1>🎯 Contest Admin Panel</h1>
@@ -181,7 +184,11 @@
             <button class="tab" onclick="switchTab('violations')">⚠️ Violations</button>
         </div>
 
-        <button class="refresh-btn" onclick="loadData()">🔄 Refresh Data</button>
+        <div style="margin-bottom: 20px;">
+            <button class="refresh-btn" onclick="loadData()">🔄 Refresh Data</button>
+            <button class="refresh-btn" style="background: #4caf50;" onclick="exportReport()">📥 Export Report
+                (Excel)</button>
+        </div>
 
         <div id="leaderboard" class="tab-content active">
             <h2>Leaderboard</h2>
@@ -197,7 +204,9 @@
                     </tr>
                 </thead>
                 <tbody id="leaderboardBody">
-                    <tr><td colspan="6" style="text-align: center;">Loading...</td></tr>
+                    <tr>
+                        <td colspan="6" style="text-align: center;">Loading...</td>
+                    </tr>
                 </tbody>
             </table>
         </div>
@@ -217,7 +226,9 @@
                     </tr>
                 </thead>
                 <tbody id="submissionsBody">
-                    <tr><td colspan="7" style="text-align: center;">Loading...</td></tr>
+                    <tr>
+                        <td colspan="7" style="text-align: center;">Loading...</td>
+                    </tr>
                 </tbody>
             </table>
         </div>
@@ -234,7 +245,9 @@
                     </tr>
                 </thead>
                 <tbody id="violationsBody">
-                    <tr><td colspan="4" style="text-align: center;">Loading...</td></tr>
+                    <tr>
+                        <td colspan="4" style="text-align: center;">Loading...</td>
+                    </tr>
                 </tbody>
             </table>
         </div>
@@ -329,9 +342,9 @@
                         <td>${v.name}</td>
                         <td><code>${v.rollNumber}</code></td>
                         <td class="${v.violations.length > 5 ? 'violation-high' : ''}">${v.violations.length}</td>
-                        <td>${v.violations.map(viol => 
-                            `${viol.type} at ${new Date(viol.timestamp).toLocaleTimeString()}`
-                        ).join('<br>')}</td>
+                        <td>${v.violations.map(viol =>
+                    `${viol.type} at ${new Date(viol.timestamp).toLocaleTimeString()}`
+                ).join('<br>')}</td>
                     </tr>
                 `).join('');
             } catch (error) {
@@ -350,7 +363,7 @@
                 const totalStudents = leaderboard.length;
                 const totalSubmissions = submissions.length;
                 const totalViolations = violations.reduce((sum, v) => sum + v.violations.length, 0);
-                const avgScore = leaderboard.length > 0 
+                const avgScore = leaderboard.length > 0
                     ? (leaderboard.reduce((sum, s) => sum + s.score, 0) / leaderboard.length).toFixed(1)
                     : 0;
 
@@ -382,6 +395,11 @@
 
         // Initial load
         loadData();
+
+        function exportReport() {
+            window.location.href = '/api/admin/export';
+        }
     </script>
 </body>
+
 </html>
