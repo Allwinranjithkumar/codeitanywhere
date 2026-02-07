@@ -161,8 +161,39 @@ public class TestRunner {
     });
 }
 
-// Execute C++ function
+// Queue for compilation tasks
+const compilationQueue = [];
+let activeCompilations = 0;
+const MAX_CONCURRENT_COMPILATIONS = 2; // Limit to 2 parallel compiles on Free Tier
+
+// Process queue
+async function processCompilationQueue() {
+    if (activeCompilations >= MAX_CONCURRENT_COMPILATIONS || compilationQueue.length === 0) return;
+
+    activeCompilations++;
+    const { code, functionName, testCase, resolve, reject } = compilationQueue.shift();
+
+    try {
+        const result = await runCppCompilation(code, functionName, testCase);
+        resolve(result);
+    } catch (error) {
+        reject(error);
+    } finally {
+        activeCompilations--;
+        processCompilationQueue(); // Process next item
+    }
+}
+
+// Execute C++ function (Queued)
 function executeCppFunction(code, functionName, testCase) {
+    return new Promise((resolve, reject) => {
+        compilationQueue.push({ code, functionName, testCase, resolve, reject });
+        processCompilationQueue();
+    });
+}
+
+// Actual Compilation Logic
+function runCppCompilation(code, functionName, testCase) {
     return new Promise((resolve, reject) => {
         const tempFile = `Solution_${Date.now()}`;
 
