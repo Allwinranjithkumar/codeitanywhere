@@ -34,7 +34,14 @@ This platform stores all student data (scores, violations) in the **Server's RAM
 *   As soon as the exam ends (or even during the exam), go to the **Admin Panel** (`/admin.html`).
 *   Click **"Export Report (Excel)"**.
 *   Save that file to your computer.
+*   Save that file to your computer.
 *   **Do not stop/suspend the server until you have that file.**
+
+### ✅ Scalability & Performance (New!)
+I have optimized this platform to handle **75+ students** on the **Free Tier**.
+*   **Smart Queuing**: If 50 students click "Run" at the same time, the server will **NOT crash**.
+*   **How it works**: It processes 2 compilations at a time.
+*   **What students see**: A spinner for 2-5 seconds. This is normal and keeps the exam stable.
 
 ### Part 1.5: Free Cloud Options (Compiler Support Required!)
 
