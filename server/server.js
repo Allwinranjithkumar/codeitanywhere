@@ -523,7 +523,8 @@ app.get('/api/admin/submissions', (req, res) => {
 
 // Admin: Export violations as CSV
 app.get('/api/admin/export', (req, res) => {
-    let csv = 'Roll Number,Student Name,Score,Problems Solved,Tab Switches,AI/Copy-Paste Detected,Status\n';
+    // User requested: Student Name | Roll Number | Marks | Problem Solved | Tab Switches | Used Copy Paste
+    let csv = 'Student Name,Roll Number,Marks,Problems Solved,Tab Switches,Copy-Paste Used\n';
 
     // Get all students (even those without violations)
     const allRolls = new Set([...students.keys(), ...submissions.keys()]);
@@ -552,13 +553,11 @@ app.get('/api/admin/export', (req, res) => {
             if (v.type === 'ai_used') aiDetected++;
         });
 
-        // Determine Status
-        let status = 'Clean';
-        if (tabSwitches >= 5) status = 'Disqualified (Tab Switching)';
-        else if (aiDetected > 0) status = 'Flagged (AI/Copy-Paste)';
-        else if (tabSwitches > 0) status = 'Warning (Minor Tab Switching)';
+        // Format Copy-Paste as Yes/No
+        const copyPasteStatus = aiDetected > 0 ? 'Yes' : 'No';
 
-        csv += `${rollNumber},${name},${score},${solved},${tabSwitches},${aiDetected},${status}\n`;
+        // Add row to CSV
+        csv += `${name},${rollNumber},${score},${solved},${tabSwitches},${copyPasteStatus}\n`;
     }
 
     res.header('Content-Type', 'text/csv');
