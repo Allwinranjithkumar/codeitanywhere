@@ -137,7 +137,7 @@ public class TestRunner {
 // Queue for compilation tasks
 const compilationQueue = [];
 let activeCompilations = 0;
-const MAX_CONCURRENT_COMPILATIONS = 2; // Limit to 2 parallel compiles on Free Tier
+const MAX_CONCURRENT_COMPILATIONS = 4; // Increased for 75 concurrent users (approx)
 
 // Process queue
 async function processCompilationQueue() {

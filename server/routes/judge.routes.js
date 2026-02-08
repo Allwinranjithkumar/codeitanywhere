@@ -53,6 +53,15 @@ router.post('/submit', authenticateToken, async (req, res) => {
             );
         } catch (dbErr) {
             console.warn('⚠️ DB Save Failed (Partial Mode):', dbErr.message);
+            // Save to Memory Store
+            require('../services/memoryStore').saveSubmission({
+                user_id: req.user.id,
+                problem_id: problemId,
+                language,
+                status,
+                score,
+                timestamp: new Date()
+            });
         }
 
         res.json({
@@ -81,6 +90,12 @@ router.post('/log-violation', authenticateToken, async (req, res) => {
             );
         } catch (dbErr) {
             console.warn('⚠️ Violation Log Failed (Partial Mode):', dbErr.message);
+            // Save to Memory Store
+            require('../services/memoryStore').saveViolation({
+                user_id: req.user.id,
+                type: violationType,
+                timestamp: timestamp || new Date()
+            });
         }
 
         res.json({ success: true });
@@ -108,7 +123,30 @@ router.get('/leaderboard', authenticateToken, async (req, res) => {
         res.json(result.rows);
     } catch (error) {
         console.warn('⚠️ Leaderboard Load Failed (Partial Mode):', error.message);
-        res.json([]); // Return empty list instead of 500 error
+
+        // Fetch from Memory Store
+        const memoryStore = require('../services/memoryStore');
+        const users = memoryStore.getAllUsers();
+        const submissions = memoryStore.getSubmissions();
+
+        // Aggregate Data manually
+        const leaderboard = users.map(user => {
+            const userSubs = submissions.filter(s => s.user_id === user.id);
+            const score = userSubs.reduce((acc, curr) => acc + (curr.status === 'Accepted' ? curr.score : 0), 0);
+            const uniqueSolved = new Set(userSubs.filter(s => s.status === 'Accepted').map(s => s.problem_id)).size;
+
+            return {
+                name: user.name,
+                reg_no: user.reg_no,
+                total_score: score,
+                problems_solved: uniqueSolved
+            };
+        });
+
+        // Sort descending
+        leaderboard.sort((a, b) => b.total_score - a.total_score);
+
+        res.json(leaderboard);
     }
 });
 

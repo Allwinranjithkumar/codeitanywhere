@@ -18,8 +18,22 @@ router.get('/violations', async (req, res) => {
         `);
         res.json(result.rows);
     } catch (error) {
-        console.error('Error fetching violations:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        console.warn('⚠️ Admin Violations Load Failed (Partial Mode):', error.message);
+        try {
+            const memoryStore = require('../services/memoryStore');
+            const violations = memoryStore.getViolations();
+            const users = memoryStore.getAllUsers();
+
+            // Join manually
+            const joined = violations.map(v => {
+                const user = users.find(u => u.id === v.user_id) || { name: 'Unknown', reg_no: 'N/A' };
+                return { ...v, name: user.name, reg_no: user.reg_no };
+            }).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+            res.json(joined);
+        } catch (memErr) {
+            res.status(500).json({ error: 'Internal server error' });
+        }
     }
 });
 
@@ -34,24 +48,53 @@ router.get('/submissions', async (req, res) => {
         `);
         res.json(result.rows);
     } catch (error) {
-        console.error('Error fetching submissions:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        console.warn('⚠️ Admin Submissions Load Failed (Partial Mode):', error.message);
+        try {
+            const memoryStore = require('../services/memoryStore');
+            const submissions = memoryStore.getSubmissions();
+            const users = memoryStore.getAllUsers();
+
+            // Join manually
+            const joined = submissions.map(s => {
+                const user = users.find(u => u.id === s.user_id) || { name: 'Unknown', reg_no: 'N/A', email: 'N/A' };
+                return { ...s, name: user.name, reg_no: user.reg_no, email: user.email };
+            }).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+            res.json(joined);
+        } catch (memErr) {
+            res.status(500).json({ error: 'Internal server error' });
+        }
     }
 });
 
 // Export data (CSV)
 router.get('/export', async (req, res) => {
     try {
-        const usersResult = await db.query('SELECT * FROM users');
-        const submissionsResult = await db.query('SELECT * FROM submissions');
-        const violationsResult = await db.query('SELECT * FROM violations');
+        let users, submissions, violations;
+
+        try {
+            // Try DB First
+            const usersResult = await db.query('SELECT * FROM users');
+            const submissionsResult = await db.query('SELECT * FROM submissions');
+            const violationsResult = await db.query('SELECT * FROM violations');
+
+            users = usersResult.rows;
+            submissions = submissionsResult.rows;
+            violations = violationsResult.rows;
+        } catch (dbErr) {
+            console.warn('⚠️ Export DB Failed (Partial Mode). Using Memory Store.');
+            const memoryStore = require('../services/memoryStore');
+            users = memoryStore.getAllUsers();
+            submissions = memoryStore.getSubmissions();
+            violations = memoryStore.getViolations();
+        }
 
         // Logic to aggregate data similar to original server.js
         let csv = 'Student Name,Register Number,Email,Score,Problems Solved,Violations,Ai Detected\n';
 
-        for (const user of usersResult.rows) {
-            const userSubmissions = submissionsResult.rows.filter(s => s.user_id === user.id);
-            const userViolations = violationsResult.rows.filter(v => v.user_id === user.id);
+        for (const user of users) {
+            const userSubmissions = submissions.filter(s => s.user_id === user.id);
+            const userViolations = violations.filter(v => v.user_id === user.id);
 
             const score = userSubmissions.reduce((acc, curr) => acc + (curr.status === 'Accepted' ? curr.score : 0), 0);
             const solved = new Set(userSubmissions.filter(s => s.status === 'Accepted').map(s => s.problem_id)).size;
