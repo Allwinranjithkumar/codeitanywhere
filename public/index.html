@@ -219,54 +219,57 @@
 </head>
 
 <body>
-    <div class="container">
-        <!-- Dashboard Sidebar -->
-        <aside class="sidebar">
-            <div class="sidebar-content">
-                <div class="logo">
-                    🚀 CodeItAnywhere
-                </div>
-                <p class="description">
-                    Welcome to the ultimate coding platform!
-                    Master technical concepts, solve challenging problems,
-                    and prepare for your dream interviews.
-                </p>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-box">
+            <h1>🏆 Coding Contest</h1>
+            <input type="text" id="studentName" placeholder="Enter your name" required>
+            <input type="text" id="rollNumber" placeholder="Enter your roll number" required>
+            <button onclick="startContest()">Start Contest</button>
+        </div>
+    </div>
 
-                <div class="nav-buttons">
-                    <a href="/auth.html" class="action-btn btn-primary">Login / Register</a>
-                    <!-- <a href="#python" class="action-btn">Python Tricks</a>
-                    <a href="#java" class="action-btn">Java Concepts</a> -->
+    <!-- Contest Screen -->
+    <div id="contestScreen" class="contest-hidden">
+        <div class="warning-banner" id="warningBanner">
+            ⚠️ TAB SWITCH DETECTED! This violation has been logged.
+        </div>
+
+        <div class="header">
+            <div>
+                <span style="color: #4ec9b0; font-size: 20px;">🏆</span>
+                <span style="font-weight: bold; margin-left: 10px;">Coding Contest</span>
+                <span style="font-size: 10px; color: #555; margin-left: 5px;">(v2.1)</span>
+                <span class="student-info" id="studentDisplay"></span>
+            </div>
+            <div class="timer" id="timer">60:00</div>
+            <div class="violations">
+                Tab Switches: <span id="violationCount">0</span>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="left-panel">
+                <div class="problem-selector" id="problemList">
+                    <!-- Problems will be loaded here -->
+                </div>
+                <!-- Problem Description Section -->
+                <div id="problemDescriptionArea">
+                    <h2 id="problemTitle" class="problem-title"></h2>
+                    <div id="problemDescription" class="problem-description"></div>
                 </div>
             </div>
 
-            <div class="footer">
-                &copy; 2026 CodeItAnywhere. <br> All rights reserved.
-            </div>
-        </aside>
-
-        <!-- Main Content Area -->
-        <main class="main-content">
-            <h2>💡 Technical Interview Insights</h2>
-
-            <div class="content-grid">
-
-                <!-- Python Insights -->
-                <div class="card" id="python">
-                    <h3>Mutable Default Arguments <span class="lang-badge">Python</span></h3>
-                    <p>Avoid using mutable objects like lists as default arguments.</p>
-                    <pre><code class="language-python"># ❌ WRONG: list is shared across calls
-def add(item, target=[]):
-    target.append(item)
-    return target
-
-# ✅ CORRECT: Use None as sentinel
-def add(item, target=None):
-    if target is None:
-        target = []
-    target.append(item)
-    return target</code></pre>
-                    <div class="key-takeaway">
-                        <strong>Insight:</strong> Default values are evaluated once at definition time.
+            <div class="right-panel">
+                <div class="editor-section">
+                    <div class="language-selector">
+                        <select id="languageSelect" onchange="changeLanguage()">
+                            <option value="python">Python</option>
+                            <option value="javascript">JavaScript</option>
+                            <option value="cpp">C++</option>
+                            <option value="c">C</option>
+                            <option value="java">Java</option>
+                        </select>
                     </div>
                 </div>
 

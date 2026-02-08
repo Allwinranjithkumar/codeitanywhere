@@ -4,6 +4,8 @@ FROM node:18-bullseye-slim
 # Install necessary compilers (g++, python3, java)
 RUN apt-get update && apt-get install -y \
     g++ \
+    gcc \
+    make \
     python3 \
     default-jdk \
     && rm -rf /var/lib/apt/lists/*
