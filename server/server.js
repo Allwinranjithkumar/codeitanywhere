@@ -512,6 +512,7 @@ app.post('/api/run', async (req, res) => {
 
 // Start Server
 async function startServer() {
+    /*
     try {
         await db.initDB();
         console.log('Database connected!');
@@ -519,12 +520,15 @@ async function startServer() {
         console.warn('WARNING: Database connection failed. Running in partial mode (No Persistence).');
         console.error(e.message);
     }
-
+    
     try {
         await syncExcel();
     } catch (e) {
         console.warn('WARNING: Excel sync failed.');
     }
+    */
+
+    console.log('Starting server in NO-DB Mode (Stability Priority)');
     await problemService.loadProblems();
 
     app.listen(PORT, () => {
