@@ -379,12 +379,6 @@
     </style>
 </head>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs/loader.min.js"></script>
-<style>
-    /* ... existing styles ... */
-</style>
-</head>
-
 <body>
     <!-- Login Screen -->
     <div id="loginScreen" class="login-screen">
@@ -438,7 +432,7 @@
                             <option value="java">Java</option>
                         </select>
                     </div>
-                    <div id="editor" style="height: 60vh; border: 1px solid #3c3c3c;"></div>
+                    <textarea id="codeEditor"></textarea>
                     <div class="output-section" id="outputSection" style="display: none;">
                         <h3>Results</h3>
                         <div id="results"></div>
@@ -476,6 +470,11 @@
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/clike/clike.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/matchbrackets.min.js"></script>
     <script src="app.js"></script>
 </body>
 

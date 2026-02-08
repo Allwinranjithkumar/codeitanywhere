@@ -159,6 +159,8 @@ function changeLanguage() {
     let mode = language;
     if (language === 'cpp') {
         mode = 'text/x-c++src';
+    } else if (language === 'c') {
+        mode = 'text/x-csrc';
     } else if (language === 'java') {
         mode = 'text/x-java';
     }
