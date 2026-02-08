@@ -4,474 +4,315 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coding Contest Platform</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
+    <title>CodeItAnywhere | Interview Insights</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #1e1e1e;
-            color: #d4d4d4;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        .warning-banner {
-            background: #ff4444;
-            color: white;
-            padding: 10px;
-            text-align: center;
-            font-weight: bold;
-            display: none;
+            background-image: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
         }
 
         .container {
             display: flex;
-            height: calc(100vh - 60px);
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            width: 1200px;
+            height: 85vh;
+            /* Fixed height for dashboard feel */
         }
 
-        .header {
-            background: #2d2d30;
-            padding: 15px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid #007acc;
-        }
-
-        .timer {
-            font-size: 24px;
-            font-weight: bold;
-            color: #4ec9b0;
-        }
-
-        .timer.warning {
-            color: #ff6b6b;
-        }
-
-        .student-info input {
-            padding: 8px 12px;
-            background: #3c3c3c;
-            border: 1px solid #555;
-            color: #d4d4d4;
-            border-radius: 4px;
-            margin-left: 10px;
-        }
-
-        .violations {
-            color: #ff6b6b;
-            font-size: 14px;
-        }
-
-        .left-panel {
-            width: 40%;
-            background: #252526;
-            overflow-y: auto;
-            padding: 20px;
-            border-right: 1px solid #3c3c3c;
-        }
-
-        .right-panel {
-            width: 60%;
+        /* Left Side: Navigation & CTA */
+        .sidebar {
+            width: 350px;
+            background: #1a1a2e;
+            color: white;
+            padding: 40px;
             display: flex;
             flex-direction: column;
+            justify-content: space-between;
+            position: relative;
         }
 
-        .problem-selector {
-            display: flex;
-            gap: 10px;
+        .sidebar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('https://source.unsplash.com/random/800x600/?coding') center/cover;
+            opacity: 0.1;
+            z-index: 0;
+        }
+
+        .sidebar-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo {
+            font-size: 2em;
+            font-weight: 700;
             margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-
-        .problem-btn {
-            padding: 10px 20px;
-            background: #3c3c3c;
-            border: 2px solid #555;
-            color: #d4d4d4;
-            cursor: pointer;
-            border-radius: 4px;
-            transition: all 0.3s;
-        }
-
-        .problem-btn:hover {
-            background: #4c4c4c;
-        }
-
-        .problem-btn.active {
-            background: #007acc;
-            border-color: #007acc;
-            color: white;
-        }
-
-        .problem-btn.solved {
-            background: #4ec9b0;
-            border-color: #4ec9b0;
-            color: #1e1e1e;
-        }
-
-        .problem-content {
-            display: none;
-        }
-
-        .problem-content.active {
-            display: block;
-        }
-
-        .problem-title {
-            font-size: 24px;
             color: #4ec9b0;
-            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .problem-description {
-            line-height: 1.8;
+        .description {
+            color: #a0a0a0;
+            font-size: 1em;
+            line-height: 1.6;
+            margin-bottom: 40px;
+        }
+
+        .nav-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .action-btn {
+            display: block;
+            text-decoration: none;
+            color: white;
+            font-weight: 600;
+            padding: 15px 20px;
+            border-radius: 8px;
+            transition: all 0.3s;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(5px);
+        }
+
+        .btn-primary {
+            background: #4ec9b0;
+            color: #1a1a2e;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: #3eb59d;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(78, 201, 176, 0.4);
+        }
+
+        .footer {
+            font-size: 0.8em;
+            color: #666;
+            margin-top: auto;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Right Side: Content Area */
+        .main-content {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+            background: #f8f9fa;
+        }
+
+        h2 {
+            color: #1a1a2e;
             margin-bottom: 20px;
+            font-size: 1.8em;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
         }
 
-        .test-cases {
-            background: #1e1e1e;
-            padding: 15px;
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+            border: 1px solid #eee;
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .card h3 {
+            color: #4ec9b0;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .lang-badge {
+            font-size: 0.7em;
+            background: #eee;
+            color: #555;
+            padding: 2px 8px;
             border-radius: 4px;
-            margin-top: 15px;
-        }
-
-        .test-case {
-            margin-bottom: 15px;
-        }
-
-        .test-case h4 {
-            color: #569cd6;
-            margin-bottom: 5px;
+            font-weight: normal;
         }
 
         pre {
-            background: #2d2d30;
-            padding: 10px;
-            border-radius: 4px;
-            overflow-x: auto;
-        }
-
-        .editor-section {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 20px;
-        }
-
-        .language-selector {
-            margin-bottom: 10px;
-        }
-
-        .language-selector select {
-            padding: 8px 12px;
-            background: #3c3c3c;
-            border: 1px solid #555;
-            color: #d4d4d4;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        .CodeMirror {
-            height: 100% !important;
-            font-size: 14px;
-            border: 1px solid #3c3c3c;
-            border-radius: 4px;
-        }
-
-        .actions {
-            padding: 20px;
-            background: #2d2d30;
-            display: flex;
-            gap: 10px;
-            border-top: 1px solid #3c3c3c;
-        }
-
-        button {
-            padding: 10px 25px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s;
-        }
-
-        .btn-run {
-            background: #4ec9b0;
-            color: #1e1e1e;
-        }
-
-        .btn-run:hover {
-            background: #5edcc4;
-        }
-
-        .btn-submit {
-            background: #007acc;
-            color: white;
-        }
-
-        .btn-submit:hover {
-            background: #0098ff;
-        }
-
-        .btn-leaderboard {
-            background: #6a5acd;
-            color: white;
-        }
-
-        .output-section {
-            background: #1e1e1e;
-            padding: 15px;
-            border-radius: 4px;
-            margin-top: 10px;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-
-        .output-section h3 {
-            color: #569cd6;
-            margin-bottom: 10px;
-        }
-
-        .result {
-            margin-bottom: 10px;
-            padding: 10px;
-            border-radius: 4px;
-        }
-
-        .result.pass {
-            background: rgba(78, 201, 176, 0.2);
-            border-left: 3px solid #4ec9b0;
-        }
-
-        .result.fail {
-            background: rgba(255, 107, 107, 0.2);
-            border-left: 3px solid #ff6b6b;
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background: #2d2d30;
-            padding: 30px;
             border-radius: 8px;
-            max-width: 800px;
-            max-height: 80vh;
-            overflow-y: auto;
-            width: 90%;
+            margin: 15px 0;
+            font-size: 0.9em;
         }
 
-        .modal-content h2 {
-            color: #4ec9b0;
-            margin-bottom: 20px;
-        }
-
-        .leaderboard-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .leaderboard-table th,
-        .leaderboard-table td {
+        .key-takeaway {
+            background: #fffbea;
+            border-left: 4px solid #f59e0b;
             padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #3c3c3c;
+            margin-top: 15px;
+            border-radius: 0 4px 4px 0;
+            font-size: 0.9em;
+            color: #444;
         }
 
-        .leaderboard-table th {
-            background: #1e1e1e;
-            color: #569cd6;
+        /* Scrollbar styling */
+        .main-content::-webkit-scrollbar {
+            width: 8px;
         }
 
-        .leaderboard-table tr:hover {
-            background: #3c3c3c;
+        .main-content::-webkit-scrollbar-track {
+            background: #f1f1f1;
         }
 
-        .rank-1 {
-            color: #ffd700;
-            font-weight: bold;
+        .main-content::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 4px;
         }
 
-        .rank-2 {
-            color: #c0c0c0;
-            font-weight: bold;
-        }
-
-        .rank-3 {
-            color: #cd7f32;
-            font-weight: bold;
-        }
-
-        .close-modal {
-            background: #ff4444;
-            color: white;
-            margin-top: 20px;
-        }
-
-        .login-screen {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-
-        .login-box {
-            background: white;
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-            text-align: center;
-            max-width: 400px;
-            width: 90%;
-        }
-
-        .login-box h1 {
-            color: #333;
-            margin-bottom: 30px;
-        }
-
-        .login-box input {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 15px;
-            border: 2px solid #ddd;
-            border-radius: 5px;
-            font-size: 16px;
-        }
-
-        .login-box button {
-            width: 100%;
-            padding: 12px;
-            background: #667eea;
-            color: white;
-            font-size: 16px;
-        }
-
-        .login-box button:hover {
-            background: #5568d3;
-        }
-
-        .contest-hidden {
-            display: none;
+        .main-content::-webkit-scrollbar-thumb:hover {
+            background: #aaa;
         }
     </style>
 </head>
 
 <body>
-    <!-- Login Screen -->
-    <div id="loginScreen" class="login-screen">
-        <div class="login-box">
-            <h1>🏆 Coding Contest</h1>
-            <input type="text" id="studentName" placeholder="Enter your name" required>
-            <input type="text" id="rollNumber" placeholder="Enter your roll number" required>
-            <button onclick="startContest()">Start Contest</button>
-        </div>
-    </div>
-
-    <!-- Contest Screen -->
-    <div id="contestScreen" class="contest-hidden">
-        <div class="warning-banner" id="warningBanner">
-            ⚠️ TAB SWITCH DETECTED! This violation has been logged.
-        </div>
-
-        <div class="header">
-            <div>
-                <span style="color: #4ec9b0; font-size: 20px;">🏆</span>
-                <span style="font-weight: bold; margin-left: 10px;">Coding Contest</span>
-                <span class="student-info" id="studentDisplay"></span>
-            </div>
-            <div class="timer" id="timer">60:00</div>
-            <div class="violations">
-                Tab Switches: <span id="violationCount">0</span>
-            </div>
-        </div>
-
-        <div class="container">
-            <div class="left-panel">
-                <div class="problem-selector" id="problemSelector">
-                    <!-- Problems will be loaded here -->
+    <div class="container">
+        <!-- Dashboard Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-content">
+                <div class="logo">
+                    🚀 CodeItAnywhere
                 </div>
-                <div id="problemsContainer">
-                    <!-- Problem content will be loaded here -->
+                <p class="description">
+                    Welcome to the ultimate coding platform!
+                    Master technical concepts, solve challenging problems,
+                    and prepare for your dream interviews.
+                </p>
+
+                <div class="nav-buttons">
+                    <a href="/auth.html" class="action-btn btn-primary">Login / Register</a>
+                    <!-- <a href="#python" class="action-btn">Python Tricks</a>
+                    <a href="#java" class="action-btn">Java Concepts</a> -->
                 </div>
             </div>
 
-            <div class="right-panel">
-                <div class="editor-section">
-                    <div class="language-selector">
-                        <select id="languageSelect" onchange="changeLanguage()">
-                            <option value="python">Python</option>
-                            <option value="javascript">JavaScript</option>
-                            <option value="cpp">C++</option>
-                            <option value="text/x-java">Java</option>
-                        </select>
-                    </div>
-                    <textarea id="codeEditor"></textarea>
-                    <div class="output-section" id="outputSection" style="display: none;">
-                        <h3>Results</h3>
-                        <div id="results"></div>
+            <div class="footer">
+                &copy; 2026 CodeItAnywhere. <br> All rights reserved.
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <h2>💡 Technical Interview Insights</h2>
+
+            <div class="content-grid">
+
+                <!-- Python Insights -->
+                <div class="card" id="python">
+                    <h3>Mutable Default Arguments <span class="lang-badge">Python</span></h3>
+                    <p>Avoid using mutable objects like lists as default arguments.</p>
+                    <pre><code class="language-python"># ❌ WRONG: list is shared across calls
+def add(item, target=[]):
+    target.append(item)
+    return target
+
+# ✅ CORRECT: Use None as sentinel
+def add(item, target=None):
+    if target is None:
+        target = []
+    target.append(item)
+    return target</code></pre>
+                    <div class="key-takeaway">
+                        <strong>Insight:</strong> Default values are evaluated once at definition time.
                     </div>
                 </div>
 
-                <div class="actions">
-                    <button class="btn-run" onclick="runCode()">▶ Run Code</button>
-                    <button class="btn-submit" onclick="submitCode()">📤 Submit</button>
-                    <button class="btn-leaderboard" onclick="showLeaderboard()">🏆 Leaderboard</button>
+                <!-- Java Insights -->
+                <div class="card" id="java">
+                    <h3>String Pool & Equality <span class="lang-badge">Java</span></h3>
+                    <p>Understanding <code>==</code> vs <code>.equals()</code> is fundamental.</p>
+                    <pre><code class="language-java">String s1 = "Hello"; // String Pool
+String s2 = new String("Hello"); // Heap
+
+System.out.println(s1 == s2);      // false (Ref check)
+System.out.println(s1.equals(s2)); // true (Value check)</code></pre>
+                    <div class="key-takeaway">
+                        <strong>Tip:</strong> Always use <code>.equals()</code> for content comparison.
+                    </div>
                 </div>
+
+                <!-- C++ Insights -->
+                <div class="card">
+                    <h3>Vector Reallocation <span class="lang-badge">C++</span></h3>
+                    <p>Prevent expensive copies by reserving memory.</p>
+                    <pre><code class="language-cpp">std::vector<int> v;
+v.reserve(1000); // Allocate memory once
+
+for(int i=0; i<1000; i++) {
+    v.push_back(i); // No reallocation needed
+}</code></pre>
+                </div>
+
+                <!-- JS Insights -->
+                <div class="card">
+                    <h3>Event Loop & Scope <span class="lang-badge">JS</span></h3>
+                    <p>Use <code>let</code> for block scoping in loops.</p>
+                    <pre><code class="language-javascript">// ✅ "let" creates a new binding each iteration
+for (let i = 0; i < 3; i++) {
+    setTimeout(() => console.log(i), 100);
+}
+// Output: 0, 1, 2</code></pre>
+                </div>
+
             </div>
-        </div>
+        </main>
     </div>
 
-    <!-- Leaderboard Modal -->
-    <div id="leaderboardModal" class="modal">
-        <div class="modal-content">
-            <h2>🏆 Leaderboard</h2>
-            <table class="leaderboard-table">
-                <thead>
-                    <tr>
-                        <th>Rank</th>
-                        <th>Name</th>
-                        <th>Roll Number</th>
-                        <th>Score</th>
-                        <th>Problems Solved</th>
-                    </tr>
-                </thead>
-                <tbody id="leaderboardBody">
-                    <!-- Leaderboard data will be loaded here -->
-                </tbody>
-            </table>
-            <button class="close-modal" onclick="closeLeaderboard()">Close</button>
-        </div>
-    </div>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/clike/clike.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/matchbrackets.min.js"></script>
-    <script src="app.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
 </body>
 
 </html>
