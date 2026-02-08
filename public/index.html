@@ -379,6 +379,12 @@
     </style>
 </head>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs/loader.min.js"></script>
+    <style>
+        /* ... existing styles ... */
+    </style>
+</head>
+
 <body>
     <!-- Login Screen -->
     <div id="loginScreen" class="login-screen">
@@ -410,11 +416,13 @@
 
         <div class="container">
             <div class="left-panel">
-                <div class="problem-selector" id="problemSelector">
+                <div class="problem-selector" id="problemList">
                     <!-- Problems will be loaded here -->
                 </div>
-                <div id="problemsContainer">
-                    <!-- Problem content will be loaded here -->
+                <!-- Problem Description Section -->
+                <div id="problemDescriptionArea">
+                   <h2 id="problemTitle" class="problem-title"></h2>
+                   <div id="problemDescription" class="problem-description"></div>
                 </div>
             </div>
 
@@ -425,10 +433,11 @@
                             <option value="python">Python</option>
                             <option value="javascript">JavaScript</option>
                             <option value="cpp">C++</option>
-                            <option value="text/x-java">Java</option>
+                            <option value="c">C</option>
+                            <option value="java">Java</option>
                         </select>
                     </div>
-                    <textarea id="codeEditor"></textarea>
+                    <div id="editor" style="height: 60vh; border: 1px solid #3c3c3c;"></div>
                     <div class="output-section" id="outputSection" style="display: none;">
                         <h3>Results</h3>
                         <div id="results"></div>
@@ -466,12 +475,6 @@
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/clike/clike.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/matchbrackets.min.js"></script>
     <script src="app.js"></script>
 </body>
-
 </html>

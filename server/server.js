@@ -171,10 +171,15 @@ async function processCompilationQueue() {
     if (activeCompilations >= MAX_CONCURRENT_COMPILATIONS || compilationQueue.length === 0) return;
 
     activeCompilations++;
-    const { code, functionName, testCase, resolve, reject } = compilationQueue.shift();
+    const { code, language, functionName, testCase, resolve, reject } = compilationQueue.shift();
 
     try {
-        const result = await runCppCompilation(code, functionName, testCase);
+        let result;
+        if (language === 'c') {
+            result = await runCCompilation(code, functionName, testCase);
+        } else {
+            result = await runCppCompilation(code, functionName, testCase);
+        }
         resolve(result);
     } catch (error) {
         reject(error);
@@ -187,27 +192,42 @@ async function processCompilationQueue() {
 // Execute C++ function (Queued)
 function executeCppFunction(code, functionName, testCase) {
     return new Promise((resolve, reject) => {
-        compilationQueue.push({ code, functionName, testCase, resolve, reject });
+        compilationQueue.push({ code, language: 'cpp', functionName, testCase, resolve, reject });
         processCompilationQueue();
     });
 }
 
-// Actual Compilation Logic
-function runCppCompilation(code, functionName, testCase) {
+// Execute C function (Queued)
+function executeCFunction(code, functionName, testCase) {
+    return new Promise((resolve, reject) => {
+        compilationQueue.push({ code, language: 'c', functionName, testCase, resolve, reject });
+        processCompilationQueue();
+    });
+}
+
+        });
+    });
+}
+
+// Actual C Compilation Logic
+function runCCompilation(code, functionName, testCase) {
     return new Promise((resolve, reject) => {
         const tempFile = `Solution_${Date.now()}`;
 
-        // Dynamically build argument declarations and calling signature
+        // Dynamically build argument declarations
         const declarations = [];
         const funcArgs = [];
 
         for (const [key, value] of Object.entries(testCase.input)) {
             if (Array.isArray(value)) {
-                // Assume vector<int> for simplicity in this contest scope
-                declarations.push(`vector<int> ${key} = {${value.join(',')}};`);
+                // Buffer declaration
+                declarations.push(`int ${key}[] = {${value.join(',')}};`);
+                declarations.push(`int ${key}Size = ${value.length};`);
+                // Pass pointer and size
                 funcArgs.push(key);
+                funcArgs.push(`${key}Size`);
             } else if (typeof value === 'string') {
-                declarations.push(`string ${key} = "${value}";`);
+                declarations.push(`char* ${key} = "${value}";`);
                 funcArgs.push(key);
             } else if (typeof value === 'number') {
                 declarations.push(`int ${key} = ${value};`);
@@ -219,6 +239,84 @@ function runCppCompilation(code, functionName, testCase) {
         }
 
         const testCode = `
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
+
+${code}
+
+int main() {
+    // Prepare arguments
+    ${declarations.join('\n    ')}
+    
+    // Call function
+    int result = ${functionName}(${funcArgs.join(', ')});
+    
+    // Print Output
+    printf("%d", result);
+    return 0;
+}
+`;
+
+        const sourcePath = path.join(__dirname, `${tempFile}.c`);
+        const exePath = path.join(__dirname, `${tempFile}.exe`);
+
+        // Write source file
+        fs.writeFile(sourcePath, testCode).then(() => {
+            // Compile with gcc
+            exec(`gcc "${sourcePath}" -o "${exePath}"`, (error, stdout, stderr) => {
+                if (error) {
+                    // Cleanup and reject
+                    fs.unlink(sourcePath).catch(() => { });
+                    reject(new Error(stderr || 'Compilation failed'));
+                    return;
+                }
+
+                // Run executable
+                exec(`"${exePath}"`, (err, stdout, stderr) => {
+                    // Cleanup files
+                    fs.unlink(sourcePath).catch(() => { });
+                    fs.unlink(exePath).catch(() => { });
+
+                    if (err) {
+                        reject(new Error(stderr || 'Runtime error'));
+                    } else {
+                        try {
+                            const result = parseInt(stdout.trim(), 10);
+                            resolve(result);
+                        } catch (e) {
+                            reject(new Error('Invalid output format'));
+                        }
+                    }
+                });
+            });
+        });
+    });
+}
+
+// Dynamically build argument declarations and calling signature
+const declarations = [];
+const funcArgs = [];
+
+for (const [key, value] of Object.entries(testCase.input)) {
+    if (Array.isArray(value)) {
+        // Assume vector<int> for simplicity in this contest scope
+        declarations.push(`vector<int> ${key} = {${value.join(',')}};`);
+        funcArgs.push(key);
+    } else if (typeof value === 'string') {
+        declarations.push(`string ${key} = "${value}";`);
+        funcArgs.push(key);
+    } else if (typeof value === 'number') {
+        declarations.push(`int ${key} = ${value};`);
+        funcArgs.push(key);
+    } else if (typeof value === 'boolean') {
+        declarations.push(`bool ${key} = ${value};`);
+        funcArgs.push(key);
+    }
+}
+
+const testCode = `
 #include <iostream>
 #include <vector>
 #include <string>
@@ -262,38 +360,38 @@ int main() {
     return 0;
 }
 `;
-        // Note: If return type is vector, cout << result will fail without an operator<< overload.
-        // Let's add a quick helper for that just in case (for TwoSum).
+// Note: If return type is vector, cout << result will fail without an operator<< overload.
+// Let's add a quick helper for that just in case (for TwoSum).
 
 
-        fs.writeFile(`${tempFile}.cpp`, testCode, 'utf-8')
-            .then(() => {
-                // Compile and run case-insensitive (Windows handles exe automatically, but let's be explicit)
-                // Using .\\ for safest windows execution path if needed, or just filename if in cwd
-                const runCmd = process.platform === 'win32' ? `${tempFile}.exe` : `./${tempFile}`;
-                exec(`g++ -o ${tempFile} ${tempFile}.cpp && ${runCmd}`, {
-                    timeout: 10000,
-                    maxBuffer: 1024 * 1024
-                }, (error, stdout, stderr) => {
-                    // Cleanup
-                    fs.unlink(`${tempFile}.cpp`).catch(() => { });
-                    fs.unlink(`${tempFile}`).catch(() => { }); // Linux/Mac
-                    fs.unlink(`${tempFile}.exe`).catch(() => { }); // Windows
+fs.writeFile(`${tempFile}.cpp`, testCode, 'utf-8')
+    .then(() => {
+        // Compile and run case-insensitive (Windows handles exe automatically, but let's be explicit)
+        // Using .\\ for safest windows execution path if needed, or just filename if in cwd
+        const runCmd = process.platform === 'win32' ? `${tempFile}.exe` : `./${tempFile}`;
+        exec(`g++ -o ${tempFile} ${tempFile}.cpp && ${runCmd}`, {
+            timeout: 10000,
+            maxBuffer: 1024 * 1024
+        }, (error, stdout, stderr) => {
+            // Cleanup
+            fs.unlink(`${tempFile}.cpp`).catch(() => { });
+            fs.unlink(`${tempFile}`).catch(() => { }); // Linux/Mac
+            fs.unlink(`${tempFile}.exe`).catch(() => { }); // Windows
 
-                    if (error) {
-                        // Check if it's a compilation error or runtime error
-                        reject(new Error(stderr || error.message));
-                    } else {
-                        try {
-                            const result = parseInt(stdout.trim());
-                            resolve(result);
-                        } catch (e) {
-                            reject(new Error('Invalid output format'));
-                        }
-                    }
-                });
-            })
-            .catch(reject);
+            if (error) {
+                // Check if it's a compilation error or runtime error
+                reject(new Error(stderr || error.message));
+            } else {
+                try {
+                    const result = parseInt(stdout.trim());
+                    resolve(result);
+                } catch (e) {
+                    reject(new Error('Invalid output format'));
+                }
+            }
+        });
+    })
+    .catch(reject);
     });
 }
 
@@ -308,6 +406,8 @@ async function executeCode(code, language, functionName, testCase) {
             return await executeJavaFunction(code, functionName, testCase);
         case 'cpp':
             return await executeCppFunction(code, functionName, testCase);
+        case 'c':
+            return await executeCFunction(code, functionName, testCase);
         default:
             throw new Error('Unsupported language');
     }
