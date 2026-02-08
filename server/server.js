@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
+const cors = require('cors');
 const db = require('./db');
 const syncExcel = require('./syncExcel');
 const problemService = require('./services/problemService');
@@ -13,8 +14,19 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
+app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static('public'));
+
+// Health Check
+app.get('/health', (req, res) => {
+    res.json({ status: 'ok', timestamp: new Date() });
+});
+
+// API Routes
+app.use('/api', authRoutes);
+app.use('/api/judge', judgeRoutes);
+app.use('/api/admin', adminRoutes);
 
 // In-memory storage
 const students = new Map();
