@@ -177,8 +177,7 @@ async function processCompilationQueue() {
     activeCompilations++;
     const { code, language, functionName, testCase, resolve, reject } = compilationQueue.shift();
 
-// Helper for re-syncing Excel manually
-app.post('/api/admin/sync-excel', async (req, res) => {
+
     try {
         let result;
         if (language === 'c') {
@@ -513,8 +512,19 @@ app.post('/api/run', async (req, res) => {
 
 // Start Server
 async function startServer() {
-    await db.initDB();
-    await syncExcel();
+    try {
+        await db.initDB();
+        console.log('Database connected!');
+    } catch (e) {
+        console.warn('WARNING: Database connection failed. Running in partial mode (No Persistence).');
+        console.error(e.message);
+    }
+
+    try {
+        await syncExcel();
+    } catch (e) {
+        console.warn('WARNING: Excel sync failed.');
+    }
     await problemService.loadProblems();
 
     app.listen(PORT, () => {
