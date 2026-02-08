@@ -1,38 +1,7 @@
-const express = require('express');
-const bodyParser = require('body-parser');
+const { VM } = require('vm2');
+const { exec } = require('child_process');
+const fs = require('fs').promises;
 const path = require('path');
-const db = require('./db');
-const syncExcel = require('./syncExcel');
-const problemService = require('./services/problemService');
-const authRoutes = require('./routes/auth.routes');
-const judgeRoutes = require('./routes/judge.routes');
-const adminRoutes = require('./routes/admin.routes');
-require('dotenv').config();
-
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-// Middleware
-app.use(bodyParser.json());
-app.use(express.static('public'));
-
-// In-memory storage
-const students = new Map();
-const submissions = new Map();
-const violations = new Map();
-
-// Load problems
-let problems = [];
-
-async function loadProblems() {
-    try {
-        const data = await fs.readFile(path.join(__dirname, '..', 'problems', 'problems.json'), 'utf-8');
-        problems = JSON.parse(data);
-        console.log(`Loaded ${problems.length} problems`);
-    } catch (error) {
-        console.error('Error loading problems:', error);
-    }
-}
 
 // Execute Python function
 function executePythonFunction(code, functionName, testCase) {
@@ -175,17 +144,10 @@ async function processCompilationQueue() {
     if (activeCompilations >= MAX_CONCURRENT_COMPILATIONS || compilationQueue.length === 0) return;
 
     activeCompilations++;
-    const { code, language, functionName, testCase, resolve, reject } = compilationQueue.shift();
+    const { code, functionName, testCase, resolve, reject } = compilationQueue.shift();
 
-// Helper for re-syncing Excel manually
-app.post('/api/admin/sync-excel', async (req, res) => {
     try {
-        let result;
-        if (language === 'c') {
-            result = await runCCompilation(code, functionName, testCase);
-        } else {
-            result = await runCppCompilation(code, functionName, testCase);
-        }
+        const result = await runCppCompilation(code, functionName, testCase);
         resolve(result);
     } catch (error) {
         reject(error);
@@ -198,104 +160,8 @@ app.post('/api/admin/sync-excel', async (req, res) => {
 // Execute C++ function (Queued)
 function executeCppFunction(code, functionName, testCase) {
     return new Promise((resolve, reject) => {
-        compilationQueue.push({ code, language: 'cpp', functionName, testCase, resolve, reject });
+        compilationQueue.push({ code, functionName, testCase, resolve, reject });
         processCompilationQueue();
-    });
-}
-
-// Execute C function (Queued)
-function executeCFunction(code, functionName, testCase) {
-    return new Promise((resolve, reject) => {
-        compilationQueue.push({ code, language: 'c', functionName, testCase, resolve, reject });
-        processCompilationQueue();
-    });
-}
-
-
-
-// Actual C Compilation Logic
-function runCCompilation(code, functionName, testCase) {
-    return new Promise((resolve, reject) => {
-        const tempFile = `Solution_${Date.now()}`;
-
-        // Dynamically build argument declarations
-        const declarations = [];
-        const funcArgs = [];
-
-        for (const [key, value] of Object.entries(testCase.input)) {
-            if (Array.isArray(value)) {
-                // Buffer declaration
-                declarations.push(`int ${key}[] = {${value.join(',')}};`);
-                declarations.push(`int ${key}Size = ${value.length};`);
-                // Pass pointer and size
-                funcArgs.push(key);
-                funcArgs.push(`${key}Size`);
-            } else if (typeof value === 'string') {
-                declarations.push(`char* ${key} = "${value}";`);
-                funcArgs.push(key);
-            } else if (typeof value === 'number') {
-                declarations.push(`int ${key} = ${value};`);
-                funcArgs.push(key);
-            } else if (typeof value === 'boolean') {
-                declarations.push(`bool ${key} = ${value};`);
-                funcArgs.push(key);
-            }
-        }
-
-        const testCode = `
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <string.h>
-
-${code}
-
-int main() {
-    // Prepare arguments
-    ${declarations.join('\n    ')}
-    
-    // Call function
-    int result = ${functionName}(${funcArgs.join(', ')});
-    
-    // Print Output
-    printf("%d", result);
-    return 0;
-}
-`;
-
-        const sourcePath = path.join(__dirname, `${tempFile}.c`);
-        const exePath = path.join(__dirname, `${tempFile}.exe`);
-
-        // Write source file
-        fs.writeFile(sourcePath, testCode).then(() => {
-            // Compile with gcc
-            exec(`gcc "${sourcePath}" -o "${exePath}"`, (error, stdout, stderr) => {
-                if (error) {
-                    // Cleanup and reject
-                    fs.unlink(sourcePath).catch(() => { });
-                    reject(new Error(stderr || 'Compilation failed'));
-                    return;
-                }
-
-                // Run executable
-                exec(`"${exePath}"`, (err, stdout, stderr) => {
-                    // Cleanup files
-                    fs.unlink(sourcePath).catch(() => { });
-                    fs.unlink(exePath).catch(() => { });
-
-                    if (err) {
-                        reject(new Error(stderr || 'Runtime error'));
-                    } else {
-                        try {
-                            const result = parseInt(stdout.trim(), 10);
-                            resolve(result);
-                        } catch (e) {
-                            reject(new Error('Invalid output format'));
-                        }
-                    }
-                });
-            });
-        });
     });
 }
 
@@ -357,26 +223,13 @@ int main() {
     // Call function
     auto result = solution.${functionName}(${funcArgs.join(', ')});
     
-    // Print result (cout supports basic types, vectors might need helper)
-    // For this context, we'll assume basic return types or simple vectors
-    // To be safe for vector returns (like TwoSum), we need an overload or helper, 
-    // but the node side expects simpler stdout.
-    // Let's rely on basic cout for now. If result is vector, this might fail to compile operator<<.
-    // We can add a simple helper for vector printing if needed.
-    
     cout << result << endl;
     
     return 0;
 }
 `;
-        // Note: If return type is vector, cout << result will fail without an operator<< overload.
-        // Let's add a quick helper for that just in case (for TwoSum).
-
-
         fs.writeFile(`${tempFile}.cpp`, testCode, 'utf-8')
             .then(() => {
-                // Compile and run case-insensitive (Windows handles exe automatically, but let's be explicit)
-                // Using .\\ for safest windows execution path if needed, or just filename if in cwd
                 const runCmd = process.platform === 'win32' ? `${tempFile}.exe` : `./${tempFile}`;
                 exec(`g++ -o ${tempFile} ${tempFile}.cpp && ${runCmd}`, {
                     timeout: 10000,
@@ -388,7 +241,6 @@ int main() {
                     fs.unlink(`${tempFile}.exe`).catch(() => { }); // Windows
 
                     if (error) {
-                        // Check if it's a compilation error or runtime error
                         reject(new Error(stderr || error.message));
                     } else {
                         try {
@@ -415,8 +267,6 @@ async function executeCode(code, language, functionName, testCase) {
             return await executeJavaFunction(code, functionName, testCase);
         case 'cpp':
             return await executeCppFunction(code, functionName, testCase);
-        case 'c':
-            return await executeCFunction(code, functionName, testCase);
         default:
             throw new Error('Unsupported language');
     }
@@ -473,59 +323,7 @@ async function testCode(code, language, functionName, testCases) {
     return results;
 }
 
-// API Routes
-
-// Register student
-app.post('/api/register', (req, res) => {
-    const { name, rollNumber } = req.body;
-
-    students.set(rollNumber, {
-        name: name,
-        rollNumber: rollNumber,
-        registeredAt: new Date()
-    });
-
-    res.json({ success: true });
-});
-
-// Get problems
-app.get('/api/problems', (req, res) => {
-    res.json(problems);
-});
-
-// Run code (sample test cases only)
-app.post('/api/run', async (req, res) => {
-    try {
-        const { code, language, problemId } = req.body;
-        const problem = problems[problemId];
-
-        if (!problem) {
-            return res.status(404).json({ error: 'Problem not found' });
-        }
-
-        const sampleCases = problem.testCases.slice(0, 2);
-        const results = await testCode(code, language, problem.functionName, sampleCases);
-        res.json(results);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Start Server
-async function startServer() {
-    await db.initDB();
-    await syncExcel();
-    await problemService.loadProblems();
-
-    app.listen(PORT, () => {
-        console.log(`
-╔═══════════════════════════════════════════╗
-║   Coding Contest Platform Running!        ║
-╚═══════════════════════════════════════════╝
-
-Server: http://localhost:${PORT}
-`);
-    });
-}
-
-startServer();
+module.exports = {
+    testCode,
+    executeCode
+};

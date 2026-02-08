@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interview Insights | Coding Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background: #f4f6f8;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        h1 {
+            color: #1a1a2e;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+            border: 1px solid #eee;
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        h2 {
+            color: #4ec9b0;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .lang-badge {
+            font-size: 0.6em;
+            background: #eee;
+            color: #333;
+            padding: 2px 8px;
+            border-radius: 4px;
+            vertical-align: middle;
+        }
+
+        pre {
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        code {
+            border-radius: 4px;
+        }
+
+        .key-takeaway {
+            background: #fffbea;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .back-btn {
+            display: inline-block;
+            margin-top: 40px;
+            text-decoration: none;
+            color: #666;
+            font-weight: 600;
+            border: 2px solid #ddd;
+            padding: 10px 20px;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .back-btn:hover {
+            background: #1a1a2e;
+            color: white;
+            border-color: #1a1a2e;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>💡 Technical Interview Insights</h1>
+            <p class="subtitle">Tricky concepts and patterns useful for your next interview</p>
+        </header>
+
+        <!-- Python Insights -->
+        <div class="card">
+            <h2>Python: Mutable Default Arguments <span class="lang-badge">Python</span></h2>
+            <p>One of the most common gotchas in Python interviews. Default arguments are evaluated only once at
+                function definition time, not each time the function is called.</p>
+
+            <pre><code class="language-python"># ❌ WRONG
+def append_to(num, target=[]):
+    target.append(num)
+    return target
+
+print(append_to(1)) # [1]
+print(append_to(2)) # [1, 2] - Surprise! It kept the old list.
+
+# ✅ CORRECT
+def append_to(num, target=None):
+    if target is None:
+        target = []
+    target.append(num)
+    return target</code></pre>
+
+            <div class="key-takeaway">
+                <strong>Why?</strong> Lists are mutable. If you use a mutable object as a default value, it persists
+                across calls. ALWAYS use <code>None</code> as default for mutable types.
+            </div>
+        </div>
+
+        <!-- Java Insights -->
+        <div class="card">
+            <h2>Java: String Pool & Equality <span class="lang-badge">Java</span></h2>
+            <p>Understanding the difference between <code>==</code> and <code>.equals()</code> is crucial.</p>
+
+            <pre><code class="language-java">String s1 = "Hello";
+String s2 = "Hello";
+String s3 = new String("Hello");
+
+System.out.println(s1 == s2);      // true (Same reference in Pool)
+System.out.println(s1 == s3);      // false (Different objects)
+System.out.println(s1.equals(s3)); // true (Same content)</code></pre>
+
+            <div class="key-takeaway">
+                <strong>Tip:</strong> Always use <code>.equals()</code> for string comparison. <code>==</code> compares
+                memory references, which is rarely what you want for content.
+            </div>
+        </div>
+
+        <!-- C++ Insights -->
+        <div class="card">
+            <h2>C++: Vector Reallocation <span class="lang-badge">C++</span></h2>
+            <p>Pushing to a vector can be expensive if it triggers a resize. Pointers to elements may become invalid.
+            </p>
+
+            <pre><code class="language-cpp">vector<int> v = {1, 2, 3};
+int* p = &v[0];
+
+// Pushing many elements might cause reallocation
+for(int i=0; i<100; i++) v.push_back(i);
+
+// *p might now be garbage! The vector moved to new memory.</code></pre>
+
+            <div class="key-takeaway">
+                <strong>Optimization:</strong> Use <code>v.reserve(n)</code> if you know the approximate size beforehand
+                to prevent multiple reallocations and improve performance.
+            </div>
+        </div>
+
+        <!-- JavaScript Insights -->
+        <div class="card">
+            <h2>JavaScript: Event Loop & Closure <span class="lang-badge">JS</span></h2>
+            <p>The classic interview question involving `setTimeout` and loops.</p>
+
+            <pre><code class="language-javascript">// ❌ What does this print?
+for (var i = 0; i < 3; i++) {
+    setTimeout(() => console.log(i), 100);
+}
+// Prints: 3, 3, 3 (Because 'var' is function-scoped)
+
+// ✅ Fix with 'let' (Block scoped)
+for (let i = 0; i < 3; i++) {
+    setTimeout(() => console.log(i), 100);
+}
+// Prints: 0, 1, 2</code></pre>
+
+            <div class="key-takeaway">
+                <strong>Insight:</strong> `var` assumes function scope, so the loop finishes before the timeout runs,
+                leaving `i` at 3. `let` creates a new binding for each iteration.
+            </div>
+        </div>
+
+        <div style="text-align: center;">
+            <a href="/" class="back-btn" onclick="logout(); return false;">Logout & Return Home</a>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
+    <script>
+        function logout() {
+            if (confirm('You have effectively ended your session. Log out?')) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '/auth.html';
+            }
+        }
+    </script>
+</body>
+
+</html>

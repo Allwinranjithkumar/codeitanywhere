@@ -5,17 +5,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Panel - Coding Contest</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f5f5f5;
+            background: #f4f6f8;
             padding: 20px;
+            color: #333;
         }
 
         .container {
@@ -24,7 +26,7 @@
         }
 
         h1 {
-            color: #333;
+            color: #1a1a2e;
             margin-bottom: 30px;
             text-align: center;
         }
@@ -36,26 +38,27 @@
             background: white;
             padding: 10px;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
 
         .tab {
             padding: 12px 24px;
-            background: #e0e0e0;
+            background: #f0f0f0;
             border: none;
             border-radius: 6px;
             cursor: pointer;
-            font-weight: bold;
+            font-weight: 600;
             transition: all 0.3s;
+            color: #555;
         }
 
         .tab:hover {
-            background: #d0d0d0;
+            background: #e0e0e0;
         }
 
         .tab.active {
-            background: #667eea;
-            color: white;
+            background: #4ec9b0;
+            color: #fff;
         }
 
         .tab-content {
@@ -63,7 +66,7 @@
             background: white;
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         }
 
         .tab-content.active {
@@ -78,15 +81,15 @@
 
         th,
         td {
-            padding: 12px;
+            padding: 15px;
             text-align: left;
-            border-bottom: 1px solid #e0e0e0;
+            border-bottom: 1px solid #eee;
         }
 
         th {
-            background: #667eea;
-            color: white;
-            font-weight: bold;
+            background: #f8f9fa;
+            color: #555;
+            font-weight: 600;
         }
 
         tr:hover {
@@ -94,25 +97,25 @@
         }
 
         .badge {
-            padding: 4px 8px;
-            border-radius: 4px;
+            padding: 4px 10px;
+            border-radius: 20px;
             font-size: 12px;
-            font-weight: bold;
+            font-weight: 600;
         }
 
         .badge-success {
-            background: #4caf50;
-            color: white;
+            background: #e6ffFA;
+            color: #047481;
         }
 
         .badge-warning {
-            background: #ff9800;
-            color: white;
+            background: #fffbea;
+            color: #92400e;
         }
 
         .badge-danger {
-            background: #f44336;
-            color: white;
+            background: #fee2e2;
+            color: #b91c1c;
         }
 
         .stats {
@@ -124,70 +127,88 @@
 
         .stat-card {
             background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+            border: 1px solid #eee;
         }
 
         .stat-card h3 {
-            color: #666;
+            color: #888;
             font-size: 14px;
             margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .stat-card .number {
             font-size: 32px;
             font-weight: bold;
-            color: #667eea;
+            color: #1a1a2e;
         }
 
-        .refresh-btn {
-            background: #667eea;
+        .action-bar {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        button.action-btn {
+            background: #4ec9b0;
             color: white;
             padding: 10px 20px;
             border: none;
             border-radius: 6px;
             cursor: pointer;
-            font-weight: bold;
-            margin-bottom: 20px;
+            font-weight: 600;
+            transition: 0.2s;
         }
 
-        .refresh-btn:hover {
-            background: #5568d3;
+        button.action-btn:hover {
+            filter: brightness(1.1);
         }
 
         code {
-            background: #f5f5f5;
+            background: #f1f1f1;
             padding: 2px 6px;
-            border-radius: 3px;
-            font-family: 'Courier New', monospace;
+            border-radius: 4px;
+            font-family: 'Consolas', monospace;
+            color: #d63384;
         }
 
-        .violation-high {
-            color: #f44336;
-            font-weight: bold;
+        /* Logout button */
+        .logout-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            float: right;
         }
     </style>
 </head>
 
 <body>
     <div class="container">
+        <button class="logout-btn" onclick="logout()">Logout</button>
         <h1>🎯 Contest Admin Panel</h1>
 
         <div class="stats" id="stats">
             <!-- Stats will be loaded here -->
         </div>
 
+        <div class="action-bar">
+            <button class="action-btn" onclick="loadData()">🔄 Refresh Data</button>
+            <button class="action-btn" style="background: #2563eb;" onclick="exportReport()">📥 Download Excel
+                Data</button>
+            <button class="action-btn" style="background: #7c3aed;" onclick="syncExcel()">📗 Sync Excel</button>
+        </div>
+
         <div class="tabs">
             <button class="tab active" onclick="switchTab('leaderboard')">📊 Leaderboard</button>
             <button class="tab" onclick="switchTab('submissions')">📝 Submissions</button>
             <button class="tab" onclick="switchTab('violations')">⚠️ Violations</button>
-        </div>
-
-        <div style="margin-bottom: 20px;">
-            <button class="refresh-btn" onclick="loadData()">🔄 Refresh Data</button>
-            <button class="refresh-btn" style="background: #4caf50;" onclick="exportReport()">📥 Export Report
-                (Excel)</button>
         </div>
 
         <div id="leaderboard" class="tab-content active">
@@ -197,15 +218,14 @@
                     <tr>
                         <th>Rank</th>
                         <th>Name</th>
-                        <th>Roll Number</th>
+                        <th>Register Number</th>
                         <th>Score</th>
                         <th>Problems Solved</th>
-                        <th>Violations</th>
                     </tr>
                 </thead>
                 <tbody id="leaderboardBody">
                     <tr>
-                        <td colspan="6" style="text-align: center;">Loading...</td>
+                        <td colspan="5" style="text-align: center;">Loading...</td>
                     </tr>
                 </tbody>
             </table>
@@ -217,10 +237,10 @@
                 <thead>
                     <tr>
                         <th>Student</th>
-                        <th>Roll Number</th>
-                        <th>Problem</th>
+                        <th>Register Number</th>
+                        <th>Problem ID</th>
                         <th>Language</th>
-                        <th>Test Cases</th>
+                        <th>Status</th>
                         <th>Score</th>
                         <th>Time</th>
                     </tr>
@@ -234,14 +254,14 @@
         </div>
 
         <div id="violations" class="tab-content">
-            <h2>Violation Log</h2>
+            <h2>Violation Log (Grouped)</h2>
             <table>
                 <thead>
                     <tr>
                         <th>Student</th>
-                        <th>Roll Number</th>
+                        <th>Register Number</th>
                         <th>Total Violations</th>
-                        <th>Details</th>
+                        <th>Latest Logs</th>
                     </tr>
                 </thead>
                 <tbody id="violationsBody">
@@ -254,12 +274,38 @@
     </div>
 
     <script>
+        // Auth Check
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/auth.html';
+        }
+
+        // Authenticated Fetch
+        async function authFetch(url, options = {}) {
+            const headers = {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+                ...options.headers
+            };
+
+            const response = await fetch(url, { ...options, headers });
+            if (response.status === 401 || response.status === 403) {
+                alert('Session expired or access denied.');
+                window.location.href = '/auth.html';
+                throw new Error('Unauthorized');
+            }
+            return response;
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/';
+        }
+
         function switchTab(tabName) {
-            // Update tab buttons
             document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
             event.target.classList.add('active');
-
-            // Update content
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
             document.getElementById(tabName).classList.add('active');
         }
@@ -269,18 +315,18 @@
                 loadLeaderboard(),
                 loadSubmissions(),
                 loadViolations(),
-                loadStats()
             ]);
+            // Calculate stats after loading data
         }
 
         async function loadLeaderboard() {
             try {
-                const response = await fetch('/api/leaderboard');
+                const response = await authFetch('/api/judge/leaderboard');
                 const data = await response.json();
-
                 const tbody = document.getElementById('leaderboardBody');
+
                 if (data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No submissions yet</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No data</td></tr>';
                     return;
                 }
 
@@ -288,117 +334,136 @@
                     <tr>
                         <td><strong>${i + 1}</strong></td>
                         <td>${entry.name}</td>
-                        <td><code>${entry.rollNumber}</code></td>
-                        <td><strong>${entry.score}</strong></td>
-                        <td><span class="badge badge-success">${entry.problemsSolved}</span></td>
-                        <td><span class="badge ${entry.violations > 3 ? 'badge-danger' : 'badge-warning'}">${entry.violations}</span></td>
+                        <td><code>${entry.reg_no}</code></td>
+                        <td><strong>${entry.total_score || 0}</strong></td>
+                        <td><span class="badge badge-success">${entry.problems_solved || 0}</span></td>
                     </tr>
                 `).join('');
-            } catch (error) {
-                console.error('Error loading leaderboard:', error);
-            }
+
+                updateStats(data.length, 'totalStudents');
+            } catch (error) { console.error(error); }
         }
 
         async function loadSubmissions() {
             try {
-                const response = await fetch('/api/admin/submissions');
+                const response = await authFetch('/api/admin/submissions');
                 const data = await response.json();
-
                 const tbody = document.getElementById('submissionsBody');
+
                 if (data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No submissions yet</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No submissions</td></tr>';
                     return;
                 }
 
                 tbody.innerHTML = data.map(sub => `
                     <tr>
-                        <td>${sub.studentName}</td>
-                        <td><code>${sub.rollNumber}</code></td>
-                        <td>Problem ${sub.problemId + 1}</td>
+                        <td>${sub.name}</td>
+                        <td><code>${sub.reg_no}</code></td>
+                        <td>${sub.problem_id}</td>
                         <td>${sub.language}</td>
-                        <td>${sub.passed}/${sub.total} <span class="badge ${sub.passed === sub.total ? 'badge-success' : 'badge-warning'}">${sub.passed === sub.total ? 'AC' : 'WA'}</span></td>
-                        <td><strong>${sub.score}</strong></td>
-                        <td>${new Date(sub.timestamp).toLocaleTimeString()}</td>
+                        <td><span class="badge ${sub.status === 'Accepted' ? 'badge-success' : 'badge-danger'}">${sub.status}</span></td>
+                        <td>${sub.score}</td>
+                        <td>${new Date(sub.created_at).toLocaleTimeString()}</td>
                     </tr>
                 `).join('');
-            } catch (error) {
-                console.error('Error loading submissions:', error);
-            }
+
+                updateStats(data.length, 'totalSubmissions');
+            } catch (error) { console.error(error); }
         }
 
         async function loadViolations() {
             try {
-                const response = await fetch('/api/admin/violations');
-                const data = await response.json();
-
+                const response = await authFetch('/api/admin/violations');
+                const data = await response.json(); // Flat list
                 const tbody = document.getElementById('violationsBody');
-                if (data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No violations logged</td></tr>';
+
+                // Group by user
+                const grouped = {};
+                data.forEach(v => {
+                    if (!grouped[v.reg_no]) {
+                        grouped[v.reg_no] = {
+                            name: v.name,
+                            reg_no: v.reg_no,
+                            logs: []
+                        };
+                    }
+                    grouped[v.reg_no].logs.push(v);
+                });
+
+                const groupArray = Object.values(grouped);
+
+                if (groupArray.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No violations</td></tr>';
                     return;
                 }
 
-                tbody.innerHTML = data.map(v => `
+                tbody.innerHTML = groupArray.map(g => `
                     <tr>
-                        <td>${v.name}</td>
-                        <td><code>${v.rollNumber}</code></td>
-                        <td class="${v.violations.length > 5 ? 'violation-high' : ''}">${v.violations.length}</td>
-                        <td>${v.violations.map(viol =>
-                    `${viol.type} at ${new Date(viol.timestamp).toLocaleTimeString()}`
-                ).join('<br>')}</td>
+                        <td>${g.name}</td>
+                        <td><code>${g.reg_no}</code></td>
+                        <td><span class="badge badge-danger">${g.logs.length}</span></td>
+                        <td>${g.logs.slice(0, 5).map(l => `${l.type} <small>(${new Date(l.timestamp).toLocaleTimeString()})</small>`).join('<br>')}</td>
                     </tr>
                 `).join('');
-            } catch (error) {
-                console.error('Error loading violations:', error);
-            }
+
+                updateStats(data.length, 'totalViolations');
+            } catch (error) { console.error(error); }
         }
 
-        async function loadStats() {
-            try {
-                const [leaderboard, submissions, violations] = await Promise.all([
-                    fetch('/api/leaderboard').then(r => r.json()),
-                    fetch('/api/admin/submissions').then(r => r.json()),
-                    fetch('/api/admin/violations').then(r => r.json())
-                ]);
-
-                const totalStudents = leaderboard.length;
-                const totalSubmissions = submissions.length;
-                const totalViolations = violations.reduce((sum, v) => sum + v.violations.length, 0);
-                const avgScore = leaderboard.length > 0
-                    ? (leaderboard.reduce((sum, s) => sum + s.score, 0) / leaderboard.length).toFixed(1)
-                    : 0;
-
-                document.getElementById('stats').innerHTML = `
-                    <div class="stat-card">
-                        <h3>Total Students</h3>
-                        <div class="number">${totalStudents}</div>
-                    </div>
-                    <div class="stat-card">
-                        <h3>Total Submissions</h3>
-                        <div class="number">${totalSubmissions}</div>
-                    </div>
-                    <div class="stat-card">
-                        <h3>Total Violations</h3>
-                        <div class="number">${totalViolations}</div>
-                    </div>
-                    <div class="stat-card">
-                        <h3>Average Score</h3>
-                        <div class="number">${avgScore}</div>
-                    </div>
-                `;
-            } catch (error) {
-                console.error('Error loading stats:', error);
-            }
+        const statsStore = {};
+        function updateStats(val, key) {
+            statsStore[key] = val;
+            renderStats();
         }
 
-        // Auto-refresh every 10 seconds
-        setInterval(loadData, 10000);
-
-        // Initial load
-        loadData();
+        function renderStats() {
+            document.getElementById('stats').innerHTML = `
+                <div class="stat-card">
+                    <h3>Total Students</h3>
+                    <div class="number">${statsStore.totalStudents || 0}</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Total Submissions</h3>
+                    <div class="number">${statsStore.totalSubmissions || 0}</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Total Violations</h3>
+                    <div class="number">${statsStore.totalViolations || 0}</div>
+                </div>
+            `;
+        }
 
         function exportReport() {
-            window.location.href = '/api/admin/export';
+            // Need to pass token? Browser navigation doesn't support headers easily.
+            // Just use window.open. If cookie-based auth was used, it would work.
+            // With JWT in header, we can't easily trigger a download via window.location if the endpoint protects it.
+            // But we can use fetch -> blob -> download.
+
+            authFetch('/api/admin/export')
+                .then(resp => resp.blob())
+                .then(blob => {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'contest_report.csv';
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                })
+                .catch(err => alert('Export failed'));
         }
+
+        async function syncExcel() {
+            if (!confirm('Sync allowed users from Excel?')) return;
+            try {
+                const res = await authFetch('/api/admin/sync-excel', { method: 'POST' });
+                const data = await res.json();
+                alert(data.message);
+            } catch (e) { }
+        }
+
+        // Initial Load
+        loadData();
     </script>
 </body>
 

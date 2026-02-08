@@ -7,13 +7,25 @@
     "start": "node server/server.js",
     "dev": "nodemon server/server.js"
   },
-  "keywords": ["coding", "contest", "judge", "hackathon"],
+  "keywords": [
+    "coding",
+    "contest",
+    "judge",
+    "hackathon"
+  ],
   "author": "Your Name",
   "license": "MIT",
   "dependencies": {
-    "express": "^4.18.2",
+    "bcrypt": "^6.0.0",
     "body-parser": "^1.20.2",
-    "vm2": "^3.9.19"
+    "cors": "^2.8.6",
+    "dotenv": "^17.2.4",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.3",
+    "marked": "^17.0.1",
+    "pg": "^8.18.0",
+    "vm2": "^3.9.19",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
