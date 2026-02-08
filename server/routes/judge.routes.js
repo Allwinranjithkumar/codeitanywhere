@@ -45,11 +45,15 @@ router.post('/submit', authenticateToken, async (req, res) => {
         const score = allPassed ? problem.points : 0;
         const status = allPassed ? 'Accepted' : 'Wrong Answer';
 
-        // Store submission in DB
-        await db.query(
-            'INSERT INTO submissions (user_id, problem_id, language, status, score) VALUES ($1, $2, $3, $4, $5)',
-            [req.user.id, problemId, language, status, score]
-        );
+        // Store submission in DB (Soft Fail)
+        try {
+            await db.query(
+                'INSERT INTO submissions (user_id, problem_id, language, status, score) VALUES ($1, $2, $3, $4, $5)',
+                [req.user.id, problemId, language, status, score]
+            );
+        } catch (dbErr) {
+            console.warn('⚠️ DB Save Failed (Partial Mode):', dbErr.message);
+        }
 
         res.json({
             results,
@@ -70,10 +74,14 @@ router.post('/log-violation', authenticateToken, async (req, res) => {
     try {
         const { violationType, timestamp } = req.body;
 
-        await db.query(
-            'INSERT INTO violations (user_id, type, timestamp) VALUES ($1, $2, $3)',
-            [req.user.id, violationType, timestamp || new Date()]
-        );
+        try {
+            await db.query(
+                'INSERT INTO violations (user_id, type, timestamp) VALUES ($1, $2, $3)',
+                [req.user.id, violationType, timestamp || new Date()]
+            );
+        } catch (dbErr) {
+            console.warn('⚠️ Violation Log Failed (Partial Mode):', dbErr.message);
+        }
 
         res.json({ success: true });
     } catch (error) {
@@ -99,8 +107,8 @@ router.get('/leaderboard', authenticateToken, async (req, res) => {
 
         res.json(result.rows);
     } catch (error) {
-        console.error('Leaderboard error:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        console.warn('⚠️ Leaderboard Load Failed (Partial Mode):', error.message);
+        res.json([]); // Return empty list instead of 500 error
     }
 });
 
