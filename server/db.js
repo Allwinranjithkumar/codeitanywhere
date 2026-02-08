@@ -1,25 +1,26 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
-const isProduction = process.env.NODE_ENV === 'production' || process.env.DATABASE_URL;
+const isProduction = process.env.NODE_ENV === 'production';
 
-const connectionConfig = {
-    connectionString: process.env.DATABASE_URL,
-    ssl: isProduction ? { rejectUnauthorized: false } : false
-};
+const connectionString = process.env.DATABASE_URL;
 
-// Fallback to individual vars if DATABASE_URL is not set (Local Dev)
-if (!process.env.DATABASE_URL) {
-    connectionConfig.user = process.env.DB_USER || 'postgres';
-    connectionConfig.host = process.env.DB_HOST || 'localhost';
-    connectionConfig.database = process.env.DB_NAME || 'coding_platform';
-    connectionConfig.password = process.env.DB_PASSWORD || 'password';
-    connectionConfig.port = process.env.DB_PORT || 5432;
-    delete connectionConfig.connectionString;
-    delete connectionConfig.ssl;
-}
-
-const pool = new Pool(connectionConfig);
+const pool = new Pool(
+    connectionString
+        ? {
+            connectionString,
+            ssl: isProduction
+                ? { rejectUnauthorized: false }
+                : false,
+        }
+        : {
+            user: process.env.DB_USER || 'postgres',
+            host: process.env.DB_HOST || 'localhost',
+            database: process.env.DB_NAME || 'coding_platform',
+            password: process.env.DB_PASSWORD || 'password',
+            port: process.env.DB_PORT || 5432,
+        }
+);
 
 async function query(text, params) {
     const start = Date.now();

@@ -1,5 +1,5 @@
 # Use Node.js as the base image
-FROM node:18-bullseye-slim
+FROM node:20-bullseye-slim
 
 # Install necessary compilers (g++, python3, java)
 RUN apt-get update && apt-get install -y \
