@@ -205,9 +205,7 @@ function executeCFunction(code, functionName, testCase) {
     });
 }
 
-        });
-    });
-}
+
 
 // Actual C Compilation Logic
 function runCCompilation(code, functionName, testCase) {
@@ -295,28 +293,33 @@ int main() {
     });
 }
 
-// Dynamically build argument declarations and calling signature
-const declarations = [];
-const funcArgs = [];
+// Actual Compilation Logic
+function runCppCompilation(code, functionName, testCase) {
+    return new Promise((resolve, reject) => {
+        const tempFile = `Solution_${Date.now()}`;
 
-for (const [key, value] of Object.entries(testCase.input)) {
-    if (Array.isArray(value)) {
-        // Assume vector<int> for simplicity in this contest scope
-        declarations.push(`vector<int> ${key} = {${value.join(',')}};`);
-        funcArgs.push(key);
-    } else if (typeof value === 'string') {
-        declarations.push(`string ${key} = "${value}";`);
-        funcArgs.push(key);
-    } else if (typeof value === 'number') {
-        declarations.push(`int ${key} = ${value};`);
-        funcArgs.push(key);
-    } else if (typeof value === 'boolean') {
-        declarations.push(`bool ${key} = ${value};`);
-        funcArgs.push(key);
-    }
-}
+        // Dynamically build argument declarations and calling signature
+        const declarations = [];
+        const funcArgs = [];
 
-const testCode = `
+        for (const [key, value] of Object.entries(testCase.input)) {
+            if (Array.isArray(value)) {
+                // Assume vector<int> for simplicity in this contest scope
+                declarations.push(`vector<int> ${key} = {${value.join(',')}};`);
+                funcArgs.push(key);
+            } else if (typeof value === 'string') {
+                declarations.push(`string ${key} = "${value}";`);
+                funcArgs.push(key);
+            } else if (typeof value === 'number') {
+                declarations.push(`int ${key} = ${value};`);
+                funcArgs.push(key);
+            } else if (typeof value === 'boolean') {
+                declarations.push(`bool ${key} = ${value};`);
+                funcArgs.push(key);
+            }
+        }
+
+        const testCode = `
 #include <iostream>
 #include <vector>
 #include <string>
@@ -360,38 +363,38 @@ int main() {
     return 0;
 }
 `;
-// Note: If return type is vector, cout << result will fail without an operator<< overload.
-// Let's add a quick helper for that just in case (for TwoSum).
+        // Note: If return type is vector, cout << result will fail without an operator<< overload.
+        // Let's add a quick helper for that just in case (for TwoSum).
 
 
-fs.writeFile(`${tempFile}.cpp`, testCode, 'utf-8')
-    .then(() => {
-        // Compile and run case-insensitive (Windows handles exe automatically, but let's be explicit)
-        // Using .\\ for safest windows execution path if needed, or just filename if in cwd
-        const runCmd = process.platform === 'win32' ? `${tempFile}.exe` : `./${tempFile}`;
-        exec(`g++ -o ${tempFile} ${tempFile}.cpp && ${runCmd}`, {
-            timeout: 10000,
-            maxBuffer: 1024 * 1024
-        }, (error, stdout, stderr) => {
-            // Cleanup
-            fs.unlink(`${tempFile}.cpp`).catch(() => { });
-            fs.unlink(`${tempFile}`).catch(() => { }); // Linux/Mac
-            fs.unlink(`${tempFile}.exe`).catch(() => { }); // Windows
+        fs.writeFile(`${tempFile}.cpp`, testCode, 'utf-8')
+            .then(() => {
+                // Compile and run case-insensitive (Windows handles exe automatically, but let's be explicit)
+                // Using .\\ for safest windows execution path if needed, or just filename if in cwd
+                const runCmd = process.platform === 'win32' ? `${tempFile}.exe` : `./${tempFile}`;
+                exec(`g++ -o ${tempFile} ${tempFile}.cpp && ${runCmd}`, {
+                    timeout: 10000,
+                    maxBuffer: 1024 * 1024
+                }, (error, stdout, stderr) => {
+                    // Cleanup
+                    fs.unlink(`${tempFile}.cpp`).catch(() => { });
+                    fs.unlink(`${tempFile}`).catch(() => { }); // Linux/Mac
+                    fs.unlink(`${tempFile}.exe`).catch(() => { }); // Windows
 
-            if (error) {
-                // Check if it's a compilation error or runtime error
-                reject(new Error(stderr || error.message));
-            } else {
-                try {
-                    const result = parseInt(stdout.trim());
-                    resolve(result);
-                } catch (e) {
-                    reject(new Error('Invalid output format'));
-                }
-            }
-        });
-    })
-    .catch(reject);
+                    if (error) {
+                        // Check if it's a compilation error or runtime error
+                        reject(new Error(stderr || error.message));
+                    } else {
+                        try {
+                            const result = parseInt(stdout.trim());
+                            resolve(result);
+                        } catch (e) {
+                            reject(new Error('Invalid output format'));
+                        }
+                    }
+                });
+            })
+            .catch(reject);
     });
 }
 
