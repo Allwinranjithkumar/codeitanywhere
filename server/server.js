@@ -16,7 +16,12 @@ const PORT = process.env.PORT || 3000;
 app.use(bodyParser.json());
 app.use(express.static('public'));
 
-// In-memory storage
+// Routes (Advanced Features)
+app.use('/api', authRoutes);
+app.use('/api', judgeRoutes);
+app.use('/api', adminRoutes);
+
+// In-memory storage (Legacy Support)
 const students = new Map();
 const submissions = new Map();
 const violations = new Map();
