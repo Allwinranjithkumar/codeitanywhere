@@ -27,23 +27,27 @@ app.use('/api/admin', adminRoutes); // /api/admin/violations
 
 // Start Server
 async function startServer() {
-    /*
     try {
         await db.initDB();
         console.log('Database connected!');
+
+        // Seed Admin User
+        const seedAdmin = require('./services/seedAdmin');
+        await seedAdmin();
+
     } catch (e) {
         console.warn('WARNING: Database connection failed. Running in partial mode (No Persistence).');
         console.error(e.message);
     }
-    
+
     try {
+        const syncExcel = require('./syncExcel');
         await syncExcel();
     } catch (e) {
         console.warn('WARNING: Excel sync failed.');
     }
-    */
 
-    console.log('Starting server in NO-DB Mode (Stability Priority)');
+    console.log('Starting server...');
     await problemService.loadProblems();
 
     app.listen(PORT, () => {

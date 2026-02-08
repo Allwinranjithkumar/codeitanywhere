@@ -156,12 +156,18 @@ router.post('/login', async (req, res) => {
                 }
                 const uniqueId = Math.abs(hash); // Ensure positive
 
+                // Special Admin Access for No-DB Mode
+                let role = 'student';
+                if (email === 'admin' || email === 'admin@codeitanywhere.com') {
+                    role = 'admin';
+                }
+
                 mockUser = {
                     id: uniqueId,
-                    name: email.split('@')[0], // Derive name from email
+                    name: role === 'admin' ? 'Administrator' : email.split('@')[0],
                     email: email,
-                    role: 'student',
-                    reg_no: email.split('@')[0].toUpperCase() // Use email prefix
+                    role: role,
+                    reg_no: role === 'admin' ? 'ADMIN' : email.split('@')[0].toUpperCase()
                 };
             }
 
