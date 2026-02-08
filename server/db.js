@@ -9,6 +9,12 @@ const pool = new Pool({
     port: process.env.DB_PORT || 5432,
 });
 
+// Prevent crash on idle client error
+pool.on('error', (err, client) => {
+    console.error('Unexpected error on idle client', err);
+    // Don't exit process
+});
+
 async function query(text, params) {
     const start = Date.now();
     const res = await pool.query(text, params);

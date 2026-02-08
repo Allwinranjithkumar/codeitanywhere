@@ -44,7 +44,16 @@ loginForm.addEventListener('submit', async (e) => {
             body: JSON.stringify({ email, password })
         });
 
-        const data = await response.json();
+        const contentType = response.headers.get("content-type");
+        let data;
+
+        if (contentType && contentType.indexOf("application/json") !== -1) {
+            data = await response.json();
+        } else {
+            const text = await response.text();
+            console.error('Non-JSON response:', text);
+            throw new Error('Server error: ' + (response.statusText || 'Unknown Error'));
+        }
 
         if (response.ok) {
             localStorage.setItem('token', data.token);
@@ -59,8 +68,8 @@ loginForm.addEventListener('submit', async (e) => {
             if (loginError) loginError.textContent = data.error || 'Login failed';
         }
     } catch (err) {
-        console.error(err);
-        if (loginError) loginError.textContent = 'Network error. Please try again.';
+        console.error('Login Fetch Error:', err);
+        if (loginError) loginError.textContent = 'Connection failed: ' + err.message;
     } finally {
         loginBtn.disabled = false;
     }
