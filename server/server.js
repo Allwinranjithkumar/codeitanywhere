@@ -177,8 +177,6 @@ async function processCompilationQueue() {
     activeCompilations++;
     const { code, language, functionName, testCase, resolve, reject } = compilationQueue.shift();
 
-// Helper for re-syncing Excel manually
-app.post('/api/admin/sync-excel', async (req, res) => {
     try {
         let result;
         if (language === 'c') {
