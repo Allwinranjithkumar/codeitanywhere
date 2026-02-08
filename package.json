@@ -1,0 +1,21 @@
+{
+  "name": "coding-contest-platform",
+  "version": "1.0.0",
+  "description": "Anti-cheat coding contest platform for college students",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "dev": "nodemon server/server.js"
+  },
+  "keywords": ["coding", "contest", "judge", "hackathon"],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "body-parser": "^1.20.2",
+    "vm2": "^3.9.19"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
