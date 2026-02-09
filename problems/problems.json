@@ -1,76 +1,46 @@
 [
   {
     "id": 0,
-    "title": "Remove Duplicates from Sorted Array",
-    "description": "<p>Given an integer array <code>nums</code> sorted in non-decreasing order, remove the duplicates <strong>in-place</strong> such that each unique element appears only once. The relative order of the elements should be kept the same.</p><p>Consider the number of unique elements in <code>nums</code> to be <code>k</code>. After removing the duplicates, return <code>k</code>.</p><p>The first <code>k</code> elements of <code>nums</code> should contain the unique elements in sorted order. The remaining elements beyond index <code>k - 1</code> can be ignored.</p><p><strong>Custom Judge:</strong></p><pre>int[] nums = [...];\nint[] expectedNums = [...];\n\nint k = removeDuplicates(nums);\n\nassert k == expectedNums.length;\nfor (int i = 0; i < k; i++) {\n    assert nums[i] == expectedNums[i];\n}</pre><p><strong>Example 1:</strong></p><pre>Input: nums = [1,1,2]\nOutput: 2, nums = [1,2,_]</pre><p><strong>Example 2:</strong></p><pre>Input: nums = [0,0,1,1,1,2,2,3,3,4]\nOutput: 5, nums = [0,1,2,3,4,_,_,_,_,_]</pre><p><strong>Constraints:</strong></p><ul><li>1 ≤ nums.length ≤ 3 × 10<sup>4</sup></li><li>-100 ≤ nums[i] ≤ 100</li><li><code>nums</code> is sorted in non-decreasing order.</li></ul>",
+    "title": "Majority Element",
+    "description": "<p>Given an array <code>nums</code> of size <code>n</code>, return the <strong>majority element</strong>.</p><p>The majority element is the element that appears more than <code>⌊n / 2⌋</code> times. You may assume that the majority element always exists in the array.</p><p><strong>Example 1:</strong></p><pre>Input: nums = [3,2,3]\nOutput: 3</pre><p><strong>Example 2:</strong></p><pre>Input: nums = [2,2,1,1,1,2,2]\nOutput: 2</pre><p><strong>Constraints:</strong></p><ul><li><code>n == nums.length</code></li><li><code>1 <= n <= 5 * 10<sup>4</sup></code></li><li><code>-10<sup>9</sup> <= nums[i] <= 10<sup>9</sup></code></li><li>The input is generated such that a majority element will exist in the array.</li></ul><p><strong>Follow-up:</strong> Could you solve the problem in linear time and in O(1) space?</p>",
     "difficulty": "Easy",
     "points": 10,
-    "functionName": "removeDuplicates",
+    "functionName": "majorityElement",
     "starterCode": {
-      "python": "def removeDuplicates(nums):\n    # Write your code here\n    return 0",
-      "javascript": "function removeDuplicates(nums) {\n    // Write your code here\n    return 0;\n}",
-      "java": "class Solution {\n    public int removeDuplicates(int[] nums) {\n        // Write your code here\n        return 0;\n    }\n}",
-      "cpp": "class Solution {\npublic:\n    int removeDuplicates(vector<int>& nums) {\n        \n    }\n};",
-      "c": "int removeDuplicates(int* nums, int numsSize) {\n    // Write your code here\n    return 0;\n}"
+      "python": "def majorityElement(nums):\n    # Write your code here\n    return 0",
+      "cpp": "class Solution {\npublic:\n    int majorityElement(vector<int>& nums) {\n        // Write your code here\n        return 0;\n    }\n};",
+      "c": "int majorityElement(int* nums, int numsSize) {\n    // Write your code here\n    return 0;\n}"
     },
     "testCases": [
       {
         "input": {
-          "nums": [
-            1,
-            1,
-            2
-          ]
+          "nums": [3, 2, 3]
+        },
+        "output": 3
+      },
+      {
+        "input": {
+          "nums": [2, 2, 1, 1, 1, 2, 2]
         },
         "output": 2
       },
       {
         "input": {
-          "nums": [
-            0,
-            0,
-            1,
-            1,
-            1,
-            2,
-            2,
-            3,
-            3,
-            4
-          ]
-        },
-        "output": 5
-      },
-      {
-        "input": {
-          "nums": [
-            1,
-            2,
-            3,
-            4,
-            5
-          ]
-        },
-        "output": 5
-      },
-      {
-        "input": {
-          "nums": [
-            1
-          ]
+          "nums": [1]
         },
         "output": 1
       },
       {
         "input": {
-          "nums": [
-            1,
-            1,
-            1,
-            1
-          ]
+          "nums": [1, 1, 1, 2, 2]
         },
         "output": 1
+      },
+      {
+        "input": {
+          "nums": [5, 5, 5, 5, 1, 2, 3]
+        },
+        "output": 5
       }
     ]
   }
