@@ -47,90 +47,11 @@ print(json.dumps(result))
     });
 }
 
-// Execute JavaScript function
-function executeJavaScriptFunction(code, functionName, testCase) {
+// Execute C function (Queued similar to C++)
+function executeCFunction(code, functionName, testCase) {
     return new Promise((resolve, reject) => {
-        try {
-            const vm = new VM({
-                timeout: 5000,
-                sandbox: {}
-            });
-
-            // Run the code and call the function
-            const result = vm.run(`
-                ${code}
-                ${functionName}(${Object.values(testCase.input).map(v => JSON.stringify(v)).join(', ')})
-            `);
-
-            resolve(result);
-        } catch (error) {
-            reject(error);
-        }
-    });
-}
-
-// Execute Java function
-function executeJavaFunction(code, functionName, testCase) {
-    return new Promise((resolve, reject) => {
-        const tempFile = `Solution_${Date.now()}`;
-
-        // Build test wrapper
-        const params = Object.keys(testCase.input);
-        const args = Object.values(testCase.input).map((val, i) => {
-            if (Array.isArray(val)) {
-                if (typeof val[0] === 'number') {
-                    return `new int[]{${val.join(',')}}`;
-                } else if (typeof val[0] === 'string') {
-                    return `new String[]{${val.map(s => `"${s}"`).join(',')}}`;
-                }
-            } else if (typeof val === 'number') {
-                return val.toString();
-            } else if (typeof val === 'string') {
-                return `"${val}"`;
-            } else if (typeof val === 'boolean') {
-                return val.toString();
-            }
-            return val;
-        }).join(', ');
-
-        const testCode = `
-import com.google.gson.Gson;
-
-${code}
-
-public class TestRunner {
-    public static void main(String[] args) {
-        Solution solution = new Solution();
-        Object result = solution.${functionName}(${args});
-        Gson gson = new Gson();
-        System.out.println(gson.toJson(result));
-    }
-}
-`;
-
-        fs.writeFile(`${tempFile}.java`, testCode, 'utf-8')
-            .then(() => {
-                exec(`javac ${tempFile}.java && java TestRunner`, {
-                    timeout: 10000,
-                    maxBuffer: 1024 * 1024
-                }, (error, stdout, stderr) => {
-                    fs.unlink(`${tempFile}.java`).catch(() => { });
-                    fs.unlink('TestRunner.class').catch(() => { });
-                    fs.unlink('Solution.class').catch(() => { });
-
-                    if (error) {
-                        reject(new Error(stderr || error.message));
-                    } else {
-                        try {
-                            const result = JSON.parse(stdout.trim());
-                            resolve(result);
-                        } catch (e) {
-                            reject(new Error('Invalid output format'));
-                        }
-                    }
-                });
-            })
-            .catch(reject);
+        compilationQueue.push({ code, functionName, testCase, resolve, reject, lang: 'c' });
+        processCompilationQueue();
     });
 }
 
@@ -144,10 +65,15 @@ async function processCompilationQueue() {
     if (activeCompilations >= MAX_CONCURRENT_COMPILATIONS || compilationQueue.length === 0) return;
 
     activeCompilations++;
-    const { code, functionName, testCase, resolve, reject } = compilationQueue.shift();
+    const { code, functionName, testCase, resolve, reject, lang } = compilationQueue.shift();
 
     try {
-        const result = await runCppCompilation(code, functionName, testCase);
+        let result;
+        if (lang === 'c') {
+            result = await runCCompilation(code, functionName, testCase);
+        } else {
+            result = await runCppCompilation(code, functionName, testCase);
+        }
         resolve(result);
     } catch (error) {
         reject(error);
@@ -157,10 +83,98 @@ async function processCompilationQueue() {
     }
 }
 
+// Actual C Compilation Logic (gcc)
+function runCCompilation(code, functionName, testCase) {
+    return new Promise((resolve, reject) => {
+        const tempFile = `Solution_${Date.now()}`;
+
+        // Dynamically build arguments
+        const declarations = [];
+        const funcArgs = [];
+
+        for (const [key, value] of Object.entries(testCase.input)) {
+            if (Array.isArray(value)) {
+                // Determine type
+                const type = typeof value[0] === 'number' ? 'int' : 'char*';
+                // For C arrays, we usually need size too. But simplistic for now.
+                // Or just pass manually constructed arrays.
+                // Array format: type name[] = { ... };
+                if (typeof value[0] === 'string') {
+                    // String array not easily supported in simple C template without helper.
+                    // Assume int array for contest scope or basic strings.
+                    declarations.push(`char* ${key}[] = {${value.map(s => `"${s}"`).join(',')}};`);
+                } else {
+                    declarations.push(`int ${key}[] = {${value.join(',')}};`);
+                    declarations.push(`int ${key}Size = ${value.length};`); // Usually needed in C
+                    funcArgs.push(key);
+                    funcArgs.push(`${key}Size`); // Convention: name + Size
+                    continue; // Skip default push
+                }
+                funcArgs.push(key);
+            } else if (typeof value === 'string') {
+                declarations.push(`char* ${key} = "${value}";`);
+                funcArgs.push(key);
+            } else if (typeof value === 'number') {
+                declarations.push(`int ${key} = ${value};`);
+                funcArgs.push(key);
+            } else if (typeof value === 'boolean') {
+                declarations.push(`int ${key} = ${value ? 1 : 0};`); // C uses int for bool often
+                funcArgs.push(key);
+            }
+        }
+
+        const testCode = `
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
+
+${code}
+
+int main() {
+    // Prepare arguments
+    ${declarations.join('\n    ')}
+
+    // Call function
+    int result = ${functionName}(${funcArgs.join(', ')});
+
+    printf("%d", result);
+
+    return 0;
+}
+`;
+        fs.writeFile(`${tempFile}.c`, testCode, 'utf-8')
+            .then(() => {
+                const runCmd = process.platform === 'win32' ? `${tempFile}.exe` : `./${tempFile}`;
+                exec(`gcc -o ${tempFile} ${tempFile}.c && ${runCmd}`, {
+                    timeout: 5000,
+                    maxBuffer: 1024 * 1024
+                }, (error, stdout, stderr) => {
+                    // Cleanup
+                    fs.unlink(`${tempFile}.c`).catch(() => { });
+                    fs.unlink(tempFile).catch(() => { });
+                    fs.unlink(`${tempFile}.exe`).catch(() => { }); // Windows
+
+                    if (error) {
+                        reject(new Error(stderr || error.message));
+                    } else {
+                        try {
+                            const result = parseInt(stdout.trim());
+                            resolve(result);
+                        } catch (e) {
+                            reject(new Error('Invalid output format'));
+                        }
+                    }
+                });
+            })
+            .catch(reject);
+    });
+}
+
 // Execute C++ function (Queued)
 function executeCppFunction(code, functionName, testCase) {
     return new Promise((resolve, reject) => {
-        compilationQueue.push({ code, functionName, testCase, resolve, reject });
+        compilationQueue.push({ code, functionName, testCase, resolve, reject, lang: 'cpp' });
         processCompilationQueue();
     });
 }
@@ -262,10 +276,8 @@ async function executeCode(code, language, functionName, testCase) {
     switch (language) {
         case 'python':
             return await executePythonFunction(code, functionName, testCase);
-        case 'javascript':
-            return await executeJavaScriptFunction(code, functionName, testCase);
-        case 'java':
-            return await executeJavaFunction(code, functionName, testCase);
+        case 'c':
+            return await executeCFunction(code, functionName, testCase);
         case 'cpp':
             return await executeCppFunction(code, functionName, testCase);
         default:

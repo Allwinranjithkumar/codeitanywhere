@@ -8,8 +8,6 @@
     "functionName": "removeDuplicates",
     "starterCode": {
       "python": "def removeDuplicates(nums):\n    # Write your code here\n    return 0",
-      "javascript": "function removeDuplicates(nums) {\n    // Write your code here\n    return 0;\n}",
-      "java": "class Solution {\n    public int removeDuplicates(int[] nums) {\n        // Write your code here\n        return 0;\n    }\n}",
       "cpp": "class Solution {\npublic:\n    int removeDuplicates(vector<int>& nums) {\n        \n    }\n};",
       "c": "int removeDuplicates(int* nums, int numsSize) {\n    // Write your code here\n    return 0;\n}"
     },

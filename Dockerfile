@@ -7,7 +7,6 @@ RUN apt-get update && apt-get install -y \
     gcc \
     make \
     python3 \
-    default-jdk \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
