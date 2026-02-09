@@ -1,0 +1,35 @@
+### Test Admin Export Endpoint
+
+# Test 1: Export 23 EEE class (using class filter)
+GET http://localhost:3000/api/admin/export?class=23%20EEE
+Authorization: Bearer YOUR_ADMIN_TOKEN_HERE
+
+###
+
+# Test 2: Export all EEE department
+GET http://localhost:3000/api/admin/export?department=EEE
+Authorization: Bearer YOUR_ADMIN_TOKEN_HERE
+
+###
+
+# Test 3: Export 2024 batch
+GET http://localhost:3000/api/admin/export?batch=24
+Authorization: Bearer YOUR_ADMIN_TOKEN_HERE
+
+###
+
+# Test 4: Export with combined filters
+GET http://localhost:3000/api/admin/export?batch=23&department=EEE&class=23%20EEE
+Authorization: Bearer YOUR_ADMIN_TOKEN_HERE
+
+###
+
+# Test 5: Export 24 ICE
+GET http://localhost:3000/api/admin/export?class=24%20ICE
+Authorization: Bearer YOUR_ADMIN_TOKEN_HERE
+
+###
+
+# Test 6: Export ALL students (no filters)
+GET http://localhost:3000/api/admin/export
+Authorization: Bearer YOUR_ADMIN_TOKEN_HERE
