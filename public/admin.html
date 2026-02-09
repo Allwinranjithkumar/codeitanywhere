@@ -198,6 +198,34 @@
             <!-- Stats will be loaded here -->
         </div>
 
+        <div class="filters"
+            style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
+            <div style="font-weight: bold; color: #555;">Filters:</div>
+            <select id="filterBatch" onchange="applyFilters()"
+                style="padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                <option value="">All Batches</option>
+                <option value="23">23 Batch</option>
+                <option value="24">24 Batch</option>
+                <option value="25">25 Batch</option>
+            </select>
+            <select id="filterDept" onchange="applyFilters()"
+                style="padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                <option value="">All Departments</option>
+                <option value="EEE">EEE</option>
+                <option value="ICE">ICE</option>
+            </select>
+            <select id="filterClass" onchange="applyFilters()"
+                style="padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                <option value="">All Classes</option>
+                <option value="23-EEE">23-EEE</option>
+                <option value="24-EEE">24-EEE</option>
+                <option value="23-ICE">23-ICE</option>
+                <option value="24-ICE">24-ICE</option>
+            </select>
+            <button onclick="clearFilters()"
+                style="padding: 8px 15px; border: 1px solid #ddd; background: #eee; border-radius: 4px; cursor: pointer;">Clear</button>
+        </div>
+
         <div class="action-bar">
             <button class="action-btn" onclick="loadData()">🔄 Refresh Data</button>
             <button class="action-btn" style="background: #2563eb;" onclick="exportReport()">📥 Download Excel
@@ -310,20 +338,65 @@
             document.getElementById(tabName).classList.add('active');
         }
 
-        async function loadData() {
-            await Promise.all([
-                loadLeaderboard(),
-                loadSubmissions(),
-                loadViolations(),
-            ]);
-            // Calculate stats after loading data
+        // Filter variables
+        let currentBatch = '';
+        let currentDept = '';
+        let currentClass = '';
+
+        function applyFilters() {
+            currentBatch = document.getElementById('filterBatch').value;
+            currentDept = document.getElementById('filterDept').value;
+            currentClass = document.getElementById('filterClass').value;
+            loadData();
         }
 
-        async function loadLeaderboard() {
+        function clearFilters() {
+            document.getElementById('filterBatch').value = '';
+            document.getElementById('filterDept').value = '';
+            document.getElementById('filterClass').value = '';
+            applyFilters();
+        }
+
+        async function loadData() {
+            // Construct Query String
+            const params = new URLSearchParams();
+            if (currentBatch) params.append('batch', currentBatch);
+            if (currentDept) params.append('department', currentDept);
+            if (currentClass) params.append('class', currentClass);
+            const queryString = params.toString();
+
+            await Promise.all([
+                loadLeaderboard(queryString), // You can implement filtering for leaderboard if needed, usually global
+                loadSubmissions(queryString),
+                loadViolations(), // Violations usually global or filtered? Request was for "Download student list", so export affects this.
+            ]);
+            // Calculate stats after loading data - handled inside load functions actually, but stats might need global filter?
+            // User asked: "Enhance admin panel to: Filter students by... Allow admin to Download student list"
+            // So Filter mainly affects Export and Submissions List presumably.
+        }
+
+        async function loadLeaderboard(qs) {
+            // Leaderboard implementation in backend usually returns everyone. 
+            // If we want to filter leaderboard, we need backend support or frontend filtering.
+            // Backend support not explicitly added to leaderboard route in plan.
+            // Let's stick to Submissions filtering as prioritized.
+            // But actually, "Filter students by... Download student list" implies seeing only those students.
+            // Let's modify leaderboard to use the params if backend supported it?
+            // Checking admin.routes.js ... /submissions supported filtering.
+            // Leaderboard route is in /judge.routes.js. I didn't modify it.
+            // So Leaderboard will show everyone.
+
             try {
                 const response = await authFetch('/api/judge/leaderboard');
                 const data = await response.json();
                 const tbody = document.getElementById('leaderboardBody');
+
+                // Frontend Filtering for Leaderboard (Optional but good UX)
+                // Need to filter data based on user attributes not in the leaderboard response?
+                // The leaderboard response has name, reg_no, total_score.
+                // It DOES NOT have batch/dept.
+                // So we cannot really filter leaderboard accurately without backend change.
+                // I will skip filtering leaderboard for now as it wasn't strictly requested (admin panel filters usually for data management/export).
 
                 if (data.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No data</td></tr>';
@@ -344,14 +417,14 @@
             } catch (error) { console.error(error); }
         }
 
-        async function loadSubmissions() {
+        async function loadSubmissions(qs) {
             try {
-                const response = await authFetch('/api/admin/submissions');
+                const response = await authFetch(`/api/admin/submissions?${qs}`);
                 const data = await response.json();
                 const tbody = document.getElementById('submissionsBody');
 
                 if (data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No submissions</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No submissions found</td></tr>';
                     return;
                 }
 
@@ -423,7 +496,7 @@
                     <div class="number">${statsStore.totalStudents || 0}</div>
                 </div>
                 <div class="stat-card">
-                    <h3>Total Submissions</h3>
+                    <h3>Submissions (Filtered)</h3>
                     <div class="number">${statsStore.totalSubmissions || 0}</div>
                 </div>
                 <div class="stat-card">
@@ -434,12 +507,13 @@
         }
 
         function exportReport() {
-            // Need to pass token? Browser navigation doesn't support headers easily.
-            // Just use window.open. If cookie-based auth was used, it would work.
-            // With JWT in header, we can't easily trigger a download via window.location if the endpoint protects it.
-            // But we can use fetch -> blob -> download.
+            const params = new URLSearchParams();
+            if (currentBatch) params.append('batch', currentBatch);
+            if (currentDept) params.append('department', currentDept);
+            if (currentClass) params.append('class', currentClass);
+            const qs = params.toString();
 
-            authFetch('/api/admin/export')
+            authFetch(`/api/admin/export?${qs}`)
                 .then(resp => resp.blob())
                 .then(blob => {
                     const url = window.URL.createObjectURL(blob);

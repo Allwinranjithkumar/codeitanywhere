@@ -19,57 +19,46 @@ async function syncAllowedUsers() {
         const sheet = workbook.Sheets[sheetName];
         const data = xlsx.utils.sheet_to_json(sheet);
 
-        console.log(`Found ${data.length} entries in Excel file.`);
+        console.log(`Using Excel Data. Found ${data.length} records.`);
 
-        let insertedCount = 0;
-        let createdUsersCount = 0;
-        let errorCount = 0;
+        // Populate allowed_users table (optional, but good for reference)
+        // More importantly, populate USERS table so they can login
 
-        // Hash Default Password
-        const defaultHash = await bcrypt.hash(DEFAULT_USER_PASSWORD, 10);
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(DEFAULT_USER_PASSWORD, salt);
+
+        let successCount = 0;
+        let failCount = 0;
 
         for (const row of data) {
-            // Map columns correctly based on JSON output
-            // "First_Name":"AISHWARYA ","Last_Name":"C","Roll_No":715523105001,"Official Email":"23e101@psgitech.ac.in"
+            const email = row['Official Email'] ? row['Official Email'].trim().toLowerCase() : null;
+            const regNo = row['Roll_No'] ? String(row['Roll_No']).trim() : null;
+            const name = `${row['First_Name']} ${row['Last_Name']}`;
 
-            const firstName = row['First_Name'] || '';
-            const lastName = row['Last_Name'] || '';
-            const email = (row['Official Email'] || row['Email'] || '').trim();
-            const regNo = String(row['Roll_No'] || row['RegisterNumber'] || row['reg_no'] || '').trim();
-            const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
+            if (!email || !regNo) {
+                continue;
+            }
 
-            if (email && regNo) {
-                try {
-                    // 1. Whitelist the user
+            try {
+                // Check if user exists
+                const existing = await db.query('SELECT id FROM users WHERE email = $1', [email]);
+
+                if (existing.rowCount === 0) {
+                    // Insert new user
                     await db.query(
-                        'INSERT INTO allowed_users (email, reg_no) VALUES ($1, $2) ON CONFLICT (email) DO NOTHING',
-                        [email, regNo]
+                        `INSERT INTO users (name, email, reg_no, password_hash, role) 
+                         VALUES ($1, $2, $3, $4, 'student')`,
+                        [name, email, regNo, hashedPassword]
                     );
-
-                    // 2. Auto-Create User Account (so they can login immediately)
-                    // If user exists, do nothing (preserve their password).
-                    // If user does not exist, insert with default password.
-
-                    const userResult = await db.query(
-                        `INSERT INTO users (name, email, reg_no, password_hash) 
-                         VALUES ($1, $2, $3, $4) 
-                         ON CONFLICT (email) DO NOTHING
-                         RETURNING id`,
-                        [fullName, email, regNo, defaultHash]
-                    );
-
-                    if (userResult.rowCount > 0) {
-                        createdUsersCount++;
-                    }
-                    insertedCount++;
-                } catch (err) {
-                    // console.warn(`Skipping duplicate or error for ${email}: ${err.message}`);
-                    errorCount++;
+                    successCount++;
                 }
+            } catch (err) {
+                // console.error(`Failed to sync user ${email}:`, err.message);
+                failCount++;
             }
         }
 
-        console.log(`Synced allowed users. Whitelisted: ${insertedCount}, Auto-Created Accounts: ${createdUsersCount}, Errors: ${errorCount}`);
+        console.log(`✅ Excel Sync Complete: ${successCount} new users added. ${failCount} skipped/duplicates.`);
 
     } catch (error) {
         console.error('Error syncing Excel file:', error);

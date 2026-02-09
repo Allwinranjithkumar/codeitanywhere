@@ -1,26 +1,27 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
-const isProduction = process.env.NODE_ENV === 'production';
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
+});
 
-const connectionString = process.env.DATABASE_URL;
+if (!process.env.DATABASE_URL) {
+    // Local Fallback
+    pool.options = {
+        user: process.env.DB_USER || 'postgres',
+        host: process.env.DB_HOST || 'localhost',
+        database: process.env.DB_NAME || 'coding_platform',
+        password: process.env.DB_PASSWORD || 'password',
+        port: process.env.DB_PORT || 5432,
+    };
+}
 
-const pool = new Pool(
-    connectionString
-        ? {
-            connectionString,
-            ssl: isProduction
-                ? { rejectUnauthorized: false }
-                : false,
-        }
-        : {
-            user: process.env.DB_USER || 'postgres',
-            host: process.env.DB_HOST || 'localhost',
-            database: process.env.DB_NAME || 'coding_platform',
-            password: process.env.DB_PASSWORD || 'password',
-            port: process.env.DB_PORT || 5432,
-        }
-);
+// Prevent crash on idle client error
+pool.on('error', (err, client) => {
+    console.error('Unexpected error on idle client', err);
+    // Don't exit process
+});
 
 async function query(text, params) {
     const start = Date.now();
@@ -47,6 +48,9 @@ async function initDB() {
                 reg_no VARCHAR(50) UNIQUE NOT NULL,
                 password_hash VARCHAR(255) NOT NULL,
                 role VARCHAR(20) DEFAULT 'student',
+                batch_year VARCHAR(10),
+                department VARCHAR(50),
+                class_name VARCHAR(50),
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         `);

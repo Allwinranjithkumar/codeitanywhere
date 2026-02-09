@@ -137,17 +137,17 @@ public class TestRunner {
 // Queue for compilation tasks
 const compilationQueue = [];
 let activeCompilations = 0;
-const MAX_CONCURRENT_COMPILATIONS = 2; // Limit to 2 parallel compiles on Free Tier
+const MAX_CONCURRENT_COMPILATIONS = 4; // Increased for 75 concurrent users (approx)
 
 // Process queue
 async function processCompilationQueue() {
     if (activeCompilations >= MAX_CONCURRENT_COMPILATIONS || compilationQueue.length === 0) return;
 
     activeCompilations++;
-    const { code, functionName, testCase, resolve, reject } = compilationQueue.shift();
+    const { code, functionName, testCase, language, resolve, reject } = compilationQueue.shift();
 
     try {
-        const result = await runCppCompilation(code, functionName, testCase);
+        const result = await runCppCompilation(code, functionName, testCase, language);
         resolve(result);
     } catch (error) {
         reject(error);
@@ -194,6 +194,8 @@ function runCppCompilation(code, functionName, testCase) {
         const testCode = `
 #include <iostream>
 #include <vector>
+#include <map>
+#include <unordered_map>
 #include <string>
 #include <algorithm>
 #include <sstream>
@@ -267,9 +269,152 @@ async function executeCode(code, language, functionName, testCase) {
             return await executeJavaFunction(code, functionName, testCase);
         case 'cpp':
             return await executeCppFunction(code, functionName, testCase);
+        case 'c':
+            return await executeCFunction(code, functionName, testCase);
         default:
             throw new Error('Unsupported language');
     }
+}
+
+// Execute C function (Queued)
+function executeCFunction(code, functionName, testCase) {
+    return new Promise((resolve, reject) => {
+        compilationQueue.push({ code, functionName, testCase, language: 'c', resolve, reject });
+        processCompilationQueue();
+    });
+}
+
+// Actual Compilation Logic for C/C++
+function runCppCompilation(code, functionName, testCase, language = 'cpp') {
+    return new Promise((resolve, reject) => {
+        const tempFile = `Solution_${Date.now()}`;
+        const isC = language === 'c';
+        const fileExt = isC ? 'c' : 'cpp';
+        const compiler = isC ? 'gcc' : 'g++';
+
+        // Dynamically build argument declarations and calling signature
+        const declarations = [];
+        const funcArgs = [];
+
+        for (const [key, value] of Object.entries(testCase.input)) {
+            if (Array.isArray(value)) {
+                if (isC) {
+                    // C-style array: int nums[] = {1, 2, 3};
+                    declarations.push(`int ${key}[] = {${value.join(',')}};`);
+                    declarations.push(`int ${key}Size = ${value.length};`);
+                    funcArgs.push(key);
+                    funcArgs.push(`${key}Size`); // Pass size for arrays in C usually
+                } else {
+                    // C++ vector
+                    declarations.push(`vector<int> ${key} = {${value.join(',')}};`);
+                    funcArgs.push(key);
+                }
+            } else if (typeof value === 'string') {
+                if (isC) {
+                    declarations.push(`char *${key} = "${value}";`);
+                } else {
+                    declarations.push(`string ${key} = "${value}";`);
+                }
+                funcArgs.push(key);
+            } else if (typeof value === 'number') {
+                declarations.push(`int ${key} = ${value};`);
+                funcArgs.push(key);
+            } else if (typeof value === 'boolean') {
+                declarations.push(`${isC ? 'int' : 'bool'} ${key} = ${value ? 1 : 0};`);
+                funcArgs.push(key);
+            }
+        }
+
+        let testCode;
+
+        if (isC) {
+            testCode = `
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
+
+${code}
+
+int main() {
+    // Prepare arguments
+    ${declarations.join('\n    ')}
+    
+    // Call function
+    int result = ${functionName}(${funcArgs.join(', ')});
+    
+    printf("%d\\n", result);
+    
+    return 0;
+}
+`;
+        } else {
+            testCode = `
+#include <iostream>
+#include <vector>
+#include <map>
+#include <string>
+#include <algorithm>
+#include <sstream>
+
+using namespace std;
+
+// Helper for printing vectors
+template <typename T>
+ostream& operator<<(ostream& os, const vector<T>& v) {
+    os << "[";
+    for (size_t i = 0; i < v.size(); ++i) {
+        os << v[i];
+        if (i != v.size() - 1) os << ",";
+    }
+    os << "]";
+    return os;
+}
+
+${code}
+
+int main() {
+    Solution solution;
+    
+    // Prepare arguments
+    ${declarations.join('\n    ')}
+    
+    // Call function
+    auto result = solution.${functionName}(${funcArgs.join(', ')});
+    
+    cout << result << endl;
+    
+    return 0;
+}
+`;
+        }
+
+        fs.writeFile(`${tempFile}.${fileExt}`, testCode, 'utf-8')
+            .then(() => {
+                const runCmd = process.platform === 'win32' ? `${tempFile}.exe` : `./${tempFile}`;
+                exec(`${compiler} -o ${tempFile} ${tempFile}.${fileExt} && ${runCmd}`, {
+                    timeout: 10000,
+                    maxBuffer: 1024 * 1024
+                }, (error, stdout, stderr) => {
+                    // Cleanup
+                    fs.unlink(`${tempFile}.${fileExt}`).catch(() => { });
+                    fs.unlink(`${tempFile}`).catch(() => { }); // Linux/Mac
+                    fs.unlink(`${tempFile}.exe`).catch(() => { }); // Windows
+
+                    if (error) {
+                        reject(new Error(stderr || error.message));
+                    } else {
+                        try {
+                            const result = parseInt(stdout.trim());
+                            resolve(result);
+                        } catch (e) {
+                            reject(new Error('Invalid output format'));
+                        }
+                    }
+                });
+            })
+            .catch(reject);
+    });
 }
 
 // Deep comparison of arrays/objects

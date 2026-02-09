@@ -45,11 +45,54 @@ router.post('/submit', authenticateToken, async (req, res) => {
         const score = allPassed ? problem.points : 0;
         const status = allPassed ? 'Accepted' : 'Wrong Answer';
 
-        // Store submission in DB
-        await db.query(
-            'INSERT INTO submissions (user_id, problem_id, language, status, score) VALUES ($1, $2, $3, $4, $5)',
-            [req.user.id, problemId, language, status, score]
+        // Check for existing submission
+        const existingSub = await db.query(
+            'SELECT * FROM submissions WHERE user_id = $1 AND problem_id = $2',
+            [req.user.id, problemId]
         );
+
+        if (existingSub.rowCount > 0) {
+            // Update existing
+            const oldScore = existingSub.rows[0].score;
+            // If already solved (score > 0), keep old score. Else take new score.
+            // Requirement: "The latest submission can replace the previous one, but score remains unchanged"
+            // Interpreted as: Don't lose marks if you already solved it. Don't add duplicate marks.
+            const finalScore = (oldScore > 0) ? oldScore : score;
+
+            // Allow status update to show 'Wrong Answer' for the specific code run, 
+            // BUT if we want to preserve the "Fact that they solved it", we might want to keep status='Accepted'?
+            // User requirement says: "Allow re-submission ONLY for viewing or overwrite... marks must not increase."
+            // Let's update status to reflect THIS submission, but keep score fixed if it was already > 0.
+
+            try {
+                await db.query(
+                    'UPDATE submissions SET language = $1, status = $2, score = $3, created_at = CURRENT_TIMESTAMP WHERE user_id = $4 AND problem_id = $5',
+                    [language, status, finalScore, req.user.id, problemId]
+                );
+            } catch (dbErr) {
+                console.warn('⚠️ DB Update Failed (Partial Mode):', dbErr.message);
+            }
+
+        } else {
+            // Insert new
+            try {
+                await db.query(
+                    'INSERT INTO submissions (user_id, problem_id, language, status, score) VALUES ($1, $2, $3, $4, $5)',
+                    [req.user.id, problemId, language, status, score]
+                );
+            } catch (dbErr) {
+                console.warn('⚠️ DB Save Failed (Partial Mode):', dbErr.message);
+                // Save to Memory Store (Fallback)
+                require('../services/memoryStore').saveSubmission({
+                    user_id: req.user.id,
+                    problem_id: problemId,
+                    language,
+                    status,
+                    score,
+                    timestamp: new Date()
+                });
+            }
+        }
 
         res.json({
             results,
@@ -70,10 +113,20 @@ router.post('/log-violation', authenticateToken, async (req, res) => {
     try {
         const { violationType, timestamp } = req.body;
 
-        await db.query(
-            'INSERT INTO violations (user_id, type, timestamp) VALUES ($1, $2, $3)',
-            [req.user.id, violationType, timestamp || new Date()]
-        );
+        try {
+            await db.query(
+                'INSERT INTO violations (user_id, type, timestamp) VALUES ($1, $2, $3)',
+                [req.user.id, violationType, timestamp || new Date()]
+            );
+        } catch (dbErr) {
+            console.warn('⚠️ Violation Log Failed (Partial Mode):', dbErr.message);
+            // Save to Memory Store
+            require('../services/memoryStore').saveViolation({
+                user_id: req.user.id,
+                type: violationType,
+                timestamp: timestamp || new Date()
+            });
+        }
 
         res.json({ success: true });
     } catch (error) {
@@ -99,8 +152,31 @@ router.get('/leaderboard', authenticateToken, async (req, res) => {
 
         res.json(result.rows);
     } catch (error) {
-        console.error('Leaderboard error:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        console.warn('⚠️ Leaderboard Load Failed (Partial Mode):', error.message);
+
+        // Fetch from Memory Store
+        const memoryStore = require('../services/memoryStore');
+        const users = memoryStore.getAllUsers();
+        const submissions = memoryStore.getSubmissions();
+
+        // Aggregate Data manually
+        const leaderboard = users.map(user => {
+            const userSubs = submissions.filter(s => s.user_id === user.id);
+            const score = userSubs.reduce((acc, curr) => acc + (curr.status === 'Accepted' ? curr.score : 0), 0);
+            const uniqueSolved = new Set(userSubs.filter(s => s.status === 'Accepted').map(s => s.problem_id)).size;
+
+            return {
+                name: user.name,
+                reg_no: user.reg_no,
+                total_score: score,
+                problems_solved: uniqueSolved
+            };
+        });
+
+        // Sort descending
+        leaderboard.sort((a, b) => b.total_score - a.total_score);
+
+        res.json(leaderboard);
     }
 });
 

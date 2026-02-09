@@ -210,21 +210,12 @@ for (let i = 0; i < 3; i++) {
         </div>
 
         <div style="text-align: center;">
-            <a href="/" class="back-btn" onclick="logout(); return false;">Logout & Return Home</a>
+            <a href="/" class="back-btn">Back to Home</a>
         </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
     <script>hljs.highlightAll();</script>
-    <script>
-        function logout() {
-            if (confirm('You have effectively ended your session. Log out?')) {
-                localStorage.removeItem('token');
-                localStorage.removeItem('user');
-                window.location.href = '/auth.html';
-            }
-        }
-    </script>
 </body>
 
 </html>
