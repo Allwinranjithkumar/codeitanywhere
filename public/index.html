@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication | Coding Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background: #0f0c29;
+            background: linear-gradient(to right, #24243e, #302b63, #0f0c29);
+            color: #fff;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .container {
+            position: relative;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            width: 400px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: 600;
+            color: #4ec9b0;
+            letter-spacing: 1px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+            color: #aaa;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, 0.2);
+            color: #fff;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        input:focus {
+            border-color: #4ec9b0;
+            box-shadow: 0 0 10px rgba(78, 201, 176, 0.2);
+        }
+
+        button.btn-primary {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            background: linear-gradient(135deg, #4ec9b0 0%, #3db89f 100%);
+            color: #1a1a2e;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+        }
+
+        button.btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(78, 201, 176, 0.3);
+        }
+
+        .switch-form {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #ccc;
+        }
+
+        .switch-form span {
+            color: #4ec9b0;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .error-msg {
+            color: #ff6b6b;
+            font-size: 0.85em;
+            margin-top: 5px;
+            min-height: 20px;
+            text-align: center;
+        }
+
+        /* Particles background (optional simple css trick) */
+        .bg-circle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(78, 201, 176, 0.1);
+            z-index: -1;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="bg-circle" style="width: 300px; height: 300px; top: -50px; left: -50px;"></div>
+    <div class="bg-circle"
+        style="width: 200px; height: 200px; bottom: -50px; right: -50px; background: rgba(106, 90, 205, 0.1);"></div>
+
+    <div class="container">
+        <!-- Login Form -->
+        <form id="loginForm">
+            <h2>Welcome Back</h2>
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" id="loginEmail" placeholder="student@psgitech.ac.in" required>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="loginPassword" placeholder="Enter password (default: student123)"
+                    value="student123" required>
+            </div>
+            <div class="error-msg" id="loginError"></div>
+            <button type="submit" class="btn-primary">Login</button>
+            <div class="switch-form">
+                Don't have an account? <span onclick="toggleForm()">Register</span>
+            </div>
+
+            <div
+                style="text-align: center; margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+                <a href="insights.html"
+                    style="color: #bbb; text-decoration: none; font-size: 0.9em; display: inline-flex; align-items: center; gap: 8px; transition: color 0.3s;">
+                    💡 Tech Interview Insights
+                </a>
+            </div>
+        </form>
+
+        <!-- Register Form -->
+        <form id="registerForm" class="hidden">
+            <h2>Create Account</h2>
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" id="regName" placeholder="John Doe" required>
+            </div>
+            <div class="form-group">
+                <label>Register Number</label>
+                <input type="text" id="regNo" placeholder="7155xx1050xx" required>
+            </div>
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" id="regEmail" placeholder="student@psgitech.ac.in" required>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="regPassword" placeholder="Create a password" required>
+            </div>
+            <div class="error-msg" id="regError"></div>
+            <button type="submit" class="btn-primary">Register</button>
+            <div class="switch-form">
+                Already have an account? <span onclick="toggleForm()">Login</span>
+            </div>
+        </form>
+    </div>
+
+    <script src="auth.js"></script>
+</body>
+
+</html>

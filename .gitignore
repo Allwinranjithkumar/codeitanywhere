@@ -1,0 +1,7 @@
+node_modules
+Solution_*.cpp
+Solution_*.exe
+Solution_*
+*.log
+.DS_Store
+.vscode
