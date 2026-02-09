@@ -146,20 +146,6 @@ function initializeEditor() {
     editor.setSize('100%', '100%');
 }
 
-// Change language
-function changeLanguageAndLoad() {
-    const language = document.getElementById('languageSelect').value;
-    let mode = language;
-    if (language === 'cpp') {
-        mode = 'text/x-c++src';
-    } else if (language === 'java') {
-        mode = 'text/x-java';
-    }
-    editor.setOption('mode', mode);
-
-    // Check if we switch back to starter if empty? 
-    // Usually handled by selectProblem logic
-}
 // Hook up the change event
 // document.getElementById('languageSelect').onchange handled in HTML? No, verify HTML.
 // HTML has onchange="changeLanguage()". I need to rename or match.
