@@ -15,14 +15,21 @@ const problemService = require('../services/problemService');
 router.post('/problems', async (req, res) => {
     try {
         const problems = req.body;
+        console.log('📥 Admin uploading problems. Type:', typeof problems);
+        console.log('Is Array?', Array.isArray(problems));
+        if (Array.isArray(problems) && problems.length > 0) {
+            console.log('First item:', JSON.stringify(problems[0]).substring(0, 100) + '...');
+        }
 
         if (!Array.isArray(problems)) {
+            console.error('❌ Upload failed: Not an array');
             return res.status(400).json({ error: 'Invalid format. Expected an array of problems.' });
         }
 
         // Validate basic structure (optional but recommended)
-        if (problems.length > 0 && (!problems[0].id || !problems[0].title)) {
-            return res.status(400).json({ error: 'Invalid problem structure. Missing id or title.' });
+        if (problems.length > 0 && (problems[0].id === undefined || !problems[0].title)) {
+            console.error('❌ Upload failed: Invalid structure in first item:', problems[0]);
+            return res.status(400).json({ error: `Invalid problem structure. First item missing id or title. Got: ${JSON.stringify(problems[0])}` });
         }
 
         const problemsPath = path.join(__dirname, '..', '..', 'problems', 'problems.json');

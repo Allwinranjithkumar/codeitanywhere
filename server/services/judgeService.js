@@ -134,153 +134,54 @@ public class TestRunner {
     });
 }
 
-// Queue for compilation tasks
-const compilationQueue = [];
-let activeCompilations = 0;
-const MAX_CONCURRENT_COMPILATIONS = 4; // Increased for 75 concurrent users (approx)
+// Global Execution Queue
+const executionQueue = [];
+let activeExecutions = 0;
+const MAX_CONCURRENT_EXECUTIONS = 5; // Safe limit for Render Free Tier (0.1 CPU)
 
 // Process queue
-async function processCompilationQueue() {
-    if (activeCompilations >= MAX_CONCURRENT_COMPILATIONS || compilationQueue.length === 0) return;
+async function processExecutionQueue() {
+    if (activeExecutions >= MAX_CONCURRENT_EXECUTIONS || executionQueue.length === 0) return;
 
-    activeCompilations++;
-    const { code, functionName, testCase, language, resolve, reject } = compilationQueue.shift();
+    activeExecutions++;
+    const { code, language, functionName, testCase, resolve, reject } = executionQueue.shift();
 
     try {
-        const result = await runCppCompilation(code, functionName, testCase, language);
+        let result;
+        // Dispatch to specific handlers based on language
+        switch (language) {
+            case 'python':
+                result = await executePythonFunction(code, functionName, testCase);
+                break;
+            case 'javascript':
+                result = await executeJavaScriptFunction(code, functionName, testCase);
+                break;
+            case 'java':
+                result = await executeJavaFunction(code, functionName, testCase);
+                break;
+            case 'cpp':
+                result = await runCppCompilation(code, functionName, testCase, 'cpp');
+                break;
+            case 'c':
+                result = await runCppCompilation(code, functionName, testCase, 'c');
+                break;
+            default:
+                throw new Error('Unsupported language');
+        }
         resolve(result);
     } catch (error) {
         reject(error);
     } finally {
-        activeCompilations--;
-        processCompilationQueue(); // Process next item
+        activeExecutions--;
+        processExecutionQueue(); // Process next item
     }
 }
 
-// Execute C++ function (Queued)
-function executeCppFunction(code, functionName, testCase) {
+// Main Entry Point: Enqueue execution request
+function executeCode(code, language, functionName, testCase) {
     return new Promise((resolve, reject) => {
-        compilationQueue.push({ code, functionName, testCase, resolve, reject });
-        processCompilationQueue();
-    });
-}
-
-// Actual Compilation Logic
-function runCppCompilation(code, functionName, testCase) {
-    return new Promise((resolve, reject) => {
-        const tempFile = `Solution_${Date.now()}`;
-
-        // Dynamically build argument declarations and calling signature
-        const declarations = [];
-        const funcArgs = [];
-
-        for (const [key, value] of Object.entries(testCase.input)) {
-            if (Array.isArray(value)) {
-                // Assume vector<int> for simplicity in this contest scope
-                declarations.push(`vector<int> ${key} = {${value.join(',')}};`);
-                funcArgs.push(key);
-            } else if (typeof value === 'string') {
-                declarations.push(`string ${key} = "${value}";`);
-                funcArgs.push(key);
-            } else if (typeof value === 'number') {
-                declarations.push(`int ${key} = ${value};`);
-                funcArgs.push(key);
-            } else if (typeof value === 'boolean') {
-                declarations.push(`bool ${key} = ${value};`);
-                funcArgs.push(key);
-            }
-        }
-
-        const testCode = `
-#include <iostream>
-#include <vector>
-#include <map>
-#include <unordered_map>
-#include <string>
-#include <algorithm>
-#include <sstream>
-
-using namespace std;
-
-// Helper for printing vectors
-template <typename T>
-ostream& operator<<(ostream& os, const vector<T>& v) {
-    os << "[";
-    for (size_t i = 0; i < v.size(); ++i) {
-        os << v[i];
-        if (i != v.size() - 1) os << ",";
-    }
-    os << "]";
-    return os;
-}
-
-${code}
-
-int main() {
-    Solution solution;
-    
-    // Prepare arguments
-    ${declarations.join('\n    ')}
-    
-    // Call function
-    auto result = solution.${functionName}(${funcArgs.join(', ')});
-    
-    cout << result << endl;
-    
-    return 0;
-}
-`;
-        fs.writeFile(`${tempFile}.cpp`, testCode, 'utf-8')
-            .then(() => {
-                const runCmd = process.platform === 'win32' ? `${tempFile}.exe` : `./${tempFile}`;
-                exec(`g++ -o ${tempFile} ${tempFile}.cpp && ${runCmd}`, {
-                    timeout: 10000,
-                    maxBuffer: 1024 * 1024
-                }, (error, stdout, stderr) => {
-                    // Cleanup
-                    fs.unlink(`${tempFile}.cpp`).catch(() => { });
-                    fs.unlink(`${tempFile}`).catch(() => { }); // Linux/Mac
-                    fs.unlink(`${tempFile}.exe`).catch(() => { }); // Windows
-
-                    if (error) {
-                        reject(new Error(stderr || error.message));
-                    } else {
-                        try {
-                            const result = parseInt(stdout.trim());
-                            resolve(result);
-                        } catch (e) {
-                            reject(new Error('Invalid output format'));
-                        }
-                    }
-                });
-            })
-            .catch(reject);
-    });
-}
-
-// Execute code based on language
-async function executeCode(code, language, functionName, testCase) {
-    switch (language) {
-        case 'python':
-            return await executePythonFunction(code, functionName, testCase);
-        case 'javascript':
-            return await executeJavaScriptFunction(code, functionName, testCase);
-        case 'java':
-            return await executeJavaFunction(code, functionName, testCase);
-        case 'cpp':
-            return await executeCppFunction(code, functionName, testCase);
-        case 'c':
-            return await executeCFunction(code, functionName, testCase);
-        default:
-            throw new Error('Unsupported language');
-    }
-}
-
-// Execute C function (Queued)
-function executeCFunction(code, functionName, testCase) {
-    return new Promise((resolve, reject) => {
-        compilationQueue.push({ code, functionName, testCase, language: 'c', resolve, reject });
-        processCompilationQueue();
+        executionQueue.push({ code, language, functionName, testCase, resolve, reject });
+        processExecutionQueue();
     });
 }
 
