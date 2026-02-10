@@ -243,6 +243,7 @@
             <button class="tab active" onclick="switchTab('leaderboard')">📊 Leaderboard</button>
             <button class="tab" onclick="switchTab('submissions')">📝 Submissions</button>
             <button class="tab" onclick="switchTab('violations')">⚠️ Violations</button>
+            <button class="tab" onclick="switchTab('problems')">🧩 Manage Problems</button>
         </div>
 
         <div id="leaderboard" class="tab-content active">
@@ -304,6 +305,38 @@
                     </tr>
                 </tbody>
             </table>
+        </div>
+
+        <div id="problems" class="tab-content">
+            <h2>Manage Problems</h2>
+            <div style="background: white; padding: 20px; border-radius: 8px; border: 1px solid #eee;">
+                <p style="margin-bottom: 15px; color: #666;">
+                    Upload a JSON file to replace the current problem set.
+                    <br>
+                    <strong>Note:</strong> This will overwrite all existing problems. Ensure the format is correct
+                    (Array of Problem Objects).
+                </p>
+
+                <div style="margin-bottom: 20px;">
+                    <button onclick="downloadWithFormat()" class="action-btn"
+                        style="background: #eab308; margin-right: 10px;">
+                        📥 Download Current Problems (Backup)
+                    </button>
+                </div>
+
+                <div
+                    style="display: flex; gap: 10px; align-items: center; background: #f9f9f9; padding: 15px; border-radius: 6px;">
+                    <input type="file" id="problemsFile" accept=".json" style="flex: 1;">
+                    <button onclick="uploadProblems()" class="action-btn" style="background: #2563eb;">
+                        📤 Upload New Problems
+                    </button>
+                </div>
+                <div id="uploadStatus" style="margin-top: 10px; font-weight: bold;"></div>
+            </div>
+
+            <h3 style="margin-top: 30px;">Current Problem Set Preview</h3>
+            <pre id="problemsPreview"
+                style="background: #f4f4f4; padding: 15px; border-radius: 6px; max-height: 400px; overflow-y: auto; font-size: 13px; color: #333;">Loading...</pre>
         </div>
     </div>
 
@@ -372,13 +405,11 @@
             const queryString = params.toString();
 
             await Promise.all([
-                loadLeaderboard(queryString), // You can implement filtering for leaderboard if needed, usually global
+                loadLeaderboard(queryString),
                 loadSubmissions(queryString),
-                loadViolations(), // Violations usually global or filtered? Request was for "Download student list", so export affects this.
+                loadViolations(),
+                loadProblemsPreview()
             ]);
-            // Calculate stats after loading data - handled inside load functions actually, but stats might need global filter?
-            // User asked: "Enhance admin panel to: Filter students by... Allow admin to Download student list"
-            // So Filter mainly affects Export and Submissions List presumably.
         }
 
         async function loadLeaderboard(qs) {
@@ -564,6 +595,86 @@
                 console.error('Reset error:', error);
                 alert('Error connecting to server.');
             }
+        }
+
+        // Problems Management
+        async function loadProblemsPreview() {
+            try {
+                // Determine the correct API endpoint for fetching problems
+                // Using judge route as it is public-ish/student facing, but protected by authFetch here
+                const response = await authFetch('/api/judge/problems');
+                const data = await response.json();
+                document.getElementById('problemsPreview').textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('problemsPreview').textContent = 'Error loading preview.';
+            }
+        }
+
+        async function downloadWithFormat() {
+            try {
+                const response = await authFetch('/api/judge/problems');
+                const data = await response.json();
+
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `problems_backup_${new Date().toISOString().slice(0, 10)}.json`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            } catch (error) {
+                alert('Failed to download problems.');
+            }
+        }
+
+        async function uploadProblems() {
+            const fileInput = document.getElementById('problemsFile');
+            const statusDiv = document.getElementById('uploadStatus');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert('Please select a JSON file first.');
+                return;
+            }
+
+            statusDiv.textContent = 'Reading file...';
+            statusDiv.style.color = 'blue';
+
+            const reader = new FileReader();
+            reader.onload = async function (e) {
+                try {
+                    const jsonContent = JSON.parse(e.target.result);
+
+                    if (!Array.isArray(jsonContent)) {
+                        throw new Error('File must contain an Array of problem objects.');
+                    }
+
+                    statusDiv.textContent = 'Uploading...';
+
+                    const response = await authFetch('/api/admin/problems', {
+                        method: 'POST',
+                        body: JSON.stringify(jsonContent)
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        statusDiv.textContent = `✅ Success! ${result.count || ''} problems updated.`;
+                        statusDiv.style.color = 'green';
+                        loadProblemsPreview(); // Refresh preview
+                        fileInput.value = ''; // Clear input
+                    } else {
+                        throw new Error(result.error || 'Upload failed');
+                    }
+
+                } catch (error) {
+                    console.error(error);
+                    statusDiv.textContent = '❌ Error: ' + error.message;
+                    statusDiv.style.color = 'red';
+                }
+            };
+            reader.readAsText(file);
         }
 
         // Initial Load

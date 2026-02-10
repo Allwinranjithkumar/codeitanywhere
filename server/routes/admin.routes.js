@@ -7,6 +7,41 @@ const { authenticateToken, verifyAdmin } = require('../middleware/auth.middlewar
 router.use(authenticateToken);
 router.use(verifyAdmin); // Assuming this middleware checks for role === 'admin'
 
+const fs = require('fs').promises;
+const path = require('path');
+const problemService = require('../services/problemService');
+
+// Update problems
+router.post('/problems', async (req, res) => {
+    try {
+        const problems = req.body;
+
+        if (!Array.isArray(problems)) {
+            return res.status(400).json({ error: 'Invalid format. Expected an array of problems.' });
+        }
+
+        // Validate basic structure (optional but recommended)
+        if (problems.length > 0 && (!problems[0].id || !problems[0].title)) {
+            return res.status(400).json({ error: 'Invalid problem structure. Missing id or title.' });
+        }
+
+        const problemsPath = path.join(__dirname, '..', '..', 'problems', 'problems.json');
+
+        // Write to file
+        await fs.writeFile(problemsPath, JSON.stringify(problems, null, 2), 'utf-8');
+
+        // Reload in memory
+        await problemService.loadProblems();
+
+        console.log(`✅ Problems updated by admin: ${problems.length} problems loaded.`);
+        res.json({ message: 'Problems updated successfully', count: problems.length });
+
+    } catch (error) {
+        console.error('Error updating problems:', error);
+        res.status(500).json({ error: 'Failed to update problems' });
+    }
+});
+
 // Get all violations
 router.get('/violations', async (req, res) => {
     try {
