@@ -466,4 +466,29 @@ router.get('/export/marksheet/:className', async (req, res) => {
     }
 });
 
+// Clear all contest data (submissions and violations)
+router.delete('/reset', async (req, res) => {
+    try {
+        console.log('⚠️  Reset data requested by admin');
+
+        // Use a transaction
+        await db.query('BEGIN');
+
+        // Delete submissions
+        await db.query('DELETE FROM submissions');
+
+        // Delete violations
+        await db.query('DELETE FROM violations');
+
+        await db.query('COMMIT');
+
+        console.log('✅ All contest data cleared');
+        res.json({ message: 'All contest data (submissions & violations) has been cleared successfully.' });
+    } catch (error) {
+        await db.query('ROLLBACK');
+        console.error('Reset data error:', error);
+        res.status(500).json({ error: 'Failed to clear data' });
+    }
+});
+
 module.exports = router;
