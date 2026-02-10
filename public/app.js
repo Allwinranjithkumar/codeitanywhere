@@ -109,22 +109,37 @@ document.addEventListener('contextmenu', preventRightClick);
 
 // Timer
 function startTimer() {
+    const DURATION = 3600 * 1000; // 60 minutes in milliseconds
+    let endTime = localStorage.getItem('contestEndTime');
+
+    if (!endTime) {
+        endTime = Date.now() + DURATION;
+        localStorage.setItem('contestEndTime', endTime);
+    }
+
     timerInterval = setInterval(() => {
-        timeRemaining--;
+        const remainingMs = endTime - Date.now();
+        timeRemaining = Math.floor(remainingMs / 1000);
+
+        if (timeRemaining < 0) {
+            timeRemaining = 0;
+            clearInterval(timerInterval);
+            autoSubmitAll();
+            alert('Time is up! Your solutions have been submitted automatically.');
+            // Optional: Clear end time so next login starts fresh? 
+            // localStorage.removeItem('contestEndTime'); 
+            return;
+        }
 
         const minutes = Math.floor(timeRemaining / 60);
         const seconds = timeRemaining % 60;
         const timerElement = document.getElementById('timer');
-        timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        if (timerElement) {
+            timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 
-        if (timeRemaining <= 300) { // 5 minutes warning
-            timerElement.classList.add('warning');
-        }
-
-        if (timeRemaining <= 0) {
-            clearInterval(timerInterval);
-            autoSubmitAll();
-            alert('Time is up! Your solutions have been submitted automatically.');
+            if (timeRemaining <= 300) { // 5 minutes warning
+                timerElement.classList.add('warning');
+            }
         }
     }, 1000);
 }
@@ -514,6 +529,7 @@ window.logout = function () {
     if (confirm('Are you sure you want to log out?')) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
+        localStorage.removeItem('contestEndTime');
         window.location.href = '/';
     }
 };
