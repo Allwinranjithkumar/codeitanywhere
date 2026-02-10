@@ -64,6 +64,36 @@ function preventRightClick(e) {
     return false;
 }
 
+function detectTabSwitch() {
+    violations++;
+    document.getElementById('violationCount').textContent = violations;
+
+    // Log violation to server
+    logViolation('tab_switch');
+
+    // Show warning banner
+    const banner = document.getElementById('warningBanner');
+    banner.style.display = 'block';
+
+    if (violations >= 5) {
+        showWarning('Critical: 5+ Tab Switches! Marked as "Tab Switched".');
+        logViolation('status_tab_switched'); // Explicit status log
+    } else {
+        setTimeout(() => {
+            banner.style.display = 'none';
+        }, 3000);
+    }
+}
+
+function showWarning(message) {
+    const banner = document.getElementById('warningBanner');
+    banner.textContent = '⚠️ ' + message;
+    banner.style.display = 'block';
+    setTimeout(() => {
+        banner.style.display = 'none';
+    }, 3000);
+}
+
 // Detect when user leaves the page
 document.addEventListener('visibilitychange', function () {
     if (document.hidden) {
