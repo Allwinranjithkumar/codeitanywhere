@@ -542,6 +542,30 @@
             } catch (e) { }
         }
 
+        async function resetContestData() {
+            if (!confirm('⚠️ ARE YOU SURE?\n\nThis will DELETE ALL submissions and violation logs for ALL students.\nThis action cannot be undone.\n\nMake sure you have downloaded the reports first.')) {
+                return;
+            }
+
+            if (!confirm('Double Check: Do you really want to wipe the data?')) {
+                return;
+            }
+
+            try {
+                const res = await authFetch('/api/admin/reset', { method: 'DELETE' });
+                const data = await res.json();
+                if (res.ok) {
+                    alert('✅ ' + data.message);
+                    loadData(); // Refresh logs
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Reset error:', error);
+                alert('Error connecting to server.');
+            }
+        }
+
         // Initial Load
         loadData();
     </script>
