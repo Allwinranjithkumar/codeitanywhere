@@ -29,46 +29,39 @@ async function authFetch(url, options = {}) {
 }
 
 // Lockdown features
-function preventCopyPaste(e) {
-    // Log violation as AI Used
-    logViolation('ai_used');
-    showWarning('Warning: Copy-Paste detected! Marked as AI Used.');
-    return false;
-}
+let isInternalCopy = false;
 
-function preventRightClick(e) {
+function handleCopyCut(e) {
+    // Allow copy/cut ONLY from the editor
+    if (e.target.closest('.CodeMirror')) {
+        isInternalCopy = true;
+        // Reset flag after 15 seconds to prevent long-term exploit
+        setTimeout(() => { isInternalCopy = false; }, 15000);
+        return true; // Allow default behavior
+    }
     e.preventDefault();
     return false;
 }
 
-function detectTabSwitch() {
-    violations++;
-    document.getElementById('violationCount').textContent = violations;
-
-    // Log violation to server
-    logViolation('tab_switch');
-
-    // Show warning banner
-    const banner = document.getElementById('warningBanner');
-    banner.style.display = 'block';
-
-    if (violations >= 5) {
-        showWarning('Critical: 5+ Tab Switches! Marked as "Tab Switched".');
-        logViolation('status_tab_switched'); // Explicit status log
-    } else {
-        setTimeout(() => {
-            banner.style.display = 'none';
-        }, 3000);
+function handlePaste(e) {
+    // If it's an internal copy, ALLOW it
+    if (isInternalCopy && e.target.closest('.CodeMirror')) {
+        // Optional: Reset flag? No, user might paste multiple times.
+        return true;
     }
+
+    // Otherwise, block and log violation
+    e.preventDefault();
+    logViolation('ai_used');
+    showWarning('Warning: External Paste detected! Marked as AI Used.');
+    return false;
 }
 
-function showWarning(message) {
-    const banner = document.getElementById('warningBanner');
-    banner.textContent = '⚠️ ' + message;
-    banner.style.display = 'block';
-    setTimeout(() => {
-        banner.style.display = 'none';
-    }, 3000);
+function preventRightClick(e) {
+    // Allow right click in editor? Usually no for strict contests.
+    // Keeping strict right click prevention
+    e.preventDefault();
+    return false;
 }
 
 // Detect when user leaves the page
@@ -78,10 +71,10 @@ document.addEventListener('visibilitychange', function () {
     }
 });
 
-// Prevent copying
-document.addEventListener('copy', preventCopyPaste);
-document.addEventListener('cut', preventCopyPaste);
-document.addEventListener('paste', preventCopyPaste);
+// Prevent copying (Global listeners)
+document.addEventListener('copy', handleCopyCut);
+document.addEventListener('cut', handleCopyCut);
+document.addEventListener('paste', handlePaste);
 document.addEventListener('contextmenu', preventRightClick);
 
 // Timer
