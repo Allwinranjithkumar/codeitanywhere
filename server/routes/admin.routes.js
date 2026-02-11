@@ -10,6 +10,22 @@ router.use(verifyAdmin); // Assuming this middleware checks for role === 'admin'
 const fs = require('fs').promises;
 const path = require('path');
 const problemService = require('../services/problemService');
+const contestState = require('../services/contestState');
+
+// Update contest status
+router.post('/contest/status', async (req, res) => {
+    try {
+        const { active } = req.body;
+        if (typeof active !== 'boolean') {
+            return res.status(400).json({ error: 'Invalid status. Boolean required.' });
+        }
+        const status = contestState.setContestActive(active);
+        res.json({ message: `Contest status updated to ${status ? 'ACTIVE' : 'ENDED'}`, active: status });
+    } catch (error) {
+        console.error('Error updating contest status:', error);
+        res.status(500).json({ error: 'Failed to update contest status' });
+    }
+});
 
 // Update problems
 router.post('/problems', async (req, res) => {

@@ -4,6 +4,15 @@ const db = require('../db');
 const { authenticateToken } = require('../middleware/auth.middleware');
 const problemService = require('../services/problemService');
 const judgeService = require('../services/judgeService');
+const contestState = require('../services/contestState');
+
+// Protect all routes
+router.use(authenticateToken);
+
+// Check contest status
+router.get('/status', (req, res) => {
+    res.json({ active: contestState.isContestActive() });
+});
 
 // Get all problems
 router.get('/problems', authenticateToken, (req, res) => {

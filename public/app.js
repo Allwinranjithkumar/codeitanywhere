@@ -124,10 +124,11 @@ function startTimer() {
         if (timeRemaining < 0) {
             timeRemaining = 0;
             clearInterval(timerInterval);
+            // Clear end time IMMEDIATELY to prevent loop on refresh
+            localStorage.removeItem('contestEndTime');
+
             autoSubmitAll();
             alert('Time is up! Your solutions have been submitted automatically.');
-            // Optional: Clear end time so next login starts fresh? 
-            // localStorage.removeItem('contestEndTime'); 
             return;
         }
 
@@ -162,7 +163,39 @@ function initApp() {
     document.getElementById('contestScreen').classList.remove('contest-hidden');
     initializeEditor();
     loadProblems();
+
+    // Start polling contest status
+    checkContestStatus();
+    setInterval(checkContestStatus, 30000); // Check every 30s
+
     startTimer();
+}
+
+// Poll for contest status
+async function checkContestStatus() {
+    try {
+        const response = await authFetch('/api/judge/status');
+        const data = await response.json();
+        if (data.active === false) {
+            clearInterval(timerInterval); // Stop local timer
+            // Force end test
+            await forceEndTest();
+        }
+    } catch (e) {
+        console.error('Status check failed', e);
+    }
+}
+
+async function forceEndTest() {
+    // Prevent multiple calls
+    if (window.isEndingTest) return;
+    window.isEndingTest = true;
+
+    alert('🛑 The contest has been ended by the admin.\nYour answers will be submitted automatically.');
+
+    await autoSubmitAll();
+    localStorage.removeItem('contestEndTime');
+    window.location.href = '/insights.html';
 }
 
 // Start immediately as we are already authenticated from index.html check
@@ -350,14 +383,14 @@ async function runCode() {
 }
 
 // Submit code
-async function submitCode() {
+async function submitCode(skipConfirm = false) {
     const code = editor.getValue();
     if (!code.trim()) {
-        alert('Please write some code first!');
+        if (!skipConfirm) alert('Please write some code first!');
         return;
     }
 
-    if (!confirm('Are you sure you want to submit this solution?')) {
+    if (!skipConfirm && !confirm('Are you sure you want to submit this solution?')) {
         return;
     }
 
@@ -492,7 +525,7 @@ async function autoSubmitAll() {
         selectProblem(i);
         const code = editor.getValue();
         if (code.trim()) {
-            await submitCode();
+            await submitCode(true);
         }
     }
 }

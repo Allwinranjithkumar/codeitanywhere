@@ -237,6 +237,8 @@
             <button class="action-btn" style="background: #2563eb;" onclick="exportReport()">📥 Download Excel
                 Data</button>
             <button class="action-btn" style="background: #7c3aed;" onclick="syncExcel()">📗 Sync Excel</button>
+            <button class="action-btn" id="contestToggleBtn" style="background: #ef4444;" onclick="toggleContest()">🛑
+                End Contest</button>
         </div>
 
         <div class="tabs">
@@ -594,6 +596,36 @@
             } catch (error) {
                 console.error('Reset error:', error);
                 alert('Error connecting to server.');
+            }
+        }
+
+        // Contest Status Management
+        async function toggleContest() {
+            const btn = document.getElementById('contestToggleBtn');
+            const isEnding = btn.textContent.includes('End');
+            const confirmMsg = isEnding
+                ? '⚠️ Are you sure you want to END the contest?\nAll students will be auto-submitted and redirected to insights.'
+                : 'Are you sure you want to RESUME the contest?';
+
+            if (!confirm(confirmMsg)) return;
+
+            try {
+                const response = await authFetch('/api/admin/contest/status', {
+                    method: 'POST',
+                    body: JSON.stringify({ active: !isEnding })
+                });
+                const data = await response.json();
+
+                if (data.active) {
+                    btn.textContent = '🛑 End Contest';
+                    btn.style.background = '#ef4444';
+                } else {
+                    btn.textContent = '▶️ Resume Contest';
+                    btn.style.background = '#22c55e';
+                }
+                alert(data.message);
+            } catch (error) {
+                alert('Failed to update status');
             }
         }
 
