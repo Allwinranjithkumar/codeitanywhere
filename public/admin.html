@@ -244,10 +244,10 @@
         </div>
 
         <div class="tabs">
-            <button class="tab active" onclick="switchTab('leaderboard')">📊 Leaderboard</button>
-            <button class="tab" onclick="switchTab('submissions')">📝 Submissions</button>
-            <button class="tab" onclick="switchTab('violations')">⚠️ Violations</button>
-            <button class="tab" onclick="switchTab('problems')">🧩 Manage Problems</button>
+            <button class="tab active" onclick="switchTab(event, 'leaderboard')">📊 Leaderboard</button>
+            <button class="tab" onclick="switchTab(event, 'submissions')">📝 Submissions</button>
+            <button class="tab" onclick="switchTab(event, 'violations')">⚠️ Violations</button>
+            <button class="tab" onclick="switchTab(event, 'problems')">🧩 Manage Problems</button>
         </div>
 
         <div id="leaderboard" class="tab-content active">
@@ -374,9 +374,9 @@
             window.location.href = '/';
         }
 
-        function switchTab(tabName) {
+        function switchTab(event, tabName) {
             document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-            event.target.classList.add('active');
+            event.currentTarget.classList.add('active');
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
             document.getElementById(tabName).classList.add('active');
         }
