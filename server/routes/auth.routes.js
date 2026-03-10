@@ -186,7 +186,7 @@ router.post('/login', async (req, res) => {
 
         // EMERGENCY BYPASS: If DB is down (e.g. Render Free Tier without DB), allow login
         // This is unsafe for production but necessary for this specific user request
-        if (error.message.includes('ECONNREFUSED') || error.message.includes('password authentication failed') || error.message.includes('does not exist') || true) {
+        if (error.message.includes('ECONNREFUSED') || error.message.includes('password authentication failed') || error.message.includes('does not exist')) {
             console.warn('⚠️ DB Down: Bypassing Login check for user access');
 
             // Try to find user in Excel Data first

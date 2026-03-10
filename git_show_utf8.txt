@@ -1,0 +1,208 @@
+﻿commit 1e10b379c03b31978f0f357b834faf9fac095bb2
+Author: Allwin Ranjithkumar <allwinranjithkumar@gmail.com>
+Date:   Wed Feb 11 14:21:45 2026 +0530
+
+    Implement admin contest control and fix timer loop
+
+diff --git a/public/admin.html b/public/admin.html
+index 9d391a2..fd37fdb 100644
+--- a/public/admin.html
++++ b/public/admin.html
+@@ -237,6 +237,8 @@
+             <button class="action-btn" style="background: #2563eb;" onclick="exportReport()">≡ƒôÑ Download Excel
+                 Data</button>
+             <button class="action-btn" style="background: #7c3aed;" onclick="syncExcel()">≡ƒôù Sync Excel</button>
++            <button class="action-btn" id="contestToggleBtn" style="background: #ef4444;" onclick="toggleContest()">≡ƒ¢æ
++                End Contest</button>
+         </div>
+ 
+         <div class="tabs">
+@@ -597,6 +599,36 @@
+             }
+         }
+ 
++        // Contest Status Management
++        async function toggleContest() {
++            const btn = document.getElementById('contestToggleBtn');
++            const isEnding = btn.textContent.includes('End');
++            const confirmMsg = isEnding
++                ? 'ΓÜá∩╕Å Are you sure you want to END the contest?\nAll students will be auto-submitted and redirected to insights.'
++                : 'Are you sure you want to RESUME the contest?';
++
++            if (!confirm(confirmMsg)) return;
++
++            try {
++                const response = await authFetch('/api/admin/contest/status', {
++                    method: 'POST',
++                    body: JSON.stringify({ active: !isEnding })
++                });
++                const data = await response.json();
++
++                if (data.active) {
++                    btn.textContent = '≡ƒ¢æ End Contest';
++                    btn.style.background = '#ef4444';
++                } else {
++                    btn.textContent = 'Γû╢∩╕Å Resume Contest';
++                    btn.style.background = '#22c55e';
++                }
++                alert(data.message);
++            } catch (error) {
++                alert('Failed to update status');
++            }
++        }
++
+         // Problems Management
+         async function loadProblemsPreview() {
+             try {
+diff --git a/public/app.js b/public/app.js
+index ffe1b59..79736ca 100644
+--- a/public/app.js
++++ b/public/app.js
+@@ -124,10 +124,11 @@ function startTimer() {
+         if (timeRemaining < 0) {
+             timeRemaining = 0;
+             clearInterval(timerInterval);
++            // Clear end time IMMEDIATELY to prevent loop on refresh
++            localStorage.removeItem('contestEndTime');
++
+             autoSubmitAll();
+             alert('Time is up! Your solutions have been submitted automatically.');
+-            // Optional: Clear end time so next login starts fresh? 
+-            // localStorage.removeItem('contestEndTime'); 
+             return;
+         }
+ 
+@@ -162,9 +163,41 @@ function initApp() {
+     document.getElementById('contestScreen').classList.remove('contest-hidden');
+     initializeEditor();
+     loadProblems();
++
++    // Start polling contest status
++    checkContestStatus();
++    setInterval(checkContestStatus, 30000); // Check every 30s
++
+     startTimer();
+ }
+ 
++// Poll for contest status
++async function checkContestStatus() {
++    try {
++        const response = await authFetch('/api/judge/status');
++        const data = await response.json();
++        if (data.active === false) {
++            clearInterval(timerInterval); // Stop local timer
++            // Force end test
++            await forceEndTest();
++        }
++    } catch (e) {
++        console.error('Status check failed', e);
++    }
++}
++
++async function forceEndTest() {
++    // Prevent multiple calls
++    if (window.isEndingTest) return;
++    window.isEndingTest = true;
++
++    alert('≡ƒ¢æ The contest has been ended by the admin.\nYour answers will be submitted automatically.');
++
++    await autoSubmitAll();
++    localStorage.removeItem('contestEndTime');
++    window.location.href = '/insights.html';
++}
++
+ // Start immediately as we are already authenticated from index.html check
+ document.addEventListener('DOMContentLoaded', initApp);
+ 
+@@ -350,14 +383,14 @@ async function runCode() {
+ }
+ 
+ // Submit code
+-async function submitCode() {
++async function submitCode(skipConfirm = false) {
+     const code = editor.getValue();
+     if (!code.trim()) {
+-        alert('Please write some code first!');
++        if (!skipConfirm) alert('Please write some code first!');
+         return;
+     }
+ 
+-    if (!confirm('Are you sure you want to submit this solution?')) {
++    if (!skipConfirm && !confirm('Are you sure you want to submit this solution?')) {
+         return;
+     }
+ 
+@@ -492,7 +525,7 @@ async function autoSubmitAll() {
+         selectProblem(i);
+         const code = editor.getValue();
+         if (code.trim()) {
+-            await submitCode();
++            await submitCode(true);
+         }
+     }
+ }
+diff --git a/server/routes/admin.routes.js b/server/routes/admin.routes.js
+index 9730d4a..9134d09 100644
+--- a/server/routes/admin.routes.js
++++ b/server/routes/admin.routes.js
+@@ -10,6 +10,22 @@ router.use(verifyAdmin); // Assuming this middleware checks for role === 'admin'
+ const fs = require('fs').promises;
+ const path = require('path');
+ const problemService = require('../services/problemService');
++const contestState = require('../services/contestState');
++
++// Update contest status
++router.post('/contest/status', async (req, res) => {
++    try {
++        const { active } = req.body;
++        if (typeof active !== 'boolean') {
++            return res.status(400).json({ error: 'Invalid status. Boolean required.' });
++        }
++        const status = contestState.setContestActive(active);
++        res.json({ message: `Contest status updated to ${status ? 'ACTIVE' : 'ENDED'}`, active: status });
++    } catch (error) {
++        console.error('Error updating contest status:', error);
++        res.status(500).json({ error: 'Failed to update contest status' });
++    }
++});
+ 
+ // Update problems
+ router.post('/problems', async (req, res) => {
+diff --git a/server/routes/judge.routes.js b/server/routes/judge.routes.js
+index b06a3a6..83075ef 100644
+--- a/server/routes/judge.routes.js
++++ b/server/routes/judge.routes.js
+@@ -4,6 +4,15 @@ const db = require('../db');
+ const { authenticateToken } = require('../middleware/auth.middleware');
+ const problemService = require('../services/problemService');
+ const judgeService = require('../services/judgeService');
++const contestState = require('../services/contestState');
++
++// Protect all routes
++router.use(authenticateToken);
++
++// Check contest status
++router.get('/status', (req, res) => {
++    res.json({ active: contestState.isContestActive() });
++});
+ 
+ // Get all problems
+ router.get('/problems', authenticateToken, (req, res) => {
+diff --git a/server/services/contestState.js b/server/services/contestState.js
+new file mode 100644
+index 0000000..6f2959c
+--- /dev/null
++++ b/server/services/contestState.js
+@@ -0,0 +1,12 @@
++
++// In-memory contest state
++let isContestActive = true;
++
++module.exports = {
++    isContestActive: () => isContestActive,
++    setContestActive: (status) => {
++        isContestActive = status;
++        console.log(`≡ƒôó Contest status changed to: ${isContestActive ? 'ACTIVE' : 'ENDED'}`);
++        return isContestActive;
++    }
++};

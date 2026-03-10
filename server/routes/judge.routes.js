@@ -11,7 +11,10 @@ router.use(authenticateToken);
 
 // Check contest status
 router.get('/status', (req, res) => {
-    res.json({ active: contestState.isContestActive() });
+    res.json({
+        active: contestState.isContestActive(),
+        antiCheat: contestState.isAntiCheatActive()
+    });
 });
 
 // Get all problems
@@ -33,7 +36,8 @@ router.post('/run', authenticateToken, async (req, res) => {
         const results = await judgeService.testCode(code, language, problem.functionName, sampleCases);
         res.json(results);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Run error:', error.message);
+        res.status(500).json({ error: 'An internal server error occurred during code evaluation.' });
     }
 });
 
@@ -112,8 +116,8 @@ router.post('/submit', authenticateToken, async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Submission error:', error);
-        res.status(500).json({ error: error.message });
+        console.error('Submission error:', error.message);
+        res.status(500).json({ error: 'An internal server error occurred during code evaluation.' });
     }
 });
 

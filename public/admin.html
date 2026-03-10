@@ -237,6 +237,8 @@
             <button class="action-btn" style="background: #2563eb;" onclick="exportReport()">📥 Download Excel
                 Data</button>
             <button class="action-btn" style="background: #7c3aed;" onclick="syncExcel()">📗 Sync Excel</button>
+            <button class="action-btn" id="antiCheatToggleBtn" style="background: #eab308;"
+                onclick="toggleAntiCheat()">🛡️ Disable Anti-Cheat</button>
             <button class="action-btn" id="contestToggleBtn" style="background: #ef4444;" onclick="toggleContest()">🛑
                 End Contest</button>
         </div>
@@ -626,6 +628,36 @@
                 alert(data.message);
             } catch (error) {
                 alert('Failed to update status');
+            }
+        }
+
+        // Anti-Cheat Status Management
+        async function toggleAntiCheat() {
+            const btn = document.getElementById('antiCheatToggleBtn');
+            const isDisabling = btn.textContent.includes('Disable');
+            const confirmMsg = isDisabling
+                ? '⚠️ Are you sure you want to DISABLE Anti-Cheat?\nStudents will be able to copy-paste and switch tabs without logging violations.'
+                : 'Are you sure you want to ENABLE Anti-Cheat?';
+
+            if (!confirm(confirmMsg)) return;
+
+            try {
+                const response = await authFetch('/api/admin/anti-cheat/status', {
+                    method: 'POST',
+                    body: JSON.stringify({ active: !isDisabling })
+                });
+                const data = await response.json();
+
+                if (data.active) {
+                    btn.textContent = '🛡️ Disable Anti-Cheat';
+                    btn.style.background = '#eab308';
+                } else {
+                    btn.textContent = '🛡️ Enable Anti-Cheat';
+                    btn.style.background = '#22c55e';
+                }
+                alert(data.message);
+            } catch (error) {
+                alert('Failed to update anti-cheat status');
             }
         }
 

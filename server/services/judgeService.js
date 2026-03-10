@@ -197,17 +197,21 @@ function runCppCompilation(code, functionName, testCase, language = 'cpp') {
         const declarations = [];
         const funcArgs = [];
 
+        // Helper: check if a value or any array element is a float
+        const isFloat = (v) => typeof v === 'number' && (!Number.isInteger(v) || String(v).includes('.'));
+        const arrayHasFloat = (arr) => arr.some(el => isFloat(el));
+
         for (const [key, value] of Object.entries(testCase.input)) {
             if (Array.isArray(value)) {
+                const useDouble = arrayHasFloat(value);
+                const cType = useDouble ? 'double' : 'int';
                 if (isC) {
-                    // C-style array: int nums[] = {1, 2, 3};
-                    declarations.push(`int ${key}[] = {${value.join(',')}};`);
+                    declarations.push(`${cType} ${key}[] = {${value.join(',')}};`);
                     declarations.push(`int ${key}Size = ${value.length};`);
                     funcArgs.push(key);
-                    funcArgs.push(`${key}Size`); // Pass size for arrays in C usually
+                    funcArgs.push(`${key}Size`);
                 } else {
-                    // C++ vector
-                    declarations.push(`vector<int> ${key} = {${value.join(',')}};`);
+                    declarations.push(`vector<${cType}> ${key} = {${value.join(',')}};`);
                     funcArgs.push(key);
                 }
             } else if (typeof value === 'string') {
@@ -218,7 +222,8 @@ function runCppCompilation(code, functionName, testCase, language = 'cpp') {
                 }
                 funcArgs.push(key);
             } else if (typeof value === 'number') {
-                declarations.push(`int ${key} = ${value};`);
+                const cType = isFloat(value) ? 'double' : 'int';
+                declarations.push(`${cType} ${key} = ${value};`);
                 funcArgs.push(key);
             } else if (typeof value === 'boolean') {
                 declarations.push(`${isC ? 'int' : 'bool'} ${key} = ${value ? 1 : 0};`);
@@ -228,7 +233,12 @@ function runCppCompilation(code, functionName, testCase, language = 'cpp') {
 
         let testCode;
 
+        // Detect if expected output is a float
+        const outputIsFloat = typeof testCase.output === 'number' && (!Number.isInteger(testCase.output) || String(testCase.output).includes('.'));
+        const cResultType = outputIsFloat ? 'double' : 'int';
+
         if (isC) {
+            const cFormat = outputIsFloat ? '"%.4f\\n"' : '"%d\\n"';
             testCode = `
 #include <stdio.h>
 #include <stdlib.h>
@@ -242,9 +252,9 @@ int main() {
     ${declarations.join('\n    ')}
     
     // Call function
-    int result = ${functionName}(${funcArgs.join(', ')});
+    ${cResultType} result = ${functionName}(${funcArgs.join(', ')});
     
-    printf("%d\\n", result);
+    printf(${cFormat}, result);
     
     return 0;
 }
@@ -283,6 +293,7 @@ int main() {
     // Call function
     auto result = solution.${functionName}(${funcArgs.join(', ')});
     
+    ${outputIsFloat ? 'cout << fixed; cout.precision(4);' : ''}
     cout << result << endl;
     
     return 0;
@@ -306,7 +317,8 @@ int main() {
                         reject(new Error(stderr || error.message));
                     } else {
                         try {
-                            const result = parseInt(stdout.trim());
+                            const trimmed = stdout.trim();
+                            const result = trimmed.includes('.') ? parseFloat(trimmed) : parseInt(trimmed);
                             resolve(result);
                         } catch (e) {
                             reject(new Error('Invalid output format'));
@@ -321,6 +333,10 @@ int main() {
 // Deep comparison of arrays/objects
 function deepEqual(a, b) {
     if (a === b) return true;
+    // Float tolerance for numeric comparison
+    if (typeof a === 'number' && typeof b === 'number') {
+        return Math.abs(a - b) < 0.001;
+    }
     if (a == null || b == null) return false;
     if (Array.isArray(a) && Array.isArray(b)) {
         if (a.length !== b.length) return false;

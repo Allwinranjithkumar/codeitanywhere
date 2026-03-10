@@ -30,8 +30,11 @@ async function authFetch(url, options = {}) {
 
 // Lockdown features
 let isInternalCopy = false;
+let isAntiCheatEnabled = true;
 
 function handleCopyCut(e) {
+    if (!isAntiCheatEnabled) return true;
+
     // Allow copy/cut ONLY from the editor
     if (e.target.closest('.CodeMirror')) {
         isInternalCopy = true;
@@ -44,6 +47,7 @@ function handleCopyCut(e) {
 }
 
 function handlePaste(e) {
+    if (!isAntiCheatEnabled) return true;
     // If it's an internal copy, ALLOW it
     if (isInternalCopy && e.target.closest('.CodeMirror')) {
         // Optional: Reset flag? No, user might paste multiple times.
@@ -58,6 +62,7 @@ function handlePaste(e) {
 }
 
 function preventRightClick(e) {
+    if (!isAntiCheatEnabled) return true;
     // Allow right click in editor? Usually no for strict contests.
     // Keeping strict right click prevention
     e.preventDefault();
@@ -65,6 +70,8 @@ function preventRightClick(e) {
 }
 
 function detectTabSwitch() {
+    if (!isAntiCheatEnabled) return;
+
     violations++;
     document.getElementById('violationCount').textContent = violations;
 
@@ -176,6 +183,11 @@ async function checkContestStatus() {
     try {
         const response = await authFetch('/api/judge/status');
         const data = await response.json();
+
+        if (data.antiCheat !== undefined) {
+            isAntiCheatEnabled = data.antiCheat;
+        }
+
         if (data.active === false) {
             clearInterval(timerInterval); // Stop local timer
             // Force end test
@@ -322,7 +334,14 @@ function selectProblem(index) {
             <h2 class="problem-title">Problem ${index + 1}: ${p.title}</h2>
             <div class="problem-description">${p.description}</div>
             <div class="test-cases">
-                <!-- Sample cases could be here -->
+                <h3>Sample Test Cases</h3>
+                ${(p.testCases || []).slice(0, 2).map((tc, i) => `
+                    <div class="test-case" style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 10px;">
+                        <strong>Test Case ${i + 1}:</strong>
+                        <div style="margin-top: 6px;"><small style="opacity: 0.7;">Input:</small> <code style="color: #4fc3f7;">${JSON.stringify(tc.input)}</code></div>
+                        <div style="margin-top: 4px;"><small style="opacity: 0.7;">Expected Output:</small> <code style="color: #81c784;">${JSON.stringify(tc.output)}</code></div>
+                    </div>
+                `).join('')}
             </div>
         </div>
     `;
