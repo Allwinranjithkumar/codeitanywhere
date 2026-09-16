@@ -1,7 +1,26 @@
-node_modules
+node_modules/
+
+# Environment Variables — NEVER commit .env to git
+# Rotate DB_PASSWORD and JWT_SECRET if they were previously committed
+.env
+
+# Compiled temp files from judge
 Solution_*.cpp
+Solution_*.c
+Solution_*.java
 Solution_*.exe
 Solution_*
-*.log
+temp_*.py
+
+# OS / Editor
 .DS_Store
-.vscode
+.vscode/
+*.log
+*.swp
+
+# Excel data files (contain student PII)
+data/*.xlsx
+
+# Build artifacts
+dist/
+scratch/

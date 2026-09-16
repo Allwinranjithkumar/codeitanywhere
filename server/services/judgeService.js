@@ -1,391 +1,389 @@
-const { VM } = require('vm2');
+/**
+ * judgeService.js — Secure code execution engine
+ *
+ * Security measures:
+ * - Temp files written to OS temp dir (not CWD) with unique UUIDs
+ * - Guaranteed cleanup in finally blocks — no temp file leaks
+ * - Strict per-execution timeouts (5s Python/JS, 8s C/C++/Java)
+ * - maxBuffer limited to prevent memory exhaustion
+ * - Language validated server-side before execution
+ * - JavaScript runs via Node.js child_process (vm2 removed — was deprecated with known escapes)
+ * - Java Gson dependency removed (was broken in most environments)
+ * - Execution queue limits concurrent processes to protect the host
+ *
+ * NOTE: For production with many users, migrate to Docker-isolated execution.
+ * This implementation provides reasonable limits for a college-level deployment.
+ */
+
 const { exec } = require('child_process');
-const fs = require('fs').promises;
-const path = require('path');
+const fs        = require('fs').promises;
+const os        = require('os');
+const path      = require('path');
+const { v4: uuidv4 } = require('uuid');
 
-// Execute Python function
-function executePythonFunction(code, functionName, testCase) {
-    return new Promise((resolve, reject) => {
-        const tempFile = `temp_${Date.now()}.py`;
+const SUPPORTED_LANGUAGES = ['python', 'javascript', 'cpp', 'c', 'java'];
+const MAX_CONCURRENT       = 5;    // Max parallel executions
+const TIMEOUT_PYTHON_JS    = 5000; // ms
+const TIMEOUT_COMPILED     = 8000; // ms
+const MAX_OUTPUT_BUFFER    = 512 * 1024; // 512 KB
 
-        // Build test code
-        const args = Object.values(testCase.input).map(val => JSON.stringify(val)).join(', ');
-        const testCode = `
-import json
-${code}
+let activeExecutions = 0;
 
-# Call function and print result
-result = ${functionName}(${args})
-print(json.dumps(result))
-`;
+// ──────────────────────────────────────────────
+// Unique Temp Directory per Execution
+// ──────────────────────────────────────────────
 
-        fs.writeFile(tempFile, testCode, 'utf-8')
-            .then(() => {
-                exec(`python3 ${tempFile}`, {
-                    timeout: 5000,
-                    maxBuffer: 1024 * 1024
-                }, (error, stdout, stderr) => {
-                    fs.unlink(tempFile).catch(() => { });
-
-                    if (error) {
-                        if (error.killed) {
-                            reject(new Error('Time Limit Exceeded'));
-                        } else {
-                            reject(new Error(stderr || error.message));
-                        }
-                    } else {
-                        try {
-                            const result = JSON.parse(stdout.trim());
-                            resolve(result);
-                        } catch (e) {
-                            reject(new Error('Invalid output format'));
-                        }
-                    }
-                });
-            })
-            .catch(reject);
-    });
+async function createTempDir() {
+    const dir = path.join(os.tmpdir(), `judge_${uuidv4()}`);
+    await fs.mkdir(dir, { recursive: true });
+    return dir;
 }
 
-// Execute JavaScript function
-function executeJavaScriptFunction(code, functionName, testCase) {
-    return new Promise((resolve, reject) => {
-        try {
-            const vm = new VM({
-                timeout: 5000,
-                sandbox: {}
-            });
-
-            // Run the code and call the function
-            const result = vm.run(`
-                ${code}
-                ${functionName}(${Object.values(testCase.input).map(v => JSON.stringify(v)).join(', ')})
-            `);
-
-            resolve(result);
-        } catch (error) {
-            reject(error);
-        }
-    });
-}
-
-// Execute Java function
-function executeJavaFunction(code, functionName, testCase) {
-    return new Promise((resolve, reject) => {
-        const tempFile = `Solution_${Date.now()}`;
-
-        // Build test wrapper
-        const params = Object.keys(testCase.input);
-        const args = Object.values(testCase.input).map((val, i) => {
-            if (Array.isArray(val)) {
-                if (typeof val[0] === 'number') {
-                    return `new int[]{${val.join(',')}}`;
-                } else if (typeof val[0] === 'string') {
-                    return `new String[]{${val.map(s => `"${s}"`).join(',')}}`;
-                }
-            } else if (typeof val === 'number') {
-                return val.toString();
-            } else if (typeof val === 'string') {
-                return `"${val}"`;
-            } else if (typeof val === 'boolean') {
-                return val.toString();
-            }
-            return val;
-        }).join(', ');
-
-        const testCode = `
-import com.google.gson.Gson;
-
-${code}
-
-public class TestRunner {
-    public static void main(String[] args) {
-        Solution solution = new Solution();
-        Object result = solution.${functionName}(${args});
-        Gson gson = new Gson();
-        System.out.println(gson.toJson(result));
+async function cleanupDir(dir) {
+    try {
+        await fs.rm(dir, { recursive: true, force: true });
+    } catch (_) {
+        // Best-effort cleanup — log but don't crash
     }
 }
-`;
 
-        fs.writeFile(`${tempFile}.java`, testCode, 'utf-8')
-            .then(() => {
-                exec(`javac ${tempFile}.java && java TestRunner`, {
-                    timeout: 10000,
-                    maxBuffer: 1024 * 1024
-                }, (error, stdout, stderr) => {
-                    fs.unlink(`${tempFile}.java`).catch(() => { });
-                    fs.unlink('TestRunner.class').catch(() => { });
-                    fs.unlink('Solution.class').catch(() => { });
+// ──────────────────────────────────────────────
+// Shell Execution Helper
+// ──────────────────────────────────────────────
 
-                    if (error) {
-                        reject(new Error(stderr || error.message));
-                    } else {
-                        try {
-                            const result = JSON.parse(stdout.trim());
-                            resolve(result);
-                        } catch (e) {
-                            reject(new Error('Invalid output format'));
-                        }
-                    }
-                });
-            })
-            .catch(reject);
+function runCommand(cmd, options) {
+    return new Promise((resolve, reject) => {
+        exec(cmd, options, (error, stdout, stderr) => {
+            if (error) {
+                if (error.killed || error.signal === 'SIGTERM') {
+                    reject(new Error('Time Limit Exceeded'));
+                } else {
+                    reject(new Error(stderr || error.message));
+                }
+            } else {
+                resolve(stdout);
+            }
+        });
     });
 }
 
-// Global Execution Queue
-const executionQueue = [];
-let activeExecutions = 0;
-const MAX_CONCURRENT_EXECUTIONS = 5; // Safe limit for Render Free Tier (0.1 CPU)
+// ──────────────────────────────────────────────
+// Python Execution
+// ──────────────────────────────────────────────
 
-// Process queue
-async function processExecutionQueue() {
-    if (activeExecutions >= MAX_CONCURRENT_EXECUTIONS || executionQueue.length === 0) return;
+async function executePython(code, functionName, testCase) {
+    const tempDir  = await createTempDir();
+    const tempFile = path.join(tempDir, 'solution.py');
 
-    activeExecutions++;
-    const { code, language, functionName, testCase, resolve, reject } = executionQueue.shift();
+    const args = Object.values(testCase.input)
+        .map(v => JSON.stringify(v))
+        .join(', ');
+
+    const testCode = `import json\nimport sys\n\n${code}\n\ntry:\n    result = ${functionName}(${args})\n    print(json.dumps(result))\nexcept Exception as e:\n    print(json.dumps({"__error__": str(e)}), file=sys.stderr)\n    sys.exit(1)\n`;
 
     try {
-        let result;
-        // Dispatch to specific handlers based on language
-        switch (language) {
-            case 'python':
-                result = await executePythonFunction(code, functionName, testCase);
-                break;
-            case 'javascript':
-                result = await executeJavaScriptFunction(code, functionName, testCase);
-                break;
-            case 'java':
-                result = await executeJavaFunction(code, functionName, testCase);
-                break;
-            case 'cpp':
-                result = await runCppCompilation(code, functionName, testCase, 'cpp');
-                break;
-            case 'c':
-                result = await runCppCompilation(code, functionName, testCase, 'c');
-                break;
-            default:
-                throw new Error('Unsupported language');
-        }
-        resolve(result);
-    } catch (error) {
-        reject(error);
+        await fs.writeFile(tempFile, testCode, 'utf-8');
+        const stdout = await runCommand(`python3 "${tempFile}"`, {
+            timeout: TIMEOUT_PYTHON_JS,
+            maxBuffer: MAX_OUTPUT_BUFFER,
+            cwd: tempDir
+        });
+        return JSON.parse(stdout.trim());
     } finally {
-        activeExecutions--;
-        processExecutionQueue(); // Process next item
+        await cleanupDir(tempDir);
     }
 }
 
-// Main Entry Point: Enqueue execution request
-function executeCode(code, language, functionName, testCase) {
-    return new Promise((resolve, reject) => {
-        executionQueue.push({ code, language, functionName, testCase, resolve, reject });
-        processExecutionQueue();
-    });
+// ──────────────────────────────────────────────
+// JavaScript Execution (via Node.js child_process — vm2 removed)
+// ──────────────────────────────────────────────
+
+async function executeJavaScript(code, functionName, testCase) {
+    const tempDir  = await createTempDir();
+    const tempFile = path.join(tempDir, 'solution.js');
+
+    const args = Object.values(testCase.input)
+        .map(v => JSON.stringify(v))
+        .join(', ');
+
+    const testCode = `
+'use strict';
+${code}
+
+try {
+    const result = ${functionName}(${args});
+    process.stdout.write(JSON.stringify(result) + '\\n');
+} catch (e) {
+    process.stderr.write(JSON.stringify({ __error__: e.message }) + '\\n');
+    process.exit(1);
+}
+`;
+
+    try {
+        await fs.writeFile(tempFile, testCode, 'utf-8');
+        const stdout = await runCommand(`node "${tempFile}"`, {
+            timeout: TIMEOUT_PYTHON_JS,
+            maxBuffer: MAX_OUTPUT_BUFFER,
+            cwd: tempDir
+        });
+        return JSON.parse(stdout.trim());
+    } finally {
+        await cleanupDir(tempDir);
+    }
 }
 
-// Actual Compilation Logic for C/C++
-function runCppCompilation(code, functionName, testCase, language = 'cpp') {
-    return new Promise((resolve, reject) => {
-        const tempFile = `Solution_${Date.now()}`;
-        const isC = language === 'c';
-        const fileExt = isC ? 'c' : 'cpp';
-        const compiler = isC ? 'gcc' : 'g++';
+// ──────────────────────────────────────────────
+// C / C++ Execution
+// ──────────────────────────────────────────────
 
-        // Dynamically build argument declarations and calling signature
-        const declarations = [];
-        const funcArgs = [];
+async function executeCpp(code, functionName, testCase, lang = 'cpp') {
+    const tempDir  = await createTempDir();
+    const isC      = lang === 'c';
+    const ext      = isC ? 'c' : 'cpp';
+    const compiler = isC ? 'gcc' : 'g++';
+    const srcFile  = path.join(tempDir, `solution.${ext}`);
+    const binFile  = path.join(tempDir, 'solution');
 
-        // Helper: check if a value or any array element is a float
-        const isFloat = (v) => typeof v === 'number' && (!Number.isInteger(v) || String(v).includes('.'));
-        const arrayHasFloat = (arr) => arr.some(el => isFloat(el));
+    // Build typed argument declarations
+    const isFloat      = v => typeof v === 'number' && !Number.isInteger(v);
+    const arrayHasFloat = arr => arr.some(el => isFloat(el));
 
-        for (const [key, value] of Object.entries(testCase.input)) {
-            if (Array.isArray(value)) {
-                const useDouble = arrayHasFloat(value);
-                const cType = useDouble ? 'double' : 'int';
-                if (isC) {
-                    declarations.push(`${cType} ${key}[] = {${value.join(',')}};`);
-                    declarations.push(`int ${key}Size = ${value.length};`);
-                    funcArgs.push(key);
-                    funcArgs.push(`${key}Size`);
-                } else {
-                    declarations.push(`vector<${cType}> ${key} = {${value.join(',')}};`);
-                    funcArgs.push(key);
-                }
-            } else if (typeof value === 'string') {
-                if (isC) {
-                    declarations.push(`char *${key} = "${value}";`);
-                } else {
-                    declarations.push(`string ${key} = "${value}";`);
-                }
-                funcArgs.push(key);
-            } else if (typeof value === 'number') {
-                const cType = isFloat(value) ? 'double' : 'int';
-                declarations.push(`${cType} ${key} = ${value};`);
-                funcArgs.push(key);
-            } else if (typeof value === 'boolean') {
-                declarations.push(`${isC ? 'int' : 'bool'} ${key} = ${value ? 1 : 0};`);
+    const declarations = [];
+    const funcArgs     = [];
+
+    for (const [key, value] of Object.entries(testCase.input)) {
+        if (Array.isArray(value)) {
+            const useDouble = arrayHasFloat(value);
+            const cType     = useDouble ? 'double' : 'int';
+            if (isC) {
+                declarations.push(`${cType} ${key}[] = {${value.join(',')}};`);
+                declarations.push(`int ${key}Size = ${value.length};`);
+                funcArgs.push(key, `${key}Size`);
+            } else {
+                declarations.push(`vector<${cType}> ${key} = {${value.join(',')}};`);
                 funcArgs.push(key);
             }
+        } else if (typeof value === 'string') {
+            // Sanitize: escape backslashes and quotes to prevent injection
+            const safe = value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+            declarations.push(isC ? `char *${key} = "${safe}";` : `string ${key} = "${safe}";`);
+            funcArgs.push(key);
+        } else if (typeof value === 'number') {
+            const cType = isFloat(value) ? 'double' : 'int';
+            declarations.push(`${cType} ${key} = ${value};`);
+            funcArgs.push(key);
+        } else if (typeof value === 'boolean') {
+            declarations.push(`${isC ? 'int' : 'bool'} ${key} = ${value ? 1 : 0};`);
+            funcArgs.push(key);
         }
-
-        let testCode;
-
-        // Detect if expected output is a float
-        const outputIsFloat = typeof testCase.output === 'number' && (!Number.isInteger(testCase.output) || String(testCase.output).includes('.'));
-        const cResultType = outputIsFloat ? 'double' : 'int';
-
-        if (isC) {
-            const cFormat = outputIsFloat ? '"%.4f\\n"' : '"%d\\n"';
-            testCode = `
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <string.h>
-
-${code}
-
-int main() {
-    // Prepare arguments
-    ${declarations.join('\n    ')}
-    
-    // Call function
-    ${cResultType} result = ${functionName}(${funcArgs.join(', ')});
-    
-    printf(${cFormat}, result);
-    
-    return 0;
-}
-`;
-        } else {
-            testCode = `
-#include <iostream>
-#include <vector>
-#include <map>
-#include <string>
-#include <algorithm>
-#include <sstream>
-
-using namespace std;
-
-// Helper for printing vectors
-template <typename T>
-ostream& operator<<(ostream& os, const vector<T>& v) {
-    os << "[";
-    for (size_t i = 0; i < v.size(); ++i) {
-        os << v[i];
-        if (i != v.size() - 1) os << ",";
     }
-    os << "]";
-    return os;
+
+    const outputIsFloat = isFloat(testCase.output);
+
+    let testCode;
+    if (isC) {
+        const fmt = outputIsFloat ? '"%.6f\\n"' : '"%d\\n"';
+        testCode = `#include <stdio.h>\n#include <stdlib.h>\n#include <stdbool.h>\n#include <string.h>\n\n${code}\n\nint main() {\n    ${declarations.join('\n    ')}\n    ${outputIsFloat ? 'double' : 'int'} result = ${functionName}(${funcArgs.join(', ')});\n    printf(${fmt}, result);\n    return 0;\n}\n`;
+    } else {
+        testCode = `#include <iostream>\n#include <vector>\n#include <string>\n#include <algorithm>\n#include <map>\n#include <set>\n#include <sstream>\nusing namespace std;\n\ntemplate<typename T>\nostream& operator<<(ostream& os, const vector<T>& v) {\n    os << "[";\n    for (size_t i = 0; i < v.size(); ++i) { os << v[i]; if(i!=v.size()-1) os << ","; }\n    return os << "]";\n}\n\n${code}\n\nint main() {\n    Solution solution;\n    ${declarations.join('\n    ')}\n    auto result = solution.${functionName}(${funcArgs.join(', ')});\n    ${outputIsFloat ? 'cout << fixed; cout.precision(6);' : ''}\n    cout << result << endl;\n    return 0;\n}\n`;
+    }
+
+    try {
+        await fs.writeFile(srcFile, testCode, 'utf-8');
+        // Compile
+        await runCommand(`${compiler} -O2 -o "${binFile}" "${srcFile}"`, {
+            timeout: TIMEOUT_COMPILED,
+            maxBuffer: MAX_OUTPUT_BUFFER,
+            cwd: tempDir
+        });
+        // Run
+        const stdout = await runCommand(`"${binFile}"`, {
+            timeout: TIMEOUT_COMPILED,
+            maxBuffer: MAX_OUTPUT_BUFFER,
+            cwd: tempDir
+        });
+        const trimmed = stdout.trim();
+        if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+            return JSON.parse(trimmed);
+        }
+        return trimmed.includes('.') ? parseFloat(trimmed) : parseInt(trimmed, 10);
+    } finally {
+        await cleanupDir(tempDir);
+    }
 }
 
+// ──────────────────────────────────────────────
+// Java Execution (simplified — no Gson dependency)
+// ──────────────────────────────────────────────
+
+async function executeJava(code, functionName, testCase) {
+    const tempDir = await createTempDir();
+    const srcFile = path.join(tempDir, 'Solution.java');
+
+    // Build argument list for Java
+    const javaArgs = Object.values(testCase.input).map(val => {
+        if (Array.isArray(val)) {
+            if (typeof val[0] === 'number') return `new int[]{${val.join(',')}}`;
+            return `new String[]{${val.map(s => `"${String(s).replace(/"/g, '\\"')}"`).join(',')}}`;
+        } else if (typeof val === 'string') {
+            return `"${val.replace(/"/g, '\\"')}"`;
+        } else if (typeof val === 'boolean') {
+            return val.toString();
+        }
+        return String(val);
+    }).join(', ');
+
+    const testCode = `
 ${code}
 
-int main() {
-    Solution solution;
-    
-    // Prepare arguments
-    ${declarations.join('\n    ')}
-    
-    // Call function
-    auto result = solution.${functionName}(${funcArgs.join(', ')});
-    
-    ${outputIsFloat ? 'cout << fixed; cout.precision(4);' : ''}
-    cout << result << endl;
-    
-    return 0;
+class Judge {
+    public static void main(String[] args) {
+        Solution solution = new Solution();
+        Object result = solution.${functionName}(${javaArgs});
+        if (result instanceof int[]) {
+            int[] arr = (int[]) result;
+            StringBuilder sb = new StringBuilder("[");
+            for (int i = 0; i < arr.length; i++) { sb.append(arr[i]); if(i<arr.length-1)sb.append(","); }
+            sb.append("]");
+            System.out.println(sb.toString());
+        } else if (result instanceof boolean[]) {
+            boolean[] arr = (boolean[]) result;
+            StringBuilder sb = new StringBuilder("[");
+            for (int i = 0; i < arr.length; i++) { sb.append(arr[i]); if(i<arr.length-1)sb.append(","); }
+            sb.append("]");
+            System.out.println(sb.toString());
+        } else {
+            System.out.println(result);
+        }
+    }
 }
 `;
+
+    try {
+        await fs.writeFile(srcFile, testCode, 'utf-8');
+        await runCommand(`javac "${srcFile}"`, {
+            timeout: TIMEOUT_COMPILED,
+            maxBuffer: MAX_OUTPUT_BUFFER,
+            cwd: tempDir
+        });
+        const stdout = await runCommand(`java -cp "${tempDir}" Judge`, {
+            timeout: TIMEOUT_COMPILED,
+            maxBuffer: MAX_OUTPUT_BUFFER,
+            cwd: tempDir
+        });
+        const trimmed = stdout.trim();
+        if (trimmed === 'true') return true;
+        if (trimmed === 'false') return false;
+        if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+            try { return JSON.parse(trimmed); } catch (_) { return trimmed; }
         }
+        const n = Number(trimmed);
+        return isNaN(n) ? trimmed : n;
+    } finally {
+        await cleanupDir(tempDir);
+    }
+}
 
-        fs.writeFile(`${tempFile}.${fileExt}`, testCode, 'utf-8')
-            .then(() => {
-                const runCmd = process.platform === 'win32' ? `${tempFile}.exe` : `./${tempFile}`;
-                exec(`${compiler} -o ${tempFile} ${tempFile}.${fileExt} && ${runCmd}`, {
-                    timeout: 10000,
-                    maxBuffer: 1024 * 1024
-                }, (error, stdout, stderr) => {
-                    // Cleanup
-                    fs.unlink(`${tempFile}.${fileExt}`).catch(() => { });
-                    fs.unlink(`${tempFile}`).catch(() => { }); // Linux/Mac
-                    fs.unlink(`${tempFile}.exe`).catch(() => { }); // Windows
+// ──────────────────────────────────────────────
+// Execution Queue (limits concurrency)
+// ──────────────────────────────────────────────
 
-                    if (error) {
-                        reject(new Error(stderr || error.message));
-                    } else {
-                        try {
-                            const trimmed = stdout.trim();
-                            const result = trimmed.includes('.') ? parseFloat(trimmed) : parseInt(trimmed);
-                            resolve(result);
-                        } catch (e) {
-                            reject(new Error('Invalid output format'));
-                        }
-                    }
-                });
-            })
-            .catch(reject);
+const queue = [];
+
+function processQueue() {
+    if (activeExecutions >= MAX_CONCURRENT || queue.length === 0) return;
+    activeExecutions++;
+    const { code, language, functionName, testCase, resolve, reject } = queue.shift();
+
+    (async () => {
+        try {
+            let result;
+            switch (language) {
+                case 'python':     result = await executePython(code, functionName, testCase);      break;
+                case 'javascript': result = await executeJavaScript(code, functionName, testCase);  break;
+                case 'cpp':        result = await executeCpp(code, functionName, testCase, 'cpp');  break;
+                case 'c':          result = await executeCpp(code, functionName, testCase, 'c');    break;
+                case 'java':       result = await executeJava(code, functionName, testCase);        break;
+                default:           throw new Error(`Unsupported language: ${language}`);
+            }
+            resolve(result);
+        } catch (err) {
+            reject(err);
+        } finally {
+            activeExecutions--;
+            processQueue();
+        }
+    })();
+}
+
+function executeCode(code, language, functionName, testCase) {
+    return new Promise((resolve, reject) => {
+        queue.push({ code, language, functionName, testCase, resolve, reject });
+        processQueue();
     });
 }
 
-// Deep comparison of arrays/objects
+// ──────────────────────────────────────────────
+// Deep Equality (with float tolerance)
+// ──────────────────────────────────────────────
+
 function deepEqual(a, b) {
     if (a === b) return true;
-    // Float tolerance for numeric comparison
-    if (typeof a === 'number' && typeof b === 'number') {
-        return Math.abs(a - b) < 0.001;
-    }
+    if (typeof a === 'number' && typeof b === 'number') return Math.abs(a - b) < 1e-4;
     if (a == null || b == null) return false;
     if (Array.isArray(a) && Array.isArray(b)) {
         if (a.length !== b.length) return false;
-        for (let i = 0; i < a.length; i++) {
-            if (!deepEqual(a[i], b[i])) return false;
-        }
-        return true;
+        return a.every((v, i) => deepEqual(v, b[i]));
     }
     if (typeof a === 'object' && typeof b === 'object') {
-        const keysA = Object.keys(a);
-        const keysB = Object.keys(b);
-        if (keysA.length !== keysB.length) return false;
-        for (let key of keysA) {
-            if (!deepEqual(a[key], b[key])) return false;
-        }
-        return true;
+        const ka = Object.keys(a), kb = Object.keys(b);
+        if (ka.length !== kb.length) return false;
+        return ka.every(k => deepEqual(a[k], b[k]));
     }
-    return false;
+    return String(a) === String(b);
 }
 
-// Test code against test cases
+// ──────────────────────────────────────────────
+// Main: Test Code Against Test Cases
+// ──────────────────────────────────────────────
+
 async function testCode(code, language, functionName, testCases) {
+    if (!SUPPORTED_LANGUAGES.includes(language)) {
+        throw new Error(`Unsupported language: ${language}`);
+    }
+    if (!code || !code.trim()) {
+        throw new Error('Code cannot be empty.');
+    }
+    if (!functionName) {
+        throw new Error('Function name is required.');
+    }
+
     const results = [];
+    const startTime = Date.now();
 
     for (const testCase of testCases) {
         try {
             const output = await executeCode(code, language, functionName, testCase);
             const passed = deepEqual(output, testCase.output);
-
             results.push({
-                passed: passed,
+                passed,
                 expected: testCase.output,
-                actual: output,
-                input: testCase.input
+                actual:   output,
+                input:    testCase.input
             });
-        } catch (error) {
+        } catch (err) {
             results.push({
-                passed: false,
+                passed:   false,
                 expected: testCase.output,
-                actual: `Error: ${error.message}`,
-                input: testCase.input
+                actual:   `Error: ${err.message}`,
+                input:    testCase.input,
+                error:    err.message
             });
         }
     }
 
-    return results;
+    const totalTime = Date.now() - startTime;
+    return { results, executionTimeMs: totalTime };
 }
 
-module.exports = {
-    testCode,
-    executeCode
-};
+module.exports = { testCode, executeCode };

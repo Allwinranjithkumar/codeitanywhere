@@ -1,224 +1,258 @@
-# 🏆 Anti-Cheat Coding Contest Platform
+# ⚡ CodeItAnywhere
 
-A complete web-based coding contest platform designed to prevent cheating through AI copy-pasting and tab switching. Perfect for college coding competitions with 30-100 students.
+> A professional online coding assessment platform with multi-language code execution, anti-cheat monitoring, real-time leaderboard, and full admin management — built with Node.js, Express, and PostgreSQL.
 
-## ✨ Features
+---
 
-### Anti-Cheat Mechanisms
-- ✅ **Copy-Paste Blocking** - Prevents Ctrl+C/V in browser
-- ✅ **Tab Switch Detection** - Logs every time student switches tabs
-- ✅ **Right-Click Disabled** - Prevents context menu access
-- ✅ **DevTools Blocked** - F12 and inspect element disabled
-- ✅ **Before Unload Warning** - Prevents accidental page closure
+## 🚀 Features
 
-### Contest Features
-- 📝 **Code Editor** - Syntax highlighting for Python, JavaScript, C++, Java
-- ⚡ **Automatic Judging** - Tests code against multiple test cases
-- 🏆 **Real-time Leaderboard** - Live rankings with scores
-- ⏱️ **Timer** - Auto-submit when time expires
-- 📊 **Admin Dashboard** - Monitor violations and submissions
-- 🔒 **Secure Execution** - Sandboxed code execution with time limits
+| Feature | Details |
+|---|---|
+| **Multi-language Judge** | Python, JavaScript (Node.js), C, C++, Java |
+| **Contest Management** | Create, schedule, and manage contests with server-authoritative timing |
+| **Anti-Cheat System** | Tab switch, copy/paste, devtools, right-click detection — all logged to DB |
+| **Real-time Leaderboard** | Persistent in PostgreSQL, ranks by score → problems solved → first submission |
+| **Admin Dashboard** | Stats, student management, problem CRUD, Excel import/export |
+| **Full Submission History** | Every submission stored — never overwritten |
+| **Secure Authentication** | bcrypt + JWT, rate-limited, no password pre-fill |
+| **Role-Based Access** | Student vs Admin — role always from DB, never from client |
 
-## 🚀 Quick Setup (15 minutes)
+---
+
+## 🏗️ Architecture
+
+```
+Browser (HTML/JS/CSS)
+        │
+        ▼
+Express API (Node.js)
+   ├── /api/auth/*         — Register, Login
+   ├── /api/contests/*     — Contest lifecycle, problems, leaderboard
+   ├── /api/judge/*        — Run code, submit, violations
+   └── /api/admin/*        — Admin-only management
+        │
+        ▼
+PostgreSQL (single source of truth)
+        │
+        ▼ (for code execution)
+child_process (Python / Node / GCC / G++ / Java)
+```
+
+---
+
+## 🗄️ Database Schema
+
+```
+users              — students and admins
+contests           — contest metadata + timing
+problems           — problem bank
+test_cases         — per-problem test cases (hidden from students)
+starter_code       — per-language starter templates
+contest_problems   — which problems belong to which contest
+contest_participants — who joined which contest
+submissions        — full history (status, score, source_code, timing)
+violations         — anti-cheat events with metadata
+```
+
+---
+
+## ⚙️ Setup
 
 ### Prerequisites
-- Node.js (v14 or higher) - [Download here](https://nodejs.org/)
-- Python 3 (for Python problems) - Usually pre-installed on Linux/Mac
-- C++ compiler (optional, for C++ problems) - `sudo apt install g++` on Ubuntu
-- Java (optional, for Java problems) - `sudo apt install default-jdk`
 
-### Installation Steps
+- Node.js ≥ 18
+- PostgreSQL ≥ 14
+- Python 3, GCC/G++, Java (for judge support)
 
-1. **Extract the project** (if you downloaded as ZIP)
-   ```bash
-   cd coding-contest
-   ```
+### 1. Clone
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Start the server**
-   ```bash
-   npm start
-   ```
-
-4. **Access the platform**
-   - Student Portal: http://localhost:3000
-   - Admin Panel: http://localhost:3000/admin.html
-
-That's it! The platform is ready to use.
-
-## 📝 Customizing Problems
-
-Edit `problems/problems.json` to add your own problems:
-
-```json
-{
-  "id": 5,
-  "title": "Your Problem Title",
-  "description": "<p>Problem description with HTML formatting</p>",
-  "difficulty": "Medium",
-  "points": 20,
-  "testCases": [
-    {
-      "input": "sample input",
-      "output": "expected output"
-    }
-  ]
-}
-```
-
-**Important Notes:**
-- First 2 test cases are shown to students (sample cases)
-- All test cases are used during submission
-- Input/output should be exact strings (including whitespace)
-- Use `\n` for multi-line inputs
-
-## 🎯 Contest Workflow
-
-### For Organizers (You)
-
-1. **Before Contest:**
-   - Customize problems in `problems/problems.json`
-   - Set contest duration in `public/app.js` (line 11: `timeRemaining = 3600`)
-   - Test the platform yourself
-   - Share the URL with students: `http://YOUR-IP:3000`
-
-2. **During Contest:**
-   - Monitor admin panel at `http://localhost:3000/admin.html`
-   - Watch for violations in real-time
-   - Check leaderboard for progress
-
-3. **After Contest:**
-   - Review submissions from admin panel
-   - Export results (use browser save/print on admin panel)
-   - Check violation logs for suspicious activity
-
-### For Students
-
-1. Navigate to the contest URL
-2. Enter name and roll number
-3. Start solving problems
-4. Use "Run Code" to test with sample cases
-5. Use "Submit" to submit final solution (tests all cases)
-6. Check leaderboard anytime
-
-## 🛡️ Anti-Cheat Details
-
-### What Gets Detected:
-- **Tab Switching** - Every Alt+Tab or window switch is logged
-- **Copy-Paste Attempts** - Blocked and warned
-- **Time on Page** - Tracked automatically
-- **Submission Times** - Logged with timestamps
-
-### What Students CANNOT Do:
-- Copy code from ChatGPT/Copilot (paste is blocked)
-- Switch to other tabs without detection
-- Open DevTools to bypass restrictions
-- Right-click to inspect code
-
-### What Students CAN Do:
-- Type code freely in the editor
-- Run code to test with sample cases
-- View problems and leaderboard
-- Submit multiple times (best submission counts)
-
-## 🌐 Deploying for Actual Contest
-
-### Option 1: Local Network (Recommended for College Lab)
-1. Connect all computers to same Wi-Fi/LAN
-2. Find your IP: `ipconfig` (Windows) or `ifconfig` (Linux/Mac)
-3. Start server on your computer
-4. Students access: `http://YOUR-IP:3000`
-
-### Option 2: Free Cloud Hosting
-
-**Using Render.com (Free):**
-1. Create account on render.com
-2. Connect your GitHub repo
-3. Deploy as Web Service
-4. Students access your render URL
-
-**Using Heroku (Free tier):**
-1. Install Heroku CLI
-2. Run: `heroku create`
-3. Run: `git push heroku main`
-4. Share the Heroku URL
-
-### Option 3: College Server
-Upload to your college's server and run with PM2:
 ```bash
-npm install -g pm2
-pm2 start server/server.js
-pm2 save
+git clone https://github.com/yourname/codeitanywhere.git
+cd codeitanywhere
+npm install
 ```
 
-## 📊 Admin Panel Features
+### 2. Configure environment
 
-Access at: `http://localhost:3000/admin.html`
-
-- **Statistics Dashboard** - Live stats on students, submissions, violations
-- **Leaderboard View** - See all rankings
-- **Submissions Log** - Every submission with pass/fail status
-- **Violation Tracker** - See which students switched tabs most
-
-## 🔧 Configuration
-
-### Change Contest Duration
-Edit `public/app.js`, line 11:
-```javascript
-let timeRemaining = 3600; // 3600 seconds = 60 minutes
+```bash
+cp .env.example .env
 ```
 
-### Change Port
-Edit `server/server.js`, line 8:
-```javascript
-const PORT = 3000; // Change to any port
+Edit `.env`:
+
+```env
+# Database
+DB_USER=postgres
+DB_HOST=localhost
+DB_NAME=coding_platform
+DB_PASSWORD=your_strong_password
+DB_PORT=5432
+
+# JWT — generate with: node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+JWT_SECRET=your_64_char_hex_secret_here
+
+# Admin account (created on first startup)
+ADMIN_EMAIL=admin@yourplatform.com
+ADMIN_PASSWORD=your_strong_admin_password
+ADMIN_NAME=System Administrator
 ```
 
-### Add More Languages
-1. Install language compiler (e.g., Ruby, Go)
-2. Add executor function in `server/server.js`
-3. Add language mode in `public/index.html`
+### 3. Create PostgreSQL Database
 
-## 🐛 Troubleshooting
+```bash
+psql -U postgres -c "CREATE DATABASE coding_platform;"
+```
 
-### "npm install" fails
-- Make sure Node.js is installed: `node --version`
-- Try: `npm install --legacy-peer-deps`
+### 4. Reset & Initialize Schema (first time)
 
-### "Cannot execute Python code"
-- Install Python 3: `python3 --version`
-- Make sure it's in PATH
+```bash
+npm run db:reset
+```
 
-### Students can't access the site
-- Check firewall settings
-- Make sure all devices are on same network
-- Use your actual IP, not `localhost`
+### 5. Start
 
-### Code execution timeout
-- Increase timeout in `server/server.js` (search for `timeout: 5000`)
-- Default is 5 seconds, increase to 10000 for complex problems
+```bash
+npm start
+# Development (auto-reload):
+npm run dev
+```
 
-## 📜 License
+The server starts at **http://localhost:3000**
 
-Free to use for educational purposes. Modify as needed for your contest!
+---
 
-## 🙋 Support
+## 🛡️ Security
 
-For issues or questions:
-1. Check this README thoroughly
-2. Test with the sample problems first
-3. Verify all prerequisites are installed
+| Measure | Implementation |
+|---|---|
+| Password hashing | bcrypt, cost factor 12 |
+| JWT signing | HS256, required env secret |
+| Rate limiting | 20 auth requests / 15 min per IP |
+| Role verification | Always from DB, never from client |
+| DB-down behaviour | Returns 503 — no bypass |
+| Code isolation | Unique temp dir per execution, cleaned up in finally |
+| Hidden test cases | Never sent to student-facing API |
+| Violation types | Validated against server-side whitelist |
+| Stack traces | Never exposed in production responses |
+| Credentials in git | `.env` in `.gitignore`, `.env.example` included |
 
-## 🎓 Tips for Success
+---
 
-1. **Test Before Contest** - Run a practice round with 5-10 students
-2. **Communicate Rules** - Tell students about anti-cheat features
-3. **Set Expectations** - Explain violation logging beforehand
-4. **Have Backups** - Keep problems in separate file
-5. **Monitor Actively** - Watch admin panel during contest
+## 📡 API Reference
 
-Good luck with your contest! 🚀
+### Auth
+
+| Method | Path | Description |
+|---|---|---|
+| POST | `/api/register` | Register new student |
+| POST | `/api/login` | Login, returns JWT |
+
+### Contests
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| GET | `/api/contests` | Student | List all contests |
+| GET | `/api/contests/active` | Student | Get active contest |
+| GET | `/api/contests/:id` | Student | Contest details + server time |
+| GET | `/api/contests/:id/status` | Student | Server-authoritative status |
+| GET | `/api/contests/:id/problems` | Student | Problems (sample cases only) |
+| POST | `/api/contests/:id/join` | Student | Join contest |
+| GET | `/api/contests/:id/leaderboard` | Student | Contest leaderboard |
+| POST | `/api/contests` | Admin | Create contest |
+| PUT | `/api/contests/:id` | Admin | Update contest / status |
+| POST | `/api/contests/:id/problems` | Admin | Assign problem to contest |
+
+### Judge
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| GET | `/api/judge/problems` | Student | All active problems |
+| POST | `/api/judge/run` | Student | Run against sample cases |
+| POST | `/api/judge/submit` | Student | Submit (persisted) |
+| GET | `/api/judge/submissions/:problemId` | Student | Own submission history |
+| GET | `/api/judge/leaderboard` | Student | Global leaderboard |
+| POST | `/api/judge/log-violation` | Student | Log anti-cheat event |
+
+### Admin
+
+| Method | Path | Description |
+|---|---|---|
+| GET | `/api/admin/stats` | Dashboard summary |
+| GET | `/api/admin/users` | All students |
+| GET | `/api/admin/submissions` | Submissions (filterable) |
+| GET | `/api/admin/violations` | All violations |
+| GET | `/api/admin/export` | Excel export |
+| POST | `/api/admin/sync-excel` | Import students from Excel |
+| GET | `/api/admin/problems` | All problems (full data) |
+| POST | `/api/admin/problems` | Create problem |
+| PUT | `/api/admin/problems/:id` | Update problem |
+| DELETE | `/api/admin/problems/:id` | Soft-delete problem |
+| POST | `/api/admin/problems/:id/testcases` | Add test case |
+| POST | `/api/admin/problems/import-json` | Bulk import from JSON |
+| DELETE | `/api/admin/reset` | Wipe all submission data |
+
+---
+
+## 👨‍💻 Tech Stack
+
+- **Backend:** Node.js 18+, Express 4
+- **Database:** PostgreSQL 14+
+- **Auth:** JWT (jsonwebtoken) + bcrypt
+- **Judge:** child_process (Python3, Node, GCC, G++, Java)
+- **Frontend:** Vanilla HTML/CSS/JS + CodeMirror 5
+- **Export:** xlsx
+- **Security:** express-rate-limit, uuid
+- **Runtime:** dotenv
+
+---
+
+## 📁 Project Structure
+
+```
+├── public/
+│   ├── index.html        # Login/Register
+│   ├── auth.js           # Auth frontend logic
+│   ├── contest.html      # Contest IDE
+│   ├── app.js            # Contest frontend logic
+│   └── admin.html        # Admin dashboard
+├── server/
+│   ├── server.js         # Entry point
+│   ├── db.js             # Pool + schema init
+│   ├── routes/
+│   │   ├── auth.routes.js
+│   │   ├── contest.routes.js
+│   │   ├── judge.routes.js
+│   │   └── admin.routes.js
+│   ├── middleware/
+│   │   └── auth.middleware.js
+│   ├── services/
+│   │   ├── judgeService.js
+│   │   ├── problemService.js
+│   │   ├── contestService.js
+│   │   └── seedAdmin.js
+│   └── scripts/
+│       └── resetDB.js    # One-time DB reset
+├── problems/
+│   └── problems.json     # Legacy; auto-migrated to DB on startup
+├── data/
+│   └── allowed_users.xlsx # For Excel import (admin-triggered)
+├── .env.example
+├── .gitignore
+└── package.json
+```
+
+---
+
+## 🔧 Development Scripts
+
+```bash
+npm start        # Start production server
+npm run dev      # Start with nodemon (auto-reload)
+npm run db:reset # Wipe DB and recreate schema
+```
+
+---
+
+## 📄 License
+
+MIT

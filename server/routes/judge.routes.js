@@ -1,196 +1,239 @@
-const express = require('express');
-const router = express.Router();
-const db = require('../db');
+/**
+ * judge.routes.js — Code execution & submission endpoints
+ *
+ * All routes require valid JWT authentication.
+ * PostgreSQL is the only persistence layer — no in-memory fallback.
+ *
+ * Routes:
+ *   GET  /api/judge/problems              — all active problems (no contest) — sample cases only
+ *   POST /api/judge/run                   — run code against sample test cases only
+ *   POST /api/judge/submit                — run against all test cases, persist submission
+ *   GET  /api/judge/submissions/:problemId — student's own submission history for a problem
+ *   GET  /api/judge/leaderboard           — global leaderboard from DB
+ *   POST /api/judge/log-violation         — record an anti-cheat violation
+ */
+
+const express        = require('express');
+const router         = express.Router();
+const db             = require('../db');
 const { authenticateToken } = require('../middleware/auth.middleware');
 const problemService = require('../services/problemService');
-const judgeService = require('../services/judgeService');
-const contestState = require('../services/contestState');
+const judgeService   = require('../services/judgeService');
+const contestService = require('../services/contestService');
 
-// Protect all routes
+// All judge routes require authentication
 router.use(authenticateToken);
 
-// Check contest status
-router.get('/status', (req, res) => {
-    res.json({
-        active: contestState.isContestActive(),
-        antiCheat: contestState.isAntiCheatActive()
-    });
+const SUPPORTED_LANGUAGES = ['python', 'javascript', 'cpp', 'c', 'java'];
+
+// ──────────────────────────────────────────────
+// GET /api/judge/problems — all active problems (sample cases only)
+// ──────────────────────────────────────────────
+
+router.get('/problems', async (req, res, next) => {
+    try {
+        const problems = await problemService.getProblemsForStudent();
+        res.json(problems);
+    } catch (err) { next(err); }
 });
 
-// Get all problems
-router.get('/problems', authenticateToken, (req, res) => {
-    res.json(problemService.getProblems());
-});
+// ──────────────────────────────────────────────
+// POST /api/judge/run — run against sample cases only (no DB write)
+// ──────────────────────────────────────────────
 
-// Run code (sample test cases)
-router.post('/run', authenticateToken, async (req, res) => {
+router.post('/run', async (req, res, next) => {
     try {
         const { code, language, problemId } = req.body;
-        const problem = problemService.getProblem(problemId);
 
-        if (!problem) {
-            return res.status(404).json({ error: 'Problem not found' });
+        if (!code || !language || problemId === undefined) {
+            return res.status(400).json({ error: 'code, language, and problemId are required.' });
+        }
+        if (!SUPPORTED_LANGUAGES.includes(language)) {
+            return res.status(400).json({ error: `Unsupported language. Supported: ${SUPPORTED_LANGUAGES.join(', ')}` });
         }
 
-        const sampleCases = problem.testCases.slice(0, 2);
-        const results = await judgeService.testCode(code, language, problem.functionName, sampleCases);
-        res.json(results);
-    } catch (error) {
-        console.error('Run error:', error.message);
-        res.status(500).json({ error: 'An internal server error occurred during code evaluation.' });
-    }
-});
+        const problem = await problemService.getProblemWithTestCases(problemId);
+        if (!problem) return res.status(404).json({ error: 'Problem not found.' });
 
-// Submit code (all test cases)
-router.post('/submit', authenticateToken, async (req, res) => {
-    try {
-        const { code, language, problemId } = req.body;
-        const problem = problemService.getProblem(problemId);
-
-        if (!problem) {
-            return res.status(404).json({ error: 'Problem not found' });
+        // Run only sample test cases — never expose hidden ones during "run"
+        const sampleCases = problem.testCases.filter(tc => tc.isSample).slice(0, 3);
+        if (sampleCases.length === 0) {
+            return res.status(400).json({ error: 'No sample test cases available for this problem.' });
         }
 
-        const results = await judgeService.testCode(code, language, problem.functionName, problem.testCases);
-        const passed = results.filter(r => r.passed).length;
-        const total = results.length;
-        const allPassed = passed === total;
-        const score = allPassed ? problem.points : 0;
-        const status = allPassed ? 'Accepted' : 'Wrong Answer';
-
-        // Check for existing submission
-        const existingSub = await db.query(
-            'SELECT * FROM submissions WHERE user_id = $1 AND problem_id = $2',
-            [req.user.id, problemId]
+        const { results, executionTimeMs } = await judgeService.testCode(
+            code, language, problem.functionName, sampleCases
         );
 
-        if (existingSub.rowCount > 0) {
-            // Update existing
-            const oldScore = existingSub.rows[0].score;
-            // If already solved (score > 0), keep old score. Else take new score.
-            // Requirement: "The latest submission can replace the previous one, but score remains unchanged"
-            // Interpreted as: Don't lose marks if you already solved it. Don't add duplicate marks.
-            const finalScore = (oldScore > 0) ? oldScore : score;
+        res.json({ results, executionTimeMs });
 
-            // Allow status update to show 'Wrong Answer' for the specific code run, 
-            // BUT if we want to preserve the "Fact that they solved it", we might want to keep status='Accepted'?
-            // User requirement says: "Allow re-submission ONLY for viewing or overwrite... marks must not increase."
-            // Let's update status to reflect THIS submission, but keep score fixed if it was already > 0.
-
-            try {
-                await db.query(
-                    'UPDATE submissions SET language = $1, status = $2, score = $3, created_at = CURRENT_TIMESTAMP WHERE user_id = $4 AND problem_id = $5',
-                    [language, status, finalScore, req.user.id, problemId]
-                );
-            } catch (dbErr) {
-                console.warn('⚠️ DB Update Failed (Partial Mode):', dbErr.message);
-            }
-
-        } else {
-            // Insert new
-            try {
-                await db.query(
-                    'INSERT INTO submissions (user_id, problem_id, language, status, score) VALUES ($1, $2, $3, $4, $5)',
-                    [req.user.id, problemId, language, status, score]
-                );
-            } catch (dbErr) {
-                console.warn('⚠️ DB Save Failed (Partial Mode):', dbErr.message);
-                // Save to Memory Store (Fallback)
-                require('../services/memoryStore').saveSubmission({
-                    user_id: req.user.id,
-                    problem_id: problemId,
-                    language,
-                    status,
-                    score,
-                    timestamp: new Date()
-                });
-            }
+    } catch (err) {
+        // Return compile/runtime errors as structured responses, not 500s
+        if (err.message && !err.message.includes('FATAL')) {
+            return res.status(422).json({ error: err.message });
         }
-
-        res.json({
-            results,
-            passed,
-            total,
-            allPassed,
-            score
-        });
-
-    } catch (error) {
-        console.error('Submission error:', error.message);
-        res.status(500).json({ error: 'An internal server error occurred during code evaluation.' });
+        next(err);
     }
 });
 
-// Log Violation
-router.post('/log-violation', authenticateToken, async (req, res) => {
-    try {
-        const { violationType, timestamp } = req.body;
+// ──────────────────────────────────────────────
+// POST /api/judge/submit — run all test cases, persist to DB
+// ──────────────────────────────────────────────
 
-        try {
-            await db.query(
-                'INSERT INTO violations (user_id, type, timestamp) VALUES ($1, $2, $3)',
-                [req.user.id, violationType, timestamp || new Date()]
-            );
-        } catch (dbErr) {
-            console.warn('⚠️ Violation Log Failed (Partial Mode):', dbErr.message);
-            // Save to Memory Store
-            require('../services/memoryStore').saveViolation({
-                user_id: req.user.id,
-                type: violationType,
-                timestamp: timestamp || new Date()
-            });
+router.post('/submit', async (req, res, next) => {
+    try {
+        const { code, language, problemId, contestId } = req.body;
+
+        if (!code || !language || problemId === undefined) {
+            return res.status(400).json({ error: 'code, language, and problemId are required.' });
+        }
+        if (!SUPPORTED_LANGUAGES.includes(language)) {
+            return res.status(400).json({ error: `Unsupported language. Supported: ${SUPPORTED_LANGUAGES.join(', ')}` });
         }
 
-        res.json({ success: true });
-    } catch (error) {
-        console.error('Violation logging error:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
+        // If a contestId is provided, verify contest is still active before accepting submission
+        if (contestId) {
+            const { active } = await contestService.getContestStatus(contestId);
+            if (!active) {
+                return res.status(403).json({ error: 'The contest has ended. Submissions are no longer accepted.' });
+            }
+        }
 
-// Leaderboard
-router.get('/leaderboard', authenticateToken, async (req, res) => {
-    try {
-        const result = await db.query(`
-            SELECT 
-                u.name, 
-                u.reg_no, 
-                SUM(s.score) as total_score,
-                COUNT(DISTINCT s.problem_id) FILTER (WHERE s.status = 'Accepted') as problems_solved
-            FROM submissions s
-            JOIN users u ON s.user_id = u.id
-            GROUP BY u.id
-            ORDER BY total_score DESC, problems_solved DESC
-        `);
+        const problem = await problemService.getProblemWithTestCases(problemId);
+        if (!problem) return res.status(404).json({ error: 'Problem not found.' });
 
-        res.json(result.rows);
-    } catch (error) {
-        console.warn('⚠️ Leaderboard Load Failed (Partial Mode):', error.message);
+        // Run against ALL test cases
+        const { results, executionTimeMs } = await judgeService.testCode(
+            code, language, problem.functionName, problem.testCases
+        );
 
-        // Fetch from Memory Store
-        const memoryStore = require('../services/memoryStore');
-        const users = memoryStore.getAllUsers();
-        const submissions = memoryStore.getSubmissions();
+        const passed    = results.filter(r => r.passed).length;
+        const total     = results.length;
+        const allPassed = passed === total;
+        const score     = allPassed ? problem.points : Math.floor((passed / total) * problem.points);
+        const status    = allPassed ? 'Accepted'
+                        : results.some(r => r.actual && String(r.actual).startsWith('Error:')) ? 'Runtime Error'
+                        : 'Wrong Answer';
 
-        // Aggregate Data manually
-        const leaderboard = users.map(user => {
-            const userSubs = submissions.filter(s => s.user_id === user.id);
-            const score = userSubs.reduce((acc, curr) => acc + (curr.status === 'Accepted' ? curr.score : 0), 0);
-            const uniqueSolved = new Set(userSubs.filter(s => s.status === 'Accepted').map(s => s.problem_id)).size;
+        // Find the first error message if any
+        const errorMsg = results.find(r => r.error)?.error || null;
 
+        // Persist submission (new row every time — full history)
+        await db.query(
+            `INSERT INTO submissions
+             (user_id, contest_id, problem_id, language, source_code, status, score,
+              passed_tests, total_tests, execution_time_ms, error_message)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+            [
+                req.user.id,
+                contestId || null,
+                problemId,
+                language,
+                code,
+                status,
+                score,
+                passed,
+                total,
+                executionTimeMs,
+                errorMsg
+            ]
+        );
+
+        // Return results but HIDE expected output for hidden test cases
+        const safeResults = results.map((r, i) => {
+            const isSample = problem.testCases[i]?.isSample;
             return {
-                name: user.name,
-                reg_no: user.reg_no,
-                total_score: score,
-                problems_solved: uniqueSolved
+                passed:   r.passed,
+                input:    isSample ? r.input    : '[hidden]',
+                expected: isSample ? r.expected : '[hidden]',
+                actual:   r.actual,
+                error:    r.error  || null
             };
         });
 
-        // Sort descending
-        leaderboard.sort((a, b) => b.total_score - a.total_score);
+        res.json({
+            results:        safeResults,
+            passed,
+            total,
+            allPassed,
+            score,
+            status,
+            executionTimeMs
+        });
 
-        res.json(leaderboard);
+    } catch (err) {
+        if (err.message && !err.message.includes('FATAL')) {
+            // Compilation error / runtime error
+            await db.query(
+                `INSERT INTO submissions
+                 (user_id, contest_id, problem_id, language, source_code, status, score,
+                  passed_tests, total_tests, error_message)
+                 VALUES ($1,$2,$3,$4,$5,'Compilation Error',0,0,0,$6)`,
+                [req.user.id, req.body.contestId || null, req.body.problemId, req.body.language, req.body.code, err.message]
+            ).catch(() => {}); // Best-effort persist
+            return res.status(422).json({ error: err.message, status: 'Compilation Error' });
+        }
+        next(err);
     }
+});
+
+// ──────────────────────────────────────────────
+// GET /api/judge/submissions/:problemId — own submission history
+// ──────────────────────────────────────────────
+
+router.get('/submissions/:problemId', async (req, res, next) => {
+    try {
+        const result = await db.query(
+            `SELECT id, language, status, score, passed_tests, total_tests,
+                    execution_time_ms, error_message, submitted_at
+             FROM submissions
+             WHERE user_id = $1 AND problem_id = $2
+             ORDER BY submitted_at DESC`,
+            [req.user.id, req.params.problemId]
+        );
+        // source_code is intentionally excluded — students can see their history but
+        // we don't resend potentially large code blocks unless explicitly needed
+        res.json(result.rows);
+    } catch (err) { next(err); }
+});
+
+// ──────────────────────────────────────────────
+// GET /api/judge/leaderboard — global leaderboard from DB
+// ──────────────────────────────────────────────
+
+router.get('/leaderboard', async (req, res, next) => {
+    try {
+        const leaderboard = await contestService.getLeaderboard(null);
+        res.json(leaderboard);
+    } catch (err) { next(err); }
+});
+
+// ──────────────────────────────────────────────
+// POST /api/judge/log-violation — anti-cheat violation event
+// ──────────────────────────────────────────────
+
+router.post('/log-violation', async (req, res, next) => {
+    try {
+        const { violationType, contestId, metadata } = req.body;
+
+        if (!violationType || typeof violationType !== 'string') {
+            return res.status(400).json({ error: 'violationType is required.' });
+        }
+
+        // Validate violation type
+        const allowedTypes = ['tab_switch','visibility_change','copy','paste','right_click','devtools','fullscreen_exit','blur'];
+        if (!allowedTypes.includes(violationType)) {
+            return res.status(400).json({ error: 'Invalid violation type.' });
+        }
+
+        await db.query(
+            `INSERT INTO violations (user_id, contest_id, type, metadata)
+             VALUES ($1, $2, $3, $4)`,
+            [req.user.id, contestId || null, violationType, metadata ? JSON.stringify(metadata) : null]
+        );
+
+        res.json({ success: true });
+    } catch (err) { next(err); }
 });
 
 module.exports = router;

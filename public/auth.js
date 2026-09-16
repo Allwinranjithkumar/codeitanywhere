@@ -1,124 +1,139 @@
-const loginForm = document.getElementById('loginForm');
-const registerForm = document.getElementById('registerForm');
-const loginFormElement = document.querySelector('#loginForm form') || document.getElementById('loginForm');
-const registerFormElement = document.querySelector('#registerForm form') || document.getElementById('registerForm');
+/**
+ * auth.js — Login & Registration frontend logic
+ *
+ * Security: No credentials are cached beyond localStorage token.
+ * The password field has NO pre-filled default value.
+ */
 
-// Elements
-const loginBtn = loginForm.querySelector('button');
-const regBtn = registerForm.querySelector('button');
-const loginError = document.getElementById('loginError') || document.querySelector('#loginForm .error-msg');
-const regError = document.getElementById('regError') || document.querySelector('#registerForm .error-msg');
+// ──────────────────────────────────────────────
+// Tab Switching
+// ──────────────────────────────────────────────
 
-// Constants
-const REG_NO_REGEX = /^7155\d{2}1050\d{2}$/;
-const EMAIL_DOMAIN = '@psgitech.ac.in';
-
-function toggleForm() {
-    loginForm.classList.toggle('hidden');
-    registerForm.classList.toggle('hidden');
-    if (loginError) loginError.textContent = '';
-    if (regError) regError.textContent = '';
-
-    // Clear inputs
-    document.querySelectorAll('input').forEach(input => input.value = '');
+function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.form-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById(tab === 'login' ? 'tabLogin' : 'tabRegister').classList.add('active');
+    document.getElementById(tab === 'login' ? 'panelLogin' : 'panelRegister').classList.add('active');
+    clearErrors();
 }
 
-// Attach event listeners to the switch links
-document.querySelectorAll('.switch-form span').forEach(span => {
-    span.onclick = toggleForm;
-});
+function clearErrors() {
+    document.querySelectorAll('.error-msg').forEach(el => {
+        el.textContent = '';
+        el.classList.remove('visible');
+    });
+}
 
-// Login Handler
-loginForm.addEventListener('submit', async (e) => {
+function showError(id, message) {
+    const el = document.getElementById(id);
+    if (el) { el.textContent = message; el.classList.add('visible'); }
+}
+
+// ──────────────────────────────────────────────
+// Login
+// ──────────────────────────────────────────────
+
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    if (loginError) loginError.textContent = 'Logging in...';
-    loginBtn.disabled = true;
+    clearErrors();
 
-    const email = document.getElementById('loginEmail').value;
+    const email    = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPassword').value;
+    const btn      = document.getElementById('loginBtn');
+
+    if (!email || !password) {
+        return showError('loginError', 'Email and password are required.');
+    }
+
+    btn.disabled    = true;
+    btn.textContent = 'Signing in...';
 
     try {
-        const response = await fetch('/api/login', {
-            method: 'POST',
+        const res  = await fetch('/api/login', {
+            method:  'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
+            body:    JSON.stringify({ email, password })
         });
+        const data = await res.json();
 
-        const contentType = response.headers.get("content-type");
-        let data;
-
-        if (contentType && contentType.indexOf("application/json") !== -1) {
-            data = await response.json();
-        } else {
-            const text = await response.text();
-            console.error('Non-JSON response:', text);
-            throw new Error('Server error: ' + (response.statusText || 'Unknown Error'));
-        }
-
-        if (response.ok) {
+        if (res.ok) {
             localStorage.setItem('token', data.token);
-            localStorage.setItem('user', JSON.stringify(data.user));
-
-            if (data.user.role === 'admin') {
-                window.location.href = '/admin.html';
-            } else {
-                window.location.href = '/contest.html';
-            }
+            localStorage.setItem('user',  JSON.stringify(data.user));
+            // Route based on role
+            window.location.href = data.user.role === 'admin' ? '/admin.html' : '/contest.html';
         } else {
-            if (loginError) loginError.textContent = data.error || 'Login failed';
+            showError('loginError', data.error || 'Login failed.');
         }
     } catch (err) {
-        console.error('Login Fetch Error:', err);
-        if (loginError) loginError.textContent = 'Connection failed: ' + err.message;
+        showError('loginError', 'Connection error. Please try again.');
     } finally {
-        loginBtn.disabled = false;
+        btn.disabled    = false;
+        btn.textContent = 'Sign In';
     }
 });
 
-// Register Handler
-registerForm.addEventListener('submit', async (e) => {
+// ──────────────────────────────────────────────
+// Register
+// ──────────────────────────────────────────────
+
+document.getElementById('registerForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    if (regError) regError.textContent = 'Registering...';
-    regBtn.disabled = true;
+    clearErrors();
 
-    const name = document.getElementById('regName').value;
-    const regNo = document.getElementById('regNo').value;
-    const email = document.getElementById('regEmail').value;
+    const name     = document.getElementById('regName').value.trim();
+    const reg_no   = document.getElementById('regNo').value.trim();
+    const email    = document.getElementById('regEmail').value.trim();
     const password = document.getElementById('regPassword').value;
+    const btn      = document.getElementById('regBtn');
 
-    // Client-side Validation
-    if (!REG_NO_REGEX.test(regNo)) {
-        if (regError) regError.textContent = 'Invalid Register Number format (7155xx1050xx)';
-        regBtn.disabled = false;
-        return;
+    if (!name || !email || !password) {
+        return showError('regError', 'Name, email, and password are required.');
+    }
+    if (password.length < 6) {
+        return showError('regError', 'Password must be at least 6 characters.');
     }
 
-    if (!email.endsWith(EMAIL_DOMAIN)) {
-        if (regError) regError.textContent = `Email must end with ${EMAIL_DOMAIN}`;
-        regBtn.disabled = false;
-        return;
-    }
+    btn.disabled    = true;
+    btn.textContent = 'Creating account...';
 
     try {
-        const response = await fetch('/api/register', {
-            method: 'POST',
+        const res  = await fetch('/api/register', {
+            method:  'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, reg_no: regNo, email, password })
+            body:    JSON.stringify({ name, reg_no, email, password })
         });
+        const data = await res.json();
 
-        const data = await response.json();
-
-        if (response.ok) {
-            alert('Registration Successful! Please login.');
-            toggleForm();
+        if (res.ok) {
+            // Show success, switch to login tab
+            switchTab('login');
+            const loginError = document.getElementById('loginError');
+            loginError.style.color  = '#10b981';
+            loginError.style.background = 'rgba(16,185,129,0.08)';
+            loginError.textContent  = '✅ ' + (data.message || 'Registration successful! Please sign in.');
+            loginError.classList.add('visible');
+            document.getElementById('loginEmail').value = email;
         } else {
-            console.log(data);
-            if (regError) regError.textContent = data.error || 'Registration failed';
+            showError('regError', data.error || 'Registration failed.');
         }
     } catch (err) {
-        console.error(err);
-        if (regError) regError.textContent = 'Network error. Please try again.';
+        showError('regError', 'Connection error. Please try again.');
     } finally {
-        regBtn.disabled = false;
+        btn.disabled    = false;
+        btn.textContent = 'Create Account';
     }
 });
+
+// Redirect if already logged in
+(function checkAuth() {
+    const token = localStorage.getItem('token');
+    const user  = localStorage.getItem('user');
+    if (token && user) {
+        try {
+            const u = JSON.parse(user);
+            window.location.href = u.role === 'admin' ? '/admin.html' : '/contest.html';
+        } catch (_) {
+            localStorage.clear();
+        }
+    }
+})();

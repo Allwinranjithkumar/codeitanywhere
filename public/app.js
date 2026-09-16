@@ -1,220 +1,100 @@
-// Global variables
-let editor;
-let currentProblem = 0;
+/**
+ * app.js — Contest frontend logic
+ *
+ * Timer is display-only. All contest validation is server-authoritative.
+ * The server enforces submission windows, not the browser timer.
+ *
+ * API calls use JWT from localStorage for every authenticated request.
+ */
+
+// ──────────────────────────────────────────────
+// State
+// ──────────────────────────────────────────────
+
+const token = localStorage.getItem('token');
+const userStr = localStorage.getItem('user');
+let user = {};
+try { user = JSON.parse(userStr || '{}'); } catch (_) { }
+
+let editor = null;
 let problems = [];
-let studentName = '';
-let rollNumber = '';
-let violations = 0;
-let timeRemaining = 3600; // 60 minutes in seconds
-let timerInterval;
-const submissions = {};
+let currentIndex = 0;
+let contestId = null;
+let contestEndTime = null;
+let timerInterval = null;
+let savedCode = {};   // { [problemIndex]: { code, language } }
+let antiCheatEnabled = true;
 
-// Helper for authenticated fetch
+// ──────────────────────────────────────────────
+// Auth Guard
+// ──────────────────────────────────────────────
+
+if (!token) { window.location.href = '/index.html'; }
+
+// ──────────────────────────────────────────────
+// Authenticated Fetch Helper
+// ──────────────────────────────────────────────
+
 async function authFetch(url, options = {}) {
-    const token = localStorage.getItem('token');
-    const headers = {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-        ...options.headers
-    };
-
-    const response = await fetch(url, { ...options, headers });
-    if (response.status === 401 || response.status === 403) {
-        alert('Session expired. Please login again.');
-        localStorage.removeItem('token');
-        window.location.href = '/auth.html';
-        throw new Error('Unauthorized');
-    }
-    return response;
-}
-
-// Lockdown features
-let isInternalCopy = false;
-let isAntiCheatEnabled = true;
-
-function handleCopyCut(e) {
-    if (!isAntiCheatEnabled) return true;
-
-    // Allow copy/cut ONLY from the editor
-    if (e.target.closest('.CodeMirror')) {
-        isInternalCopy = true;
-        // Reset flag after 15 seconds to prevent long-term exploit
-        setTimeout(() => { isInternalCopy = false; }, 15000);
-        return true; // Allow default behavior
-    }
-    e.preventDefault();
-    return false;
-}
-
-function handlePaste(e) {
-    if (!isAntiCheatEnabled) return true;
-    // If it's an internal copy, ALLOW it
-    if (isInternalCopy && e.target.closest('.CodeMirror')) {
-        // Optional: Reset flag? No, user might paste multiple times.
-        return true;
-    }
-
-    // Otherwise, block and log violation
-    e.preventDefault();
-    logViolation('ai_used');
-    showWarning('Warning: External Paste detected! Marked as AI Used.');
-    return false;
-}
-
-function preventRightClick(e) {
-    if (!isAntiCheatEnabled) return true;
-    // Allow right click in editor? Usually no for strict contests.
-    // Keeping strict right click prevention
-    e.preventDefault();
-    return false;
-}
-
-function detectTabSwitch() {
-    if (!isAntiCheatEnabled) return;
-
-    violations++;
-    document.getElementById('violationCount').textContent = violations;
-
-    // Log violation to server
-    logViolation('tab_switch');
-
-    // Show warning banner
-    const banner = document.getElementById('warningBanner');
-    banner.style.display = 'block';
-
-    if (violations >= 5) {
-        showWarning('Critical: 5+ Tab Switches! Marked as "Tab Switched".');
-        logViolation('status_tab_switched'); // Explicit status log
-    } else {
-        setTimeout(() => {
-            banner.style.display = 'none';
-        }, 3000);
-    }
-}
-
-function showWarning(message) {
-    const banner = document.getElementById('warningBanner');
-    banner.textContent = '⚠️ ' + message;
-    banner.style.display = 'block';
-    setTimeout(() => {
-        banner.style.display = 'none';
-    }, 3000);
-}
-
-// Detect when user leaves the page
-document.addEventListener('visibilitychange', function () {
-    if (document.hidden) {
-        detectTabSwitch();
-    }
-});
-
-// Prevent copying (Global listeners)
-document.addEventListener('copy', handleCopyCut);
-document.addEventListener('cut', handleCopyCut);
-document.addEventListener('paste', handlePaste);
-document.addEventListener('contextmenu', preventRightClick);
-
-// Timer
-function startTimer() {
-    const DURATION = 3600 * 1000; // 60 minutes in milliseconds
-    let endTime = localStorage.getItem('contestEndTime');
-
-    if (!endTime) {
-        endTime = Date.now() + DURATION;
-        localStorage.setItem('contestEndTime', endTime);
-    }
-
-    timerInterval = setInterval(() => {
-        const remainingMs = endTime - Date.now();
-        timeRemaining = Math.floor(remainingMs / 1000);
-
-        if (timeRemaining < 0) {
-            timeRemaining = 0;
-            clearInterval(timerInterval);
-            // Clear end time IMMEDIATELY to prevent loop on refresh
-            localStorage.removeItem('contestEndTime');
-
-            autoSubmitAll();
-            alert('Time is up! Your solutions have been submitted automatically.');
-            return;
+    const res = await fetch(url, {
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+            ...options.headers
         }
-
-        const minutes = Math.floor(timeRemaining / 60);
-        const seconds = timeRemaining % 60;
-        const timerElement = document.getElementById('timer');
-        if (timerElement) {
-            timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-
-            if (timeRemaining <= 300) { // 5 minutes warning
-                timerElement.classList.add('warning');
-            }
-        }
-    }, 1000);
+    });
+    if (res.status === 401 || res.status === 403) {
+        localStorage.clear();
+        window.location.href = '/index.html';
+    }
+    return res;
 }
 
-// Initialize app
-function initApp() {
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    if (user.name) {
-        // Handle rollNumber normalization if needed (some parts use reg_no, some rollNumber)
-        const displayRoll = user.reg_no || user.rollNumber;
-        document.getElementById('studentDisplay').textContent = `${user.name} (${displayRoll})`;
-        studentName = user.name;
-        rollNumber = displayRoll;
-    } else {
-        // Fallback or force login
-        window.location.href = '/auth.html';
-        return;
+// ──────────────────────────────────────────────
+// Initialise
+// ──────────────────────────────────────────────
+
+async function init() {
+    // Show student info
+    document.getElementById('studentDisplay').textContent =
+        `${user.name || 'Student'} (${user.reg_no || ''})`;
+
+    initEditor();
+
+    // Load active contest
+    try {
+        const res = await authFetch('/api/contests/active');
+        const data = await res.json();
+
+        if (data.active && data.contest) {
+            contestId = data.contest.id;
+            contestEndTime = new Date(data.contest.end_time);
+            antiCheatEnabled = data.contest.anti_cheat;
+
+            // Join the contest (no-op if already joined)
+            await authFetch(`/api/contests/${contestId}/join`, { method: 'POST' });
+
+            // Load problems for this contest
+            await loadProblems(contestId);
+        } else {
+            // No active contest — load all problems globally
+            await loadProblems(null);
+        }
+    } catch (err) {
+        console.error('Init error:', err);
+        await loadProblems(null);
     }
-
-    document.getElementById('contestScreen').classList.remove('contest-hidden');
-    initializeEditor();
-    loadProblems();
-
-    // Start polling contest status
-    checkContestStatus();
-    setInterval(checkContestStatus, 30000); // Check every 30s
 
     startTimer();
+    if (antiCheatEnabled) enableAntiCheat();
 }
 
-// Poll for contest status
-async function checkContestStatus() {
-    try {
-        const response = await authFetch('/api/judge/status');
-        const data = await response.json();
+// ──────────────────────────────────────────────
+// Editor
+// ──────────────────────────────────────────────
 
-        if (data.antiCheat !== undefined) {
-            isAntiCheatEnabled = data.antiCheat;
-        }
-
-        if (data.active === false) {
-            clearInterval(timerInterval); // Stop local timer
-            // Force end test
-            await forceEndTest();
-        }
-    } catch (e) {
-        console.error('Status check failed', e);
-    }
-}
-
-async function forceEndTest() {
-    // Prevent multiple calls
-    if (window.isEndingTest) return;
-    window.isEndingTest = true;
-
-    alert('🛑 The contest has been ended by the admin.\nYour answers will be submitted automatically.');
-
-    await autoSubmitAll();
-    localStorage.removeItem('contestEndTime');
-    window.location.href = '/insights.html';
-}
-
-// Start immediately as we are already authenticated from index.html check
-document.addEventListener('DOMContentLoaded', initApp);
-
-// Initialize code editor
-function initializeEditor() {
+function initEditor() {
     editor = CodeMirror.fromTextArea(document.getElementById('codeEditor'), {
         mode: 'python',
         theme: 'monokai',
@@ -225,309 +105,273 @@ function initializeEditor() {
         tabSize: 4,
         indentWithTabs: false
     });
-
     editor.setSize('100%', '100%');
 }
 
-// Change language
-function changeLanguageAndLoad() {
-    const language = document.getElementById('languageSelect').value;
-    let mode = language;
-    if (language === 'cpp') {
-        mode = 'text/x-c++src';
-    } else if (language === 'java') {
-        mode = 'text/x-java';
-    }
-    editor.setOption('mode', mode);
-
-    // Check if we switch back to starter if empty? 
-    // Usually handled by selectProblem logic
-}
-// Hook up the change event
-// document.getElementById('languageSelect').onchange handled in HTML? No, verify HTML.
-// HTML has onchange="changeLanguage()". I need to rename or match.
-// I'll rename my function to changeLanguage to match HTML.
-
 function changeLanguage() {
-    const language = document.getElementById('languageSelect').value;
-    let mode = language;
-    if (language === 'cpp') {
-        mode = 'text/x-c++src';
-    } else if (language === 'c') {
-        mode = 'text/x-csrc';
-    } else if (language === 'java') {
-        mode = 'text/x-java';
-    }
-    editor.setOption('mode', mode);
+    const lang = document.getElementById('languageSelect').value;
+    const modeMap = {
+        python: 'python', javascript: 'javascript',
+        cpp: 'text/x-c++src', c: 'text/x-csrc', java: 'text/x-java'
+    };
+    editor.setOption('mode', modeMap[lang] || lang);
 
-    // Load starter code for language
-    const p = problems[currentProblem];
-    // Preserve code if user typed something? Or simple reset?
-    // User expects starter code if switching language usually.
-    if (p && p.starterCode && p.starterCode[language]) {
-        // Check if editor has default content before overwriting? 
-        // For simplicity, let's just set it for now or keep existing if not empty?
-        // Contest behavior: switching language resets code or translates (transpile is hard).
-        // Let's reset to starter code.
-        editor.setValue(p.starterCode[language]);
-    } else {
-        editor.setValue('');
+    const problem = problems[currentIndex];
+    if (problem?.starterCode?.[lang]) {
+        const existing = editor.getValue().trim();
+        if (!existing) editor.setValue(problem.starterCode[lang]);
     }
 }
 
+// ──────────────────────────────────────────────
+// Load Problems
+// ──────────────────────────────────────────────
 
-// Load problems
-async function loadProblems() {
+async function loadProblems(cId) {
     try {
-        const response = await authFetch('/api/judge/problems');
-        problems = await response.json();
+        const url = cId ? `/api/contests/${cId}/problems` : '/api/judge/problems';
+        const res = await authFetch(url);
 
-        const problemList = document.getElementById('problemList'); // Correct ID in HTML is problemSelector?
-        // Let's check HTML. HTML says: <div class="problem-selector" id="problemSelector">
-        // Wait, app.js previously used problemList... let me check previous app.js content.
-        // Previous app.js: const problemList = document.getElementById('problemList');
-        // HTML provided previously: <div class="problem-selector" id="problemSelector">
-        // AND <div id="problemsContainer">
-
-        // Wait, the previous app.js I read had:
-        // const problemList = document.getElementById('problemList');
-        // in function loadProblems().
-
-        // But the HTML file `public/index.html` shows:
-        // <div class="problem-selector" id="problemSelector">
-        // It does NOT have id="problemList".
-        // This means the previous `app.js` might have been broken or I misread?
-        // Ah, I see in `initializeEditor`... wait.
-        // Let's use `problemSelector` which exists.
-
-        const problemSelector = document.getElementById('problemSelector');
-        if (problemSelector) {
-            problemSelector.innerHTML = problems.map((p, i) => `
-                <button onclick="selectProblem(${i})" id="problem-btn-${i}" class="problem-btn">
-                    Problem ${i + 1}: ${p.title}
-                    <span class="difficulty ${p.difficulty.toLowerCase()}">${p.difficulty}</span>
-                </button>
-            `).join('');
+        if (!res.ok) {
+            document.getElementById('problemsContainer').innerHTML =
+                '<p style="color:#ef4444;padding:20px;">No active contest or problems available.</p>';
+            return;
         }
 
-        selectProblem(0);
-    } catch (error) {
-        console.error('Error loading problems:', error);
+        problems = await res.json();
+        renderProblemNav();
+        if (problems.length > 0) selectProblem(0);
+    } catch (err) {
+        console.error('Load problems error:', err);
     }
 }
 
-// Select problem
+function renderProblemNav() {
+    const sel = document.getElementById('problemSelector');
+    sel.innerHTML = '';
+    problems.forEach((p, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'problem-btn';
+        btn.id = `prob-btn-${i}`;
+        btn.textContent = `P${i + 1}`;
+        btn.title = p.title;
+        btn.onclick = () => selectProblem(i);
+        sel.appendChild(btn);
+    });
+}
+
 function selectProblem(index) {
-    if (!problems[index]) return;
-    currentProblem = index;
-    const p = problems[index];
+    if (!savedCode[currentIndex]) savedCode[currentIndex] = {};
+    if (editor) {
+        const currentLang = document.getElementById('languageSelect').value;
+        savedCode[currentIndex][currentLang] = editor.getValue();
+    }
 
-    // Check where to put title and description
-    // The previous HTML didn't show where they go clearly in `problemsContainer`?
-    // Previous app.js: document.getElementById('problemTitle').textContent = ...
-    // But HTML: <div id="problemsContainer"> <!-- Problem content will be loaded here --> </div>
-    // So I should inject the content into problemsContainer.
+    document.querySelectorAll('.problem-btn').forEach((b, i) => b.classList.toggle('active', i === index));
 
-    const container = document.getElementById('problemsContainer');
-    container.innerHTML = `
+    currentIndex = index;
+    const problem = problems[index];
+    if (!problem) return;
+
+    // Render problem
+    document.getElementById('problemsContainer').innerHTML = `
         <div class="problem-content active">
-            <h2 class="problem-title">Problem ${index + 1}: ${p.title}</h2>
-            <div class="problem-description">${p.description}</div>
-            <div class="test-cases">
-                <h3>Sample Test Cases</h3>
-                ${(p.testCases || []).slice(0, 2).map((tc, i) => `
-                    <div class="test-case" style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 10px;">
-                        <strong>Test Case ${i + 1}:</strong>
-                        <div style="margin-top: 6px;"><small style="opacity: 0.7;">Input:</small> <code style="color: #4fc3f7;">${JSON.stringify(tc.input)}</code></div>
-                        <div style="margin-top: 4px;"><small style="opacity: 0.7;">Expected Output:</small> <code style="color: #81c784;">${JSON.stringify(tc.output)}</code></div>
-                    </div>
-                `).join('')}
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+                <span class="problem-badge diff-${(problem.difficulty||'medium').toLowerCase()}">${problem.difficulty || 'Medium'}</span>
+                <span class="problem-badge points-badge">${problem.points || 100} pts</span>
             </div>
+            <h1 class="problem-title">${problem.title}</h1>
+            <div class="problem-description">${problem.description}</div>
+            ${renderTestCases(problem.testCases || [])}
         </div>
     `;
 
-    document.getElementById('outputSection').style.display = 'none';
-
-    // Highlight active button
-    document.querySelectorAll('.problem-btn').forEach(btn => btn.classList.remove('active'));
-    const btn = document.getElementById(`problem-btn-${index}`);
-    if (btn) btn.classList.add('active');
-
-    // Load saved submission or starter code
-    const saved = submissions[index];
-    if (saved && saved.code) {
-        editor.setValue(saved.code);
-    } else {
-        changeLanguage(); // Load starter code
-    }
+    // Load starter/saved code for selected language
+    changeLanguage();
 }
 
-// Run code
+function renderTestCases(cases) {
+    if (!cases.length) return '';
+    return `<div class="test-cases space-y-3 mt-4">
+        ${cases.map((tc, i) => {
+            const inputStr = typeof tc.input === 'object'
+                ? Object.entries(tc.input).map(([k, v]) => `${k} = ${JSON.stringify(v)}`).join(', ')
+                : JSON.stringify(tc.input);
+            return `<div class="example-card">
+                <div class="example-title">Example ${i + 1}:</div>
+                <div class="example-box">
+                    <div><span class="label">Input:</span> ${inputStr}</div>
+                    <div><span class="label">Output:</span> <span class="output-val">${JSON.stringify(tc.output)}</span></div>
+                    ${tc.explanation ? `<div class="example-explanation" style="margin-top:6px;font-size:11.5px;color:var(--muted);"><strong style="color:var(--text);">Explanation:</strong> ${tc.explanation}</div>` : ''}
+                </div>
+            </div>`;
+        }).join('')}
+    </div>`;
+}
+
+// ──────────────────────────────────────────────
+// Timer (display-only — server enforces timing)
+// ──────────────────────────────────────────────
+
+function startTimer() {
+    const timerEl = document.getElementById('timer');
+    if (!timerEl) return;
+
+    function tick() {
+        if (!contestEndTime) { timerEl.textContent = '--:--'; return; }
+        const remaining = Math.max(0, Math.floor((contestEndTime - Date.now()) / 1000));
+        const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+        const s = (remaining % 60).toString().padStart(2, '0');
+        timerEl.textContent = `${m}:${s}`;
+        timerEl.classList.toggle('warning', remaining < 300 && remaining > 0);
+
+        if (remaining === 0) {
+            clearInterval(timerInterval);
+            timerEl.textContent = '00:00';
+            showBanner('⏰ Time is up! The contest has ended.', '#ef4444');
+        }
+    }
+
+    tick();
+    timerInterval = setInterval(tick, 1000);
+}
+
+// ──────────────────────────────────────────────
+// Run Code
+// ──────────────────────────────────────────────
+
 async function runCode() {
     const code = editor.getValue();
-    if (!code.trim()) {
-        alert('Please write some code first!');
-        return;
-    }
-
     const language = document.getElementById('languageSelect').value;
-    const problem = problems[currentProblem];
+
+    if (!code.trim()) return alert('Write some code first!');
+
+    const problem = problems[currentIndex];
+    if (!problem) return;
 
     document.getElementById('outputSection').style.display = 'block';
-    document.getElementById('results').innerHTML = '<p>Running tests...</p>';
+    document.getElementById('results').innerHTML = '<p class="loading">⏳ Running sample tests...</p>';
 
     try {
-        const response = await authFetch('/api/judge/run', {
+        const res = await authFetch('/api/judge/run', {
             method: 'POST',
-            body: JSON.stringify({
-                code: code,
-                language: language,
-                testCases: problem.testCases.slice(0, 2),
-                problemId: problem.id // Use ID or index? Server expects problemId. Service uses lookup.
-                // If I pass index as problemId, make sure service handles it. Service uses find or index.
-            })
+            body: JSON.stringify({ code, language, problemId: problem.id })
         });
+        const data = await res.json();
 
-        const results = await response.json();
-        displayResults(results);
-    } catch (error) {
-        const resultsDiv = document.getElementById('results');
-        resultsDiv.innerHTML = `
-        <div class="result fail">
-            <strong>System Error:</strong>
-            <pre style="background: #2b1d1d; color: #ff6b6b; padding: 10px; border-radius: 4px; overflow-x: auto; margin-top: 5px;">${error.message}</pre>
-        </div>
-    `;
-    }
-}
-
-// Submit code
-async function submitCode(skipConfirm = false) {
-    const code = editor.getValue();
-    if (!code.trim()) {
-        if (!skipConfirm) alert('Please write some code first!');
-        return;
-    }
-
-    if (!skipConfirm && !confirm('Are you sure you want to submit this solution?')) {
-        return;
-    }
-
-    const language = document.getElementById('languageSelect').value;
-    const problem = problems[currentProblem];
-
-    document.getElementById('outputSection').style.display = 'block';
-    document.getElementById('results').innerHTML = '<p>Submitting and testing all cases...</p>';
-
-    try {
-        const response = await authFetch('/api/judge/submit', {
-            method: 'POST',
-            body: JSON.stringify({
-                code: code,
-                language: language,
-                problemId: problem.id,
-                // studentName: studentName, // Handled by token
-                // rollNumber: rollNumber,   // Handled by token
-                violations: violations
-            })
-        });
-
-        const result = await response.json();
-
-        // Save submission
-        submissions[currentProblem] = {
-            code: code,
-            result: result
-        };
-
-        // Update UI
-        if (result.allPassed) {
-            const btn = document.getElementById(`problem-btn-${currentProblem}`);
-            if (btn) btn.classList.add('solved');
-            alert('✅ All test cases passed! Solution submitted successfully.');
-        } else {
-            alert(`❌ ${result.passed}/${result.total} test cases passed. Keep trying!`);
+        if (!res.ok) {
+            document.getElementById('results').innerHTML =
+                `<div class="result fail"><strong>Error:</strong> ${data.error}</div>`;
+            return;
         }
 
-        displayResults(result.results);
-    } catch (error) {
-        const resultsDiv = document.getElementById('results');
-        resultsDiv.innerHTML = `
-        <div class="result fail">
-            <strong>System Error:</strong>
-            <pre style="background: #2b1d1d; color: #ff6b6b; padding: 10px; border-radius: 4px; overflow-x: auto; margin-top: 5px;">${error.message}</pre>
-        </div>
-    `;
+        renderResults(data.results, true);
+    } catch (err) {
+        document.getElementById('results').innerHTML =
+            `<div class="result fail">Connection error: ${err.message}</div>`;
     }
 }
 
-// Display results
-function displayResults(results) {
-    const resultsDiv = document.getElementById('results');
+// ──────────────────────────────────────────────
+// Submit Code
+// ──────────────────────────────────────────────
 
-    // Check for compilation errors
-    const compilationError = results.find(r => !r.passed && r.actual && typeof r.actual === 'string' && r.actual.toString().includes('Error: Command failed'));
+async function submitCode() {
+    const code = editor.getValue();
+    const language = document.getElementById('languageSelect').value;
+    const problem = problems[currentIndex];
 
-    if (compilationError) {
-        let errorMsg = compilationError.actual.replace(/Error: Command failed: g\+\+.*?\n/s, '');
-        resultsDiv.innerHTML = `
-        <div class="result fail" style="border-left: 5px solid #ff4444;">
-            <h3 style="color: #ff4444; margin-top: 0;">Compilation Error</h3>
-            <pre style="background: #2b1d1d; color: #ff9999; padding: 10px; border-radius: 4px; white-space: pre-wrap; font-family: 'Consolas', monospace;">${errorMsg}</pre>
-        </div>
-    `;
-        return;
-    }
+    if (!code.trim()) return alert('Write some code first!');
+    if (!problem) return;
+    if (!confirm(`Submit solution for "${problem.title}"?`)) return;
 
-    resultsDiv.innerHTML = results.map((result, i) => `
-    <div class="result ${result.passed ? 'pass' : 'fail'}">
-        <strong>Test Case ${i + 1}:</strong> ${result.passed ? '✅ Passed' : '❌ Failed'}
-        ${!result.passed ? `
-            <div style="margin-top: 8px; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px;">
-                <div style="margin-bottom: 4px;"><small style="opacity: 0.7;">Input:</small> <code style="color: #ddd;">${JSON.stringify(result.input)}</code></div>
-                <div style="margin-bottom: 4px;"><small style="opacity: 0.7;">Expected:</small> <code style="color: #4caf50;">${JSON.stringify(result.expected)}</code></div>
-                <div><small style="opacity: 0.7;">Output:</small> <code style="color: #ff4444;">${JSON.stringify(result.actual)}</code></div>
-            </div>
-        ` : ''}
-    </div>
-`).join('');
-}
+    document.getElementById('outputSection').style.display = 'block';
+    document.getElementById('results').innerHTML = '<p class="loading">⏳ Judging all test cases...</p>';
 
-// Log violation
-async function logViolation(type) {
     try {
-        await authFetch('/api/judge/log-violation', {
+        const res = await authFetch('/api/judge/submit', {
             method: 'POST',
             body: JSON.stringify({
-                violationType: type,
-                timestamp: new Date().toISOString()
+                code, language,
+                problemId: problem.id,
+                contestId: contestId || undefined
             })
         });
-    } catch (error) {
-        console.error('Error logging violation:', error);
+        const data = await res.json();
+
+        if (!res.ok) {
+            document.getElementById('results').innerHTML =
+                `<div class="result fail"><strong>${data.status || 'Error'}:</strong> ${data.error}</div>`;
+            return;
+        }
+
+        // Mark problem as solved if accepted
+        if (data.allPassed) {
+            document.getElementById(`prob-btn-${currentIndex}`)?.classList.add('solved');
+        }
+
+        // Show score summary
+        const statusClass = data.allPassed ? 'pass' : 'fail';
+        const summary = `<div class="result ${statusClass}" style="margin-bottom:12px;">
+            <strong>${data.status}</strong> — ${data.passed}/${data.total} passed · ${data.score} pts · ${data.executionTimeMs}ms
+        </div>`;
+        document.getElementById('results').innerHTML = summary;
+        renderResults(data.results, false, true);
+
+    } catch (err) {
+        document.getElementById('results').innerHTML =
+            `<div class="result fail">Connection error: ${err.message}</div>`;
     }
 }
 
-// Show leaderboard
+function renderResults(results, isSample) {
+    if (!results || !results.length) return;
+    const container = document.getElementById('results');
+    const rows = results.map((r, i) => {
+        const inputDisplay = r.input === '[hidden]' ? '[hidden]'
+            : (typeof r.input === 'object'
+                ? Object.entries(r.input).map(([k, v]) => `${k}=${JSON.stringify(v)}`).join(', ')
+                : JSON.stringify(r.input));
+
+        return `<div class="result ${r.passed ? 'pass' : 'fail'}">
+            <strong>${isSample ? 'Example' : 'Test'} ${i + 1}:</strong> ${r.passed ? '✅ Passed' : '❌ Failed'}
+            <br><small>Input: ${inputDisplay}</small>
+            ${!r.passed && r.expected !== '[hidden]'
+                ? `<br><small>Expected: ${JSON.stringify(r.expected)} · Got: ${JSON.stringify(r.actual)}</small>`
+                : ''}
+            ${r.error ? `<br><small style="color:#f87171;">Error: ${r.error}</small>` : ''}
+        </div>`;
+    });
+    container.innerHTML += rows.join('');
+}
+
+// ──────────────────────────────────────────────
+// Leaderboard
+// ──────────────────────────────────────────────
+
 async function showLeaderboard() {
     try {
-        const response = await authFetch('/api/judge/leaderboard');
-        const leaderboard = await response.json();
+        const url = contestId
+            ? `/api/contests/${contestId}/leaderboard`
+            : '/api/judge/leaderboard';
+        const res = await authFetch(url);
+        const data = await res.json();
 
         const tbody = document.getElementById('leaderboardBody');
-        tbody.innerHTML = leaderboard.map((entry, i) => `
-        <tr>
-            <td class="${i < 3 ? 'rank-' + (i + 1) : ''}">${i + 1}</td>
-            <td>${entry.name}</td>
-            <td>${entry.reg_no || entry.rollNumber}</td>
-            <td>${entry.total_score || 0}</td>
-            <td>${entry.problems_solved || 0}</td>
-        </tr>
-    `).join('');
+        tbody.innerHTML = data.length === 0
+            ? '<tr><td colspan="5" style="text-align:center;color:#64748b;">No submissions yet</td></tr>'
+            : data.map((e, i) => `
+                <tr>
+                    <td class="${i < 3 ? `rank-${i + 1}` : ''}">${i + 1}</td>
+                    <td>${e.name}</td>
+                    <td>${e.reg_no}</td>
+                    <td><strong>${e.total_score || 0}</strong></td>
+                    <td>${e.problems_solved || 0}</td>
+                </tr>`).join('');
 
         document.getElementById('leaderboardModal').classList.add('active');
-    } catch (error) {
-        alert('Error loading leaderboard: ' + error.message);
+    } catch (err) {
+        alert('Error loading leaderboard: ' + err.message);
     }
 }
 
@@ -535,53 +379,80 @@ function closeLeaderboard() {
     document.getElementById('leaderboardModal').classList.remove('active');
 }
 
-// Auto submit all on time up
-async function autoSubmitAll() {
-    for (let i = 0; i < problems.length; i++) {
-        if (submissions[i]) {
-            continue;
+// ──────────────────────────────────────────────
+// Anti-Cheat
+// ──────────────────────────────────────────────
+
+function enableAntiCheat() {
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) logViolation('tab_switch');
+    });
+    document.addEventListener('copy', () => logViolation('copy'));
+    document.addEventListener('paste', () => {
+        showBanner('⚠️ Paste detected — this violation has been logged.');
+        logViolation('paste');
+    });
+    document.addEventListener('contextmenu', e => {
+        e.preventDefault();
+        logViolation('right_click');
+    });
+    window.addEventListener('blur', () => logViolation('blur'));
+    document.addEventListener('keydown', e => {
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'v' || e.key === 'x')) {
+            const isEditorInput = e.target?.closest?.('.CodeMirror');
+            if (!isEditorInput) {
+                e.preventDefault();
+                showBanner('⚠️ Copy/paste shortcuts are disabled outside the editor.');
+                logViolation('copy');
+            }
         }
-        selectProblem(i);
-        const code = editor.getValue();
-        if (code.trim()) {
-            await submitCode(true);
+        if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I')) {
+            e.preventDefault();
+            showBanner('⚠️ Developer tools are disabled during the contest.');
+            logViolation('devtools');
         }
+    });
+}
+
+async function logViolation(type) {
+    try {
+        await authFetch('/api/judge/log-violation', {
+            method: 'POST',
+            body: JSON.stringify({ violationType: type, contestId: contestId || undefined })
+        });
+    } catch (_) { }
+    showBanner(`⚠️ ${type.replace(/_/g, ' ')} detected — logged.`);
+}
+
+function showBanner(msg, color = '#ef4444') {
+    const banner = document.getElementById('warningBanner');
+    if (!banner) return;
+    banner.textContent = msg;
+    banner.style.background = color;
+    banner.style.display = 'block';
+    clearTimeout(banner._timeout);
+    banner._timeout = setTimeout(() => { banner.style.display = 'none'; }, 3500);
+}
+
+// ──────────────────────────────────────────────
+// Logout
+// ──────────────────────────────────────────────
+
+function logout() {
+    if (confirm('Are you sure you want to log out?')) {
+        localStorage.clear();
+        window.location.href = '/index.html';
     }
 }
 
-// Prevent leaving page
-window.addEventListener('beforeunload', function (e) {
-    e.preventDefault();
-    e.returnValue = '';
-    return '';
-});
-
-// Provide access for UI buttons to global functions
-window.runCode = runCode;
-window.submitCode = submitCode;
-window.showLeaderboard = showLeaderboard;
-window.closeLeaderboard = closeLeaderboard;
-window.selectProblem = selectProblem; // Necessary for dynamically generated buttons
-window.changeLanguage = changeLanguage;
-
-// End Test - Submit & Redirect to Insights
-window.endTest = async function () {
-    if (!confirm('Are you sure you want to end the test? This will submit your current progress and show you interview insights.')) {
-        return;
+function endTest() {
+    if (confirm('End the test and submit all your solutions?')) {
+        logout();
     }
+}
 
-    // Optional: Auto-submit pending code here if needed
-    // await autoSubmitAll(); 
+// Prevent accidental navigation
+window.addEventListener('beforeunload', e => { e.preventDefault(); e.returnValue = ''; });
 
-    window.location.href = '/insights.html';
-};
-
-// Logout / Cancel
-window.logout = function () {
-    if (confirm('Are you sure you want to log out?')) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        localStorage.removeItem('contestEndTime');
-        window.location.href = '/';
-    }
-};
+// Start
+init();

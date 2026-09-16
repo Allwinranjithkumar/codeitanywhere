@@ -1,191 +1,368 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Authentication | Coding Platform</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <title>CodeItAnywhere — Online Coding & Assessment Platform</title>
+
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ["Inter", "sans-serif"],
+                        mono: ["JetBrains Mono", "monospace"]
+                    }
+                }
+            }
+        };
+    </script>
+
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Outfit', sans-serif;
+        :root {
+            --bg: #0b0f17;
+            --surface: #111827;
+            --surface-2: #1f2937;
+            --border: #374151;
+            --text: #f9fafb;
+            --accent: #10b981;
         }
 
         body {
-            background: #0f0c29;
-            background: linear-gradient(to right, #24243e, #302b63, #0f0c29);
-            color: #fff;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
+            background: #0b0f17;
+            color: #f9fafb;
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
         }
 
-        .container {
-            position: relative;
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 40px;
-            width: 400px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+        /* Subtle grid background */
+        .bg-grid {
+            background-size: 40px 40px;
+            background-image: 
+                linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
         }
 
-        h2 {
-            text-align: center;
-            margin-bottom: 30px;
-            font-weight: 600;
-            color: #4ec9b0;
-            letter-spacing: 1px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-size: 0.9em;
-            color: #aaa;
-        }
-
-        input {
-            width: 100%;
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            background: rgba(0, 0, 0, 0.2);
-            color: #fff;
-            outline: none;
-            transition: 0.3s;
-        }
-
-        input:focus {
-            border-color: #4ec9b0;
-            box-shadow: 0 0 10px rgba(78, 201, 176, 0.2);
-        }
-
-        button.btn-primary {
-            width: 100%;
-            padding: 12px;
-            border-radius: 8px;
-            border: none;
-            background: linear-gradient(135deg, #4ec9b0 0%, #3db89f 100%);
-            color: #1a1a2e;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            margin-top: 10px;
-        }
-
-        button.btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(78, 201, 176, 0.3);
-        }
-
-        .switch-form {
-            text-align: center;
-            margin-top: 20px;
-            font-size: 0.9em;
-            color: #ccc;
-        }
-
-        .switch-form span {
-            color: #4ec9b0;
-            cursor: pointer;
-            font-weight: 600;
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        .error-msg {
-            color: #ff6b6b;
-            font-size: 0.85em;
-            margin-top: 5px;
-            min-height: 20px;
-            text-align: center;
-        }
-
-        /* Particles background (optional simple css trick) */
-        .bg-circle {
-            position: absolute;
-            border-radius: 50%;
-            background: rgba(78, 201, 176, 0.1);
-            z-index: -1;
+        .glow-emerald {
+            box-shadow: 0 0 50px -10px rgba(16, 185, 129, 0.3);
         }
     </style>
 </head>
 
-<body>
+<body class="bg-[#0b0f17] text-zinc-100 flex flex-col min-h-screen relative overflow-x-hidden">
 
-    <div class="bg-circle" style="width: 300px; height: 300px; top: -50px; left: -50px;"></div>
-    <div class="bg-circle"
-        style="width: 200px; height: 200px; bottom: -50px; right: -50px; background: rgba(106, 90, 205, 0.1);"></div>
+    <!-- BACKGROUND GLOWS -->
+    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[350px] bg-emerald-500/10 blur-[120px] pointer-events-none -z-10"></div>
+    <div class="absolute top-96 right-10 w-[400px] h-[300px] bg-indigo-500/10 blur-[100px] pointer-events-none -z-10"></div>
 
-    <div class="container">
-        <!-- Login Form -->
-        <form id="loginForm">
-            <h2>Welcome Back</h2>
-            <div class="form-group">
-                <label>Email Address</label>
-                <input type="email" id="loginEmail" placeholder="student@psgitech.ac.in" required>
-            </div>
-            <div class="form-group">
-                <label>Password</label>
-                <input type="password" id="loginPassword" placeholder="Enter password (default: student123)"
-                    value="student123" required>
-            </div>
-            <div class="error-msg" id="loginError"></div>
-            <button type="submit" class="btn-primary">Login</button>
-            <div class="switch-form">
-                Don't have an account? <span onclick="toggleForm()">Register</span>
-            </div>
+    <!-- =====================================================
+         NAVBAR
+    ===================================================== -->
+    <header class="border-b border-zinc-800/80 backdrop-blur-md bg-[#0b0f17]/80 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <!-- LOGO -->
+            <a href="/" class="flex items-center gap-2.5 group">
+                <div class="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold text-sm group-hover:scale-105 transition">
+                    &lt;/&gt;
+                </div>
+                <div>
+                    <span class="text-base font-extrabold tracking-tight">CodeItAnywhere</span>
+                    <span class="block text-[10px] text-zinc-400 font-medium">Enterprise Coding Platform</span>
+                </div>
+            </a>
 
-            <div
-                style="text-align: center; margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
-                <a href="insights.html"
-                    style="color: #bbb; text-decoration: none; font-size: 0.9em; display: inline-flex; align-items: center; gap: 8px; transition: color 0.3s;">
-                    💡 Tech Interview Insights
+            <!-- NAV LINKS -->
+            <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-zinc-300">
+                <a href="/contest.html" class="hover:text-emerald-400 transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-code text-xs text-emerald-500"></i> Contest Arena
+                </a>
+                <a href="/admin.html" class="hover:text-emerald-400 transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-wand-magic-sparkles text-xs text-purple-400"></i> AI Problem Studio
+                </a>
+                <a href="#problemsSection" class="hover:text-emerald-400 transition">
+                    Problems
+                </a>
+                <a href="#featuresSection" class="hover:text-emerald-400 transition">
+                    Platform Features
+                </a>
+            </nav>
+
+            <!-- AUTH ACTION BUTTONS -->
+            <div id="authNavArea" class="flex items-center gap-3">
+                <!-- Populated dynamically based on localStorage -->
+                <a href="/auth.html" class="text-xs font-semibold px-4 py-2 rounded-lg border border-zinc-700 bg-zinc-800/50 hover:bg-zinc-800 text-zinc-200 transition">
+                    Sign In
+                </a>
+                <a href="/auth.html" class="text-xs font-semibold px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 transition">
+                    Get Started
                 </a>
             </div>
-        </form>
+        </div>
+    </header>
 
-        <!-- Register Form -->
-        <form id="registerForm" class="hidden">
-            <h2>Create Account</h2>
-            <div class="form-group">
-                <label>Full Name</label>
-                <input type="text" id="regName" placeholder="John Doe" required>
-            </div>
-            <div class="form-group">
-                <label>Register Number</label>
-                <input type="text" id="regNo" placeholder="7155xx1050xx" required>
-            </div>
-            <div class="form-group">
-                <label>Email Address</label>
-                <input type="email" id="regEmail" placeholder="student@psgitech.ac.in" required>
-            </div>
-            <div class="form-group">
-                <label>Password</label>
-                <input type="password" id="regPassword" placeholder="Create a password" required>
-            </div>
-            <div class="error-msg" id="regError"></div>
-            <button type="submit" class="btn-primary">Register</button>
-            <div class="switch-form">
-                Already have an account? <span onclick="toggleForm()">Login</span>
-            </div>
-        </form>
-    </div>
+    <!-- =====================================================
+         HERO SECTION
+    ===================================================== -->
+    <section class="py-16 md:py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full text-center flex flex-col items-center">
+        <!-- BADGE -->
+        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-semibold mb-6">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            Powered by Amazon Bedrock AI & PostgreSQL
+        </div>
 
-    <script src="auth.js"></script>
+        <!-- HEADLINE -->
+        <h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white max-w-4xl leading-tight sm:leading-none">
+            Master Competitive Code. <br>
+            <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400">
+                Ace Technical Assessments.
+            </span>
+        </h1>
+
+        <!-- SUBTITLE -->
+        <p class="mt-6 text-base sm:text-lg text-zinc-400 max-w-2xl leading-relaxed">
+            The next-generation competitive programming platform with LeetCode-grade contest IDE, real-time multi-language code execution, automated grading, and anti-cheat monitoring.
+        </p>
+
+        <!-- CTA BUTTONS -->
+        <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
+            <a href="/contest.html" class="px-6 py-3 rounded-xl font-bold text-sm bg-emerald-600 hover:bg-emerald-500 text-white shadow-xl shadow-emerald-600/30 flex items-center gap-2 hover:-translate-y-0.5 transition">
+                <i class="fa-solid fa-laptop-code"></i>
+                Enter Contest Arena
+            </a>
+
+            <a href="/admin.html" class="px-6 py-3 rounded-xl font-bold text-sm border border-zinc-700 bg-zinc-800/80 hover:bg-zinc-800 text-zinc-100 flex items-center gap-2 hover:-translate-y-0.5 transition">
+                <i class="fa-solid fa-sparkles text-purple-400"></i>
+                Problem Studio (Admin)
+            </a>
+        </div>
+
+        <!-- STATS BAR -->
+        <div class="mt-16 grid grid-cols-2 md:grid-cols-4 gap-4 w-full max-w-4xl border border-zinc-800 bg-zinc-900/60 rounded-2xl p-6 backdrop-blur">
+            <div>
+                <div class="text-2xl font-bold text-white">5 Languages</div>
+                <div class="text-xs text-zinc-400 mt-1">Python, C++, Java, JS, C</div>
+            </div>
+            <div>
+                <div class="text-2xl font-bold text-emerald-400">&lt; 150ms</div>
+                <div class="text-xs text-zinc-400 mt-1">Execution Speed</div>
+            </div>
+            <div>
+                <div class="text-2xl font-bold text-cyan-400">100% Secure</div>
+                <div class="text-xs text-zinc-400 mt-1">Anti-Cheat & Sandboxed</div>
+            </div>
+            <div>
+                <div class="text-2xl font-bold text-purple-400">Bedrock AI</div>
+                <div class="text-xs text-zinc-400 mt-1">Auto Problem Generator</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- =====================================================
+         LIVE PROBLEMS SECTION
+    ===================================================== -->
+    <section id="problemsSection" class="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+        <div class="flex items-center justify-between mb-8 border-b border-zinc-800 pb-4">
+            <div>
+                <h2 class="text-2xl font-bold text-white tracking-tight">Active Contest Challenges</h2>
+                <p class="text-sm text-zinc-400 mt-1">Select a challenge below to launch directly into the Code Editor</p>
+            </div>
+            <a href="/contest.html" class="text-xs font-semibold text-emerald-400 hover:text-emerald-300 flex items-center gap-1">
+                Open Full Contest IDE <i class="fa-solid fa-arrow-right"></i>
+            </a>
+        </div>
+
+        <!-- PROBLEM CARDS CONTAINER (DYNAMIC) -->
+        <div id="problemsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="col-span-full py-12 text-center text-zinc-500 font-mono text-sm">
+                <i class="fa-solid fa-circle-notch fa-spin text-emerald-500 text-lg mr-2"></i>
+                Loading problems from PostgreSQL...
+            </div>
+        </div>
+    </section>
+
+    <!-- =====================================================
+         FEATURES SECTION
+    ===================================================== -->
+    <section id="featuresSection" class="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full border-t border-zinc-800/80">
+        <div class="text-center max-w-3xl mx-auto mb-14">
+            <h2 class="text-3xl font-extrabold text-white tracking-tight">Engineered for Universities & Enterprise</h2>
+            <p class="text-sm text-zinc-400 mt-3">Built with a single source of truth in PostgreSQL, instant AI problem creation, and zero-compromise security.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- CARD 1 -->
+            <div class="p-6 rounded-2xl border border-zinc-800 bg-zinc-900/50 space-y-3">
+                <div class="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 text-lg">
+                    <i class="fa-solid fa-microchip"></i>
+                </div>
+                <h3 class="text-lg font-bold text-white">Amazon Bedrock AI Studio</h3>
+                <p class="text-xs text-zinc-400 leading-relaxed">
+                    Generate comprehensive competitive problems with constraints, repeatable test cases, detailed explanations, and starter templates in seconds.
+                </p>
+            </div>
+
+            <!-- CARD 2 -->
+            <div class="p-6 rounded-2xl border border-zinc-800 bg-zinc-900/50 space-y-3">
+                <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-lg">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <h3 class="text-lg font-bold text-white">Anti-Cheat Proctoring</h3>
+                <p class="text-xs text-zinc-400 leading-relaxed">
+                    Automatic tab-switch logging, copy-paste suppression, and fullscreen enforcement to maintain strict academic integrity during assessments.
+                </p>
+            </div>
+
+            <!-- CARD 3 -->
+            <div class="p-6 rounded-2xl border border-zinc-800 bg-zinc-900/50 space-y-3">
+                <div class="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-lg">
+                    <i class="fa-solid fa-file-excel"></i>
+                </div>
+                <h3 class="text-lg font-bold text-white">1-Click Excel Reports</h3>
+                <p class="text-xs text-zinc-400 leading-relaxed">
+                    Export entire batch and class submission rankings, testcase pass rates, execution times, and student roll numbers into formatted Excel workbooks.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- =====================================================
+         FOOTER
+    ===================================================== -->
+    <footer class="border-t border-zinc-800/80 py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full flex flex-col sm:flex-row items-center justify-between text-xs text-zinc-500 gap-4 mt-auto">
+        <div>
+            © 2026 CodeItAnywhere. All rights reserved.
+        </div>
+        <div class="flex items-center gap-6">
+            <a href="/contest.html" class="hover:text-zinc-300 transition">Contest Arena</a>
+            <a href="/admin.html" class="hover:text-zinc-300 transition">Admin Studio</a>
+            <a href="/auth.html" class="hover:text-zinc-300 transition">Sign In</a>
+        </div>
+    </footer>
+
+    <!-- =====================================================
+         PAGE SCRIPT (DYNAMIC PROBLEM & AUTH LOADING)
+    ===================================================== -->
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            renderAuthStatus();
+            await loadProblemsList();
+        });
+
+        function renderAuthStatus() {
+            const token = localStorage.getItem('token');
+            const userStr = localStorage.getItem('user');
+            const authArea = document.getElementById('authNavArea');
+
+            if (token && userStr) {
+                try {
+                    const user = JSON.parse(userStr);
+                    authArea.innerHTML = `
+                        <span class="text-xs font-semibold text-zinc-300 hidden sm:inline">
+                            Hi, <span class="text-emerald-400">${user.name || 'User'}</span>
+                        </span>
+                        <a href="/contest.html" class="text-xs font-semibold px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-terminal text-[10px]"></i> Contest
+                        </a>
+                        ${user.role === 'admin' ? `
+                            <a href="/admin.html" class="text-xs font-semibold px-3 py-2 rounded-lg border border-purple-500/30 bg-purple-500/10 text-purple-300 hover:bg-purple-500/20 transition">
+                                Admin
+                            </a>
+                        ` : ''}
+                        <button onclick="signOut()" class="text-xs text-zinc-400 hover:text-rose-400 p-2" title="Sign Out">
+                            <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                        </button>
+                    `;
+                } catch (_) {}
+            }
+        }
+
+        window.signOut = function() {
+            localStorage.clear();
+            window.location.reload();
+        };
+
+        async function loadProblemsList() {
+            const container = document.getElementById('problemsGrid');
+            try {
+                const token = localStorage.getItem('token');
+                const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+                const res = await fetch('/api/judge/problems', { headers });
+
+                if (!res.ok) throw new Error('Failed to load problems');
+
+                const problems = await res.json();
+
+                if (!problems || problems.length === 0) {
+                    container.innerHTML = `
+                        <div class="col-span-full py-8 text-center text-zinc-400 text-xs">
+                            No contest problems currently available. Check back soon or create one in the Admin Studio!
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = problems.map((p, idx) => {
+                    const diffBadge = p.difficulty === 'Easy' 
+                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                        : p.difficulty === 'Hard'
+                        ? 'bg-rose-500/10 text-rose-400 border-rose-500/30'
+                        : 'bg-amber-500/10 text-amber-400 border-amber-500/30';
+
+                    // Extract plain text preview from HTML description
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = p.description || '';
+                    const plainDesc = tempDiv.textContent.slice(0, 110) + '...';
+
+                    return `
+                        <div class="border border-zinc-800 hover:border-zinc-700 bg-zinc-900/60 rounded-2xl p-5 flex flex-col justify-between transition hover:-translate-y-1 hover:shadow-xl group">
+                            <div>
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full border ${diffBadge}">
+                                        ${p.difficulty || 'Medium'}
+                                    </span>
+                                    <span class="text-xs font-mono text-zinc-400">
+                                        ${p.points || 100} pts
+                                    </span>
+                                </div>
+                                <h3 class="text-base font-bold text-white group-hover:text-emerald-400 transition mb-2">
+                                    ${idx + 1}. ${p.title}
+                                </h3>
+                                <p class="text-xs text-zinc-400 leading-relaxed mb-4">
+                                    ${plainDesc}
+                                </p>
+                            </div>
+                            <div class="pt-4 border-t border-zinc-800/80 flex items-center justify-between">
+                                <span class="text-[11px] text-zinc-500 font-mono">
+                                    ${(p.testCases || []).length} Sample Cases
+                                </span>
+                                <a href="/contest.html?problem=${p.id}" class="text-xs font-semibold text-emerald-400 hover:text-emerald-300 flex items-center gap-1.5">
+                                    Solve Challenge <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (err) {
+                container.innerHTML = `
+                    <div class="col-span-full py-8 text-center text-rose-400 text-xs">
+                        Error loading problems: ${err.message}
+                    </div>
+                `;
+            }
+        }
+    </script>
 </body>
 
 </html>

@@ -4,746 +4,2159 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - Coding Contest</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <title>Admin — CodeItAnywhere</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        * {
+        *,
+        *::before,
+        *::after {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Outfit', sans-serif;
+        }
+
+        :root {
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --border: #e2e8f0;
+            --primary: #6366f1;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --text: #1e293b;
+            --muted: #64748b;
         }
 
         body {
-            background: #f4f6f8;
-            padding: 20px;
-            color: #333;
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
         }
 
-        .container {
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #1e1b4b, #312e81);
+            color: white;
+            padding: 0 24px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header h1 {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .header .admin-badge {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+        }
+
+        .btn-logout {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            padding: 7px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.82rem;
+            font-family: inherit;
+            transition: 0.2s;
+        }
+
+        .btn-logout:hover {
+            background: rgba(239, 68, 68, 0.35);
+        }
+
+        /* Layout */
+        .main {
             max-width: 1400px;
             margin: 0 auto;
+            padding: 24px;
         }
 
-        h1 {
-            color: #1a1a2e;
-            margin-bottom: 30px;
-            text-align: center;
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
         }
 
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            border-radius: 12px 12px 0 0;
+        }
+
+        .stat-card.indigo::before {
+            background: #6366f1;
+        }
+
+        .stat-card.emerald::before {
+            background: #10b981;
+        }
+
+        .stat-card.amber::before {
+            background: #f59e0b;
+        }
+
+        .stat-card.red::before {
+            background: #ef4444;
+        }
+
+        .stat-card.sky::before {
+            background: #0ea5e9;
+        }
+
+        .stat-card.violet::before {
+            background: #8b5cf6;
+        }
+
+        .stat-card h3 {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+        }
+
+        .stat-card .number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .stat-card .label {
+            font-size: 0.78rem;
+            color: var(--muted);
+            margin-top: 2px;
+        }
+
+        /* Active Contest Banner */
+        .contest-banner {
+            background: linear-gradient(135deg, #065f46, #047857);
+            color: white;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .contest-banner h3 {
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        .contest-banner p {
+            font-size: 0.82rem;
+            opacity: 0.85;
+        }
+
+        /* Tabs */
         .tabs {
             display: flex;
-            gap: 10px;
+            gap: 4px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 6px;
             margin-bottom: 20px;
-            background: white;
-            padding: 10px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            overflow-x: auto;
         }
 
         .tab {
-            padding: 12px 24px;
-            background: #f0f0f0;
+            padding: 9px 18px;
             border: none;
-            border-radius: 6px;
+            background: transparent;
+            border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
-            transition: all 0.3s;
-            color: #555;
-        }
-
-        .tab:hover {
-            background: #e0e0e0;
+            font-size: 0.85rem;
+            color: var(--muted);
+            font-family: inherit;
+            white-space: nowrap;
+            transition: all 0.2s;
         }
 
         .tab.active {
-            background: #4ec9b0;
-            color: #fff;
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
         }
 
-        .tab-content {
+        .tab-panel {
             display: none;
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         }
 
-        .tab-content.active {
+        .tab-panel.active {
             display: block;
+        }
+
+        /* Toolbar */
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            font-family: inherit;
+            transition: 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--muted);
+        }
+
+        .btn:hover {
+            filter: brightness(1.1);
+            transform: translateY(-1px);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Filters */
+        .filters {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 16px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filters label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--muted);
+        }
+
+        .filters select,
+        .filters input {
+            padding: 7px 10px;
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            font-size: 0.85rem;
+            font-family: inherit;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        /* Table */
+        .table-wrap {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
-        }
-
-        th,
-        td {
-            padding: 15px;
-            text-align: left;
-            border-bottom: 1px solid #eee;
+            font-size: 0.86rem;
         }
 
         th {
-            background: #f8f9fa;
-            color: #555;
+            padding: 12px 16px;
+            text-align: left;
+            background: #f8fafc;
+            color: var(--muted);
             font-weight: 600;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            border-bottom: 1px solid var(--border);
         }
 
-        tr:hover {
-            background: #f9f9f9;
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f1f5f9;
         }
 
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: #f8fafc;
+        }
+
+        /* Badges */
         .badge {
-            padding: 4px 10px;
+            padding: 3px 10px;
             border-radius: 20px;
-            font-size: 12px;
+            font-size: 0.73rem;
             font-weight: 600;
         }
 
         .badge-success {
-            background: #e6ffFA;
-            color: #047481;
-        }
-
-        .badge-warning {
-            background: #fffbea;
-            color: #92400e;
+            background: #dcfce7;
+            color: #166534;
         }
 
         .badge-danger {
             background: #fee2e2;
-            color: #b91c1c;
+            color: #991b1b;
         }
 
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
+        .badge-warning {
+            background: #fef3c7;
+            color: #92400e;
         }
 
-        .stat-card {
-            background: white;
-            padding: 25px;
+        .badge-info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge-muted {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        /* Form */
+        .form-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
             border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
-            border: 1px solid #eee;
-        }
-
-        .stat-card h3 {
-            color: #888;
-            font-size: 14px;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .stat-card .number {
-            font-size: 32px;
-            font-weight: bold;
-            color: #1a1a2e;
-        }
-
-        .action-bar {
+            padding: 24px;
             margin-bottom: 20px;
-            display: flex;
-            gap: 10px;
         }
 
-        button.action-btn {
-            background: #4ec9b0;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
+        .form-card h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 18px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 14px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.8rem;
             font-weight: 600;
-            transition: 0.2s;
+            color: var(--muted);
+            margin-bottom: 5px;
         }
 
-        button.action-btn:hover {
-            filter: brightness(1.1);
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 9px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.88rem;
+            font-family: inherit;
+            background: var(--bg);
+            color: var(--text);
+            resize: vertical;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        /* Empty state */
+        .empty {
+            text-align: center;
+            padding: 48px;
+            color: var(--muted);
+        }
+
+        .empty .icon {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+        }
+
+        /* Code preview */
+        pre {
+            background: #f8fafc;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            overflow-x: auto;
+            border: 1px solid var(--border);
         }
 
         code {
-            background: #f1f1f1;
-            padding: 2px 6px;
+            background: #f1f5f9;
+            padding: 1px 6px;
             border-radius: 4px;
-            font-family: 'Consolas', monospace;
-            color: #d63384;
+            font-size: 0.85em;
         }
 
-        /* Logout button */
-        .logout-btn {
-            background: #ff6b6b;
+        /* ── Bedrock AI & Problem Builder Styles ── */
+        .ai-generator-box {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.12));
+            border: 1px solid rgba(139, 92, 246, 0.35);
+            border-radius: 12px;
+            padding: 18px 20px;
+            margin-bottom: 22px;
+        }
+        .ai-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 20px;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+        .testcase-card {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 14px;
+            position: relative;
+            transition: all 0.2s;
+        }
+        .testcase-card:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+        }
+        .testcase-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            font-size: 0.82rem;
+            font-weight: 700;
+        }
+        .code-lang-tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 8px;
+            background: #f1f5f9;
+            padding: 4px;
+            border-radius: 8px;
+            width: fit-content;
+        }
+        .code-lang-tab {
+            padding: 5px 14px;
+            border: none;
+            background: transparent;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            color: var(--muted);
+            font-family: inherit;
+        }
+        .code-lang-tab.active {
+            background: white;
+            color: var(--primary);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .constraint-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #e2e8f0;
+            color: #1e293b;
+            font-size: 0.8rem;
+            font-family: monospace;
+            padding: 4px 10px;
+            border-radius: 6px;
+            margin-right: 6px;
+            margin-bottom: 6px;
+        }
+        .constraint-tag button {
+            background: none;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            font-size: 0.95rem;
+            line-height: 1;
+        }
+        /* ── AI Problem Architect GPT Studio Styles ── */
+        .gpt-wrapper {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+        .gpt-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #ffffff;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .gpt-messages-feed {
+            height: 520px;
+            overflow-y: auto;
+            padding: 24px 20px;
+            background: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            scroll-behavior: smooth;
+        }
+        .gpt-empty-hero {
+            text-align: center;
+            margin: auto;
+            max-width: 820px;
+            padding: 30px 10px;
+        }
+        .prompt-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 12px;
+            text-align: left;
+        }
+        .prompt-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            gap: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+        .prompt-card:hover {
+            border-color: #6366f1;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px -2px rgba(99, 102, 241, 0.15);
+        }
+        .prompt-card .pc-icon {
+            font-size: 1.4rem;
+            line-height: 1;
+        }
+        .prompt-card .pc-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 3px;
+        }
+        .prompt-card .pc-desc {
+            font-size: 0.74rem;
+            color: #64748b;
+            line-height: 1.35;
+        }
+        .gpt-msg {
+            display: flex;
+            gap: 12px;
+            max-width: 96%;
+        }
+        .gpt-msg.user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+        .gpt-msg.assistant {
+            align-self: flex-start;
+            width: 100%;
+        }
+        .gpt-msg-avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+        .gpt-msg.user .gpt-msg-avatar {
+            background: #1e293b;
+            color: white;
+        }
+        .gpt-msg.assistant .gpt-msg-avatar {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
+        }
+        .gpt-msg-content {
+            flex: 1;
+            max-width: 900px;
+        }
+        .gpt-user-bubble {
+            background: linear-gradient(135deg, #4f46e5, #4338ca);
+            color: white;
+            padding: 10px 16px;
+            border-radius: 16px;
+            border-top-right-radius: 2px;
+            font-size: 0.88rem;
+            line-height: 1.5;
+            display: inline-block;
+            box-shadow: 0 2px 6px rgba(79, 70, 229, 0.2);
+        }
+        .gpt-ai-text {
+            color: #1e293b;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+        .gpt-problem-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 18px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.05);
+            margin-top: 8px;
+        }
+        .gpt-pc-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 12px;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .gpt-pc-section {
+            margin-bottom: 14px;
+        }
+        .gpt-sec-title {
+            font-size: 0.76rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #64748b;
+            margin-bottom: 6px;
+        }
+        .gpt-pc-desc {
+            font-size: 0.84rem;
+            color: #334155;
+            line-height: 1.5;
+            background: #f8fafc;
+            border-left: 3px solid #6366f1;
+            padding: 10px 14px;
+            border-radius: 0 8px 8px 0;
+        }
+        .gpt-tc-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .gpt-tc-item {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 0.8rem;
+            font-family: monospace;
+        }
+        .gpt-lang-tabs {
+            display: flex;
+            gap: 4px;
+            background: #e2e8f0;
+            padding: 3px;
+            border-radius: 6px;
+        }
+        .gpt-lt {
+            border: none;
+            background: transparent;
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            color: #64748b;
+        }
+        .gpt-lt.active {
+            background: white;
+            color: #4f46e5;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+        }
+        .gpt-code-box {
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 12px 14px;
+            border-radius: 8px;
+            font-family: 'Consolas', monospace;
+            font-size: 0.8rem;
+            overflow-x: auto;
+            max-height: 220px;
+            margin: 0;
+        }
+        .gpt-pc-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #f1f5f9;
+            padding-top: 12px;
+            margin-top: 14px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .gpt-input-container {
+            padding: 14px 20px;
+            border-top: 1px solid var(--border);
+            background: white;
+        }
+
+        .gpt-input-box {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 8px 12px;
+            transition: border-color 0.2s;
+        }
+        .gpt-input-box:focus-within {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+            background: white;
+        }
+        .gpt-input-box textarea {
+            flex: 1;
+            border: none;
+            background: transparent;
+            font-family: inherit;
+            font-size: 0.88rem;
+            resize: none;
+            outline: none;
+            line-height: 1.4;
+            max-height: 140px;
+            padding: 4px 0;
+        }
+        .gpt-send-btn {
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
             color: white;
             border: none;
             padding: 8px 16px;
-            border-radius: 6px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.84rem;
             cursor: pointer;
-            float: right;
+            transition: opacity 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+        .gpt-send-btn:hover {
+            opacity: 0.92;
+        }
+        .gpt-send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
     </style>
 </head>
 
 <body>
-    <div class="container">
-        <button class="logout-btn" onclick="logout()">Logout</button>
-        <h1>🎯 Contest Admin Panel</h1>
 
-        <div class="stats" id="stats">
-            <!-- Stats will be loaded here -->
+    <!-- Admin Authentication Modal Overlay -->
+    <div id="adminAuthOverlay" style="position:fixed;inset:0;background:rgba(15,20,26,0.92);backdrop-filter:blur(8px);z-index:9999;display:none;align-items:center;justify-content:center;padding:16px;">
+        <div style="background:#1e222d;border:1px solid #374151;border-radius:16px;padding:32px;width:100%;max-width:380px;box-shadow:0 25px 50px rgba(0,0,0,0.6);">
+            <div style="text-align:center;margin-bottom:20px;">
+                <div style="font-size:2rem;margin-bottom:8px;">⚡</div>
+                <h2 style="color:white;font-size:1.25rem;font-weight:700;margin:0 0 6px 0;">Admin Sign In</h2>
+                <p style="color:#9ca3af;font-size:0.8rem;margin:0;">Administrator access required to view panel</p>
+            </div>
+            <form id="adminLoginForm" onsubmit="handleAdminLogin(event)">
+                <div style="margin-bottom:14px;">
+                    <label style="display:block;font-size:0.75rem;color:#9ca3af;margin-bottom:6px;font-weight:600;">ADMIN EMAIL</label>
+                    <input id="adminEmailInput" type="email" value="admin@codeitanywhere.com" required style="width:100%;padding:10px 12px;border-radius:8px;background:#111827;border:1px solid #374151;color:white;font-size:0.88rem;box-sizing:border-box;">
+                </div>
+                <div style="margin-bottom:16px;">
+                    <label style="display:block;font-size:0.75rem;color:#9ca3af;margin-bottom:6px;font-weight:600;">PASSWORD</label>
+                    <input id="adminPasswordInput" type="password" value="Admin@1234" required style="width:100%;padding:10px 12px;border-radius:8px;background:#111827;border:1px solid #374151;color:white;font-size:0.88rem;box-sizing:border-box;">
+                </div>
+                <div id="adminLoginError" style="color:#ef4444;font-size:0.8rem;margin-bottom:12px;display:none;text-align:center;background:rgba(239,68,68,0.1);padding:6px;border-radius:6px;"></div>
+                <button type="submit" id="adminLoginBtn" style="width:100%;padding:12px;background:#10b981;border:none;border-radius:8px;color:white;font-weight:700;font-size:0.9rem;cursor:pointer;transition:background 0.2s;">
+                    Sign In to Dashboard
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="header">
+        <h1>⚡ CodeItAnywhere — Admin Panel</h1>
+        <div style="display:flex;align-items:center;gap:12px;">
+            <span class="admin-badge" id="adminName">Admin</span>
+            <button class="btn-logout" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <div class="main">
+        <!-- Stats -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card indigo">
+                <h3>Students</h3>
+                <div class="number" id="stat-students">—</div>
+            </div>
+            <div class="stat-card emerald">
+                <h3>Problems</h3>
+                <div class="number" id="stat-problems">—</div>
+            </div>
+            <div class="stat-card sky">
+                <h3>Contests</h3>
+                <div class="number" id="stat-contests">—</div>
+            </div>
+            <div class="stat-card violet">
+                <h3>Submissions</h3>
+                <div class="number" id="stat-submissions">—</div>
+            </div>
+            <div class="stat-card amber">
+                <h3>Accepted</h3>
+                <div class="number" id="stat-accepted">—</div>
+            </div>
+            <div class="stat-card red">
+                <h3>Violations</h3>
+                <div class="number" id="stat-violations">—</div>
+            </div>
         </div>
 
-        <div class="filters"
-            style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
-            <div style="font-weight: bold; color: #555;">Filters:</div>
-            <select id="filterBatch" onchange="applyFilters()"
-                style="padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                <option value="">All Batches</option>
-                <option value="23">23 Batch</option>
-                <option value="24">24 Batch</option>
-                <option value="25">25 Batch</option>
-            </select>
-            <select id="filterDept" onchange="applyFilters()"
-                style="padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                <option value="">All Departments</option>
-                <option value="EEE">EEE</option>
-                <option value="ICE">ICE</option>
-            </select>
-            <select id="filterClass" onchange="applyFilters()"
-                style="padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                <option value="">All Classes</option>
-                <option value="23-EEE">23-EEE</option>
-                <option value="24-EEE">24-EEE</option>
-                <option value="23-ICE">23-ICE</option>
-                <option value="24-ICE">24-ICE</option>
-            </select>
-            <button onclick="clearFilters()"
-                style="padding: 8px 15px; border: 1px solid #ddd; background: #eee; border-radius: 4px; cursor: pointer;">Clear</button>
+        <div id="contestBanner"></div>
 
-            <!-- Reset Data Button -->
-            <button onclick="resetContestData()"
-                style="padding: 8px 15px; border: 1px solid #ff4444; background: #ffebeb; color: #ff4444; border-radius: 4px; cursor: pointer; margin-left: 10px;">
-                ⚠️ Reset Contest Data
-            </button>
-        </div>
-
-        <div class="action-bar">
-            <button class="action-btn" onclick="loadData()">🔄 Refresh Data</button>
-            <button class="action-btn" style="background: #2563eb;" onclick="exportReport()">📥 Download Excel
-                Data</button>
-            <button class="action-btn" style="background: #7c3aed;" onclick="syncExcel()">📗 Sync Excel</button>
-            <button class="action-btn" id="antiCheatToggleBtn" style="background: #eab308;"
-                onclick="toggleAntiCheat()">🛡️ Disable Anti-Cheat</button>
-            <button class="action-btn" id="contestToggleBtn" style="background: #ef4444;" onclick="toggleContest()">🛑
-                End Contest</button>
-        </div>
-
+        <!-- Tabs -->
         <div class="tabs">
-            <button class="tab active" onclick="switchTab(event, 'leaderboard')">📊 Leaderboard</button>
-            <button class="tab" onclick="switchTab(event, 'submissions')">📝 Submissions</button>
-            <button class="tab" onclick="switchTab(event, 'violations')">⚠️ Violations</button>
-            <button class="tab" onclick="switchTab(event, 'problems')">🧩 Manage Problems</button>
+            <button class="tab active" data-tab="leaderboard" onclick="switchTab('leaderboard',this)">📊 Leaderboard</button>
+            <button class="tab" data-tab="submissions" onclick="switchTab('submissions',this)">📝 Submissions</button>
+            <button class="tab" data-tab="violations" onclick="switchTab('violations',this)">⚠️ Violations</button>
+            <button class="tab" data-tab="problems" onclick="switchTab('problems',this)">🧩 Questions & JSON Upload</button>
+            <button class="tab" data-tab="contests" onclick="switchTab('contests',this)">🏁 Contests</button>
+            <button class="tab" data-tab="import" onclick="switchTab('import',this)">📥 Import/Export</button>
         </div>
 
-        <div id="leaderboard" class="tab-content active">
-            <h2>Leaderboard</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Rank</th>
-                        <th>Name</th>
-                        <th>Register Number</th>
-                        <th>Score</th>
-                        <th>Problems Solved</th>
-                    </tr>
-                </thead>
-                <tbody id="leaderboardBody">
-                    <tr>
-                        <td colspan="5" style="text-align: center;">Loading...</td>
-                    </tr>
-                </tbody>
-            </table>
+        <!-- ── LEADERBOARD ── -->
+        <div id="tab-leaderboard" class="tab-panel active">
+            <div class="toolbar">
+                <button class="btn btn-primary" onclick="loadLeaderboard()">🔄 Refresh</button>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Name</th>
+                            <th>Reg No</th>
+                            <th>Class</th>
+                            <th>Score</th>
+                            <th>Solved</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboardBody">
+                        <tr>
+                            <td colspan="6" class="empty">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
-        <div id="submissions" class="tab-content">
-            <h2>All Submissions</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Student</th>
-                        <th>Register Number</th>
-                        <th>Problem ID</th>
-                        <th>Language</th>
-                        <th>Status</th>
-                        <th>Score</th>
-                        <th>Time</th>
-                    </tr>
-                </thead>
-                <tbody id="submissionsBody">
-                    <tr>
-                        <td colspan="7" style="text-align: center;">Loading...</td>
-                    </tr>
-                </tbody>
-            </table>
+        <!-- ── SUBMISSIONS ── -->
+        <div id="tab-submissions" class="tab-panel">
+            <div class="filters">
+                <label>Batch:</label>
+                <select id="fBatch" onchange="loadSubmissions()">
+                    <option value="">All</option>
+                    <option>2023</option>
+                    <option>2024</option>
+                    <option>2025</option>
+                </select>
+                <label>Dept:</label>
+                <select id="fDept" onchange="loadSubmissions()">
+                    <option value="">All</option>
+                    <option>EEE</option>
+                    <option>ICE</option>
+                </select>
+                <button class="btn btn-outline" onclick="clearFilters()">Clear</button>
+                <button class="btn btn-success" onclick="exportExcel()" style="margin-left:auto;">📥 Export
+                    Excel</button>
+                <button class="btn btn-danger" onclick="resetData()" style="margin-left:4px;">⚠️ Reset Data</button>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Reg No</th>
+                            <th>Problem</th>
+                            <th>Language</th>
+                            <th>Status</th>
+                            <th>Score</th>
+                            <th>Time</th>
+                            <th>Submitted</th>
+                        </tr>
+                    </thead>
+                    <tbody id="submissionsBody">
+                        <tr>
+                            <td colspan="8" class="empty">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
-        <div id="violations" class="tab-content">
-            <h2>Violation Log (Grouped)</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Student</th>
-                        <th>Register Number</th>
-                        <th>Total Violations</th>
-                        <th>Latest Logs</th>
-                    </tr>
-                </thead>
-                <tbody id="violationsBody">
-                    <tr>
-                        <td colspan="4" style="text-align: center;">Loading...</td>
-                    </tr>
-                </tbody>
-            </table>
+        <!-- ── VIOLATIONS ── -->
+        <div id="tab-violations" class="tab-panel">
+            <div class="toolbar">
+                <button class="btn btn-primary" onclick="loadViolations()">🔄 Refresh</button>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Reg No</th>
+                            <th>Type</th>
+                            <th>Contest</th>
+                            <th>Time</th>
+                        </tr>
+                    </thead>
+                    <tbody id="violationsBody">
+                        <tr>
+                            <td colspan="5" class="empty">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
-        <div id="problems" class="tab-content">
-            <h2>Manage Problems</h2>
-            <div style="background: white; padding: 20px; border-radius: 8px; border: 1px solid #eee;">
-                <p style="margin-bottom: 15px; color: #666;">
-                    Upload a JSON file to replace the current problem set.
-                    <br>
-                    <strong>Note:</strong> This will overwrite all existing problems. Ensure the format is correct
-                    (Array of Problem Objects).
-                </p>
-
-                <div style="margin-bottom: 20px;">
-                    <button onclick="downloadWithFormat()" class="action-btn"
-                        style="background: #eab308; margin-right: 10px;">
-                        📥 Download Current Problems (Backup)
-                    </button>
+        <!-- ── QUESTIONS & JSON UPLOAD ── -->
+        <div id="tab-problems" class="tab-panel">
+            <div class="toolbar" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
+                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                    <button class="btn btn-outline" onclick="loadProblems()">🔄 Refresh List</button>
+                    <button class="btn btn-outline" onclick="exportAllProblemsJson()" style="color:#059669;border-color:#a7f3d0;background:#ecfdf5;">📥 Export All Questions (.json)</button>
+                    <button class="btn btn-outline" onclick="toggleManualForm()">✏️ Manual Form (Optional)</button>
                 </div>
-
-                <div
-                    style="display: flex; gap: 10px; align-items: center; background: #f9f9f9; padding: 15px; border-radius: 6px;">
-                    <input type="file" id="problemsFile" accept=".json" style="flex: 1;">
-                    <button onclick="uploadProblems()" class="action-btn" style="background: #2563eb;">
-                        📤 Upload New Problems
-                    </button>
+                <div style="font-size:0.85rem;color:var(--muted);background:white;padding:6px 14px;border-radius:20px;border:1px solid var(--border);">
+                    Catalog Status: <strong id="problemCountBadge" style="color:var(--primary);font-size:0.92rem;">0 Questions</strong>
                 </div>
-                <div id="uploadStatus" style="margin-top: 10px; font-weight: bold;"></div>
             </div>
 
-            <h3 style="margin-top: 30px;">Current Problem Set Preview</h3>
-            <pre id="problemsPreview"
-                style="background: #f4f4f4; padding: 15px; border-radius: 6px; max-height: 400px; overflow-y: auto; font-size: 13px; color: #333;">Loading...</pre>
+            <!-- Two Column JSON Studio: Sample Script on Left, Auto-Uploader on Right -->
+            <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(430px, 1fr));gap:20px;margin-bottom:28px;">
+                
+                <!-- ── CARD 1: SAMPLE JSON SCRIPT (EXACT FORMAT) ── -->
+                <div style="background:#ffffff;border:1px solid #bfdbfe;border-radius:14px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,0.04);display:flex;flex-direction:column;">
+                    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:10px;">
+                        <div>
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <span style="font-size:1.25rem;">📋</span>
+                                <h3 style="margin:0;font-size:1rem;font-weight:700;color:#1e40af;">Sample JSON Script (Exact Format)</h3>
+                            </div>
+                            <p style="margin:4px 0 0 0;font-size:0.78rem;color:#3b82f6;line-height:1.4;">
+                                Follow this exact JSON structure to add or modify questions. Once uploaded, it automatically configures all test cases, starter codes & requirements!
+                            </p>
+                        </div>
+                        <div style="display:flex;gap:6px;">
+                            <button class="btn btn-primary" onclick="copySampleJson()" style="padding:6px 12px;font-size:0.78rem;background:#2563eb;">📋 Copy Format</button>
+                            <button class="btn btn-outline" onclick="downloadSampleJson()" style="padding:6px 12px;font-size:0.78rem;background:white;">📥 Download .json</button>
+                        </div>
+                    </div>
+
+                    <pre id="sampleJsonCodeBlock" style="flex:1;margin:0;background:#0f172a;color:#f1f5f9;border-radius:10px;padding:14px;font-size:0.74rem;font-family:Consolas,Monaco,monospace;line-height:1.55;max-height:430px;overflow-y:auto;box-shadow:inset 0 2px 8px rgba(0,0,0,0.5);white-space:pre;">{
+  "title": "House Robber",
+  "description": "&lt;p&gt;You are a professional robber planning to rob houses along a street. Adjacent houses have security systems connected.&lt;/p&gt;&lt;p&gt;Return the maximum amount of money you can rob tonight without alerting the police.&lt;/p&gt;",
+  "difficulty": "Medium",
+  "points": 100,
+  "functionName": "rob",
+  "constraints": [
+    "1 &lt;= nums.length &lt;= 100",
+    "0 &lt;= nums[i] &lt;= 400"
+  ],
+  "testCases": [
+    {
+      "input": { "nums": [1, 2, 3, 1] },
+      "output": 4,
+      "explanation": "Rob house 1 (money = 1) and house 3 (money = 3). Total = 4.",
+      "isSample": true
+    },
+    {
+      "input": { "nums": [2, 7, 9, 3, 1] },
+      "output": 12,
+      "explanation": "Rob house 1 (2), house 3 (9), house 5 (1). Total = 12.",
+      "isSample": true
+    },
+    {
+      "input": { "nums": [2, 1, 1, 2] },
+      "output": 4,
+      "isSample": false
+    },
+    {
+      "input": { "nums": [0] },
+      "output": 0,
+      "isSample": false
+    },
+    {
+      "input": { "nums": [5, 1, 1, 5] },
+      "output": 10,
+      "isSample": false
+    }
+  ]
+}</pre>
+                    <div style="margin-top:10px;font-size:0.74rem;color:#64748b;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;">
+                        <span>💡 <strong>No boilerplate needed:</strong> Starter code for Python, C++, Java, JS & C is <strong>auto-generated</strong> from <code>functionName</code>!</span>
+                        <span style="color:#059669;font-weight:600;">✓ Auto-configures all 5 languages</span>
+                    </div>
+                </div>
+
+                <!-- ── CARD 2: UPLOAD & AUTOMATIC REQUIREMENTS CONFIGURATOR ── -->
+                <div style="background:#ffffff;border:1px solid #c7d2fe;border-radius:14px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,0.04);display:flex;flex-direction:column;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <span style="font-size:1.25rem;">🚀</span>
+                            <h3 style="margin:0;font-size:1rem;font-weight:700;color:#1e293b;">Upload Questions JSON</h3>
+                        </div>
+                        <span id="jsonFormatBadge" class="badge" style="background:#f1f5f9;color:#64748b;font-size:0.74rem;padding:3px 10px;">
+                            Waiting for input...
+                        </span>
+                    </div>
+                    <p style="margin:0 0 12px 0;font-size:0.78rem;color:var(--muted);">
+                        Upload your <code>.json</code> file or paste JSON code directly. When you click <strong>Upload & Apply</strong>, the platform automatically generates problems, parses test cases (samples & hidden), assigns points, and creates boilerplates in Postgres.
+                    </p>
+
+                    <!-- File Dropzone -->
+                    <div id="dropZone" style="border:2px dashed #94a3b8;border-radius:10px;padding:16px;text-align:center;background:#f8fafc;cursor:pointer;margin-bottom:12px;transition:all 0.2s;" onclick="document.getElementById('fileUploadInput').click()">
+                        <input type="file" id="fileUploadInput" accept=".json" style="display:none;" onchange="handleFileSelect(event)">
+                        <span style="font-size:1.5rem;">📁</span>
+                        <div style="font-size:0.84rem;font-weight:600;color:#1e293b;margin-top:2px;">Click to Select .json File or Drag & Drop Here</div>
+                        <div id="selectedFileName" style="font-size:0.74rem;color:#64748b;margin-top:2px;">Accepts single question or array of multiple questions</div>
+                    </div>
+
+                    <!-- Direct JSON Paste Area -->
+                    <div style="flex:1;display:flex;flex-direction:column;margin-bottom:12px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                            <label style="font-size:0.74rem;font-weight:700;color:var(--muted);text-transform:uppercase;">Or Paste JSON Directly:</label>
+                            <button type="button" onclick="clearJsonInput()" style="background:none;border:none;color:#ef4444;font-size:0.74rem;font-weight:600;cursor:pointer;">Clear</button>
+                        </div>
+                        <textarea id="jsonUploadText" rows="7" placeholder="Paste your question JSON script here..." oninput="validateUploadJson()" style="width:100%;box-sizing:border-box;padding:12px;border:1px solid #cbd5e1;border-radius:8px;font-family:Consolas,Monaco,monospace;font-size:0.78rem;line-height:1.5;resize:vertical;outline:none;background:#fcfdfd;"></textarea>
+                    </div>
+
+                    <!-- Upload Action Button & Status -->
+                    <button id="btnUploadJson" class="btn btn-primary" onclick="uploadOrApplyJson()" style="width:100%;padding:12px;font-size:0.92rem;font-weight:700;background:linear-gradient(135deg,#2563eb,#4f46e5);border:none;border-radius:9px;cursor:pointer;box-shadow:0 4px 12px rgba(37,99,235,0.25);transition:all 0.2s;">
+                        🚀 Upload & Automatically Apply All Requirements
+                    </button>
+                    <div id="uploadStatusMsg" style="margin-top:8px;font-size:0.82rem;font-weight:600;min-height:22px;"></div>
+                </div>
+
+            </div>
+
+            <!-- ── MANUAL PROBLEM FORM (COLLAPSIBLE) ── -->
+            <div id="addProblemForm" class="form-card" style="display:none;margin-bottom:24px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                    <h3 id="problemFormTitle" style="margin-bottom:0;">Manual Problem Editor</h3>
+                    <button class="btn btn-outline" style="padding:4px 10px;" onclick="document.getElementById('addProblemForm').style.display='none'">✕ Close</button>
+                </div>
+                <input type="hidden" id="editProblemId">
+
+                <!-- Problem Meta -->
+                <div class="form-row">
+                    <div class="form-group"><label>Problem Title *</label><input id="pTitle" placeholder="e.g. Subarray Sum Equals K"></div>
+                    <div class="form-group"><label>Function Name (camelCase) *</label><input id="pFuncName" placeholder="e.g. subarraySum" oninput="autoGenerateStarterCode(true)"></div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Difficulty</label>
+                        <select id="pDiff"><option value="Easy">Easy</option><option value="Medium" selected>Medium</option><option value="Hard">Hard</option></select>
+                    </div>
+                    <div class="form-group"><label>Points (Score)</label><input id="pPoints" type="number" value="100"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>Problem Description (HTML / Markdown supported) *</label>
+                    <textarea id="pDesc" rows="5" placeholder="Problem description..."></textarea>
+                </div>
+
+                <!-- Constraints -->
+                <div class="form-group">
+                    <label>Constraints</label>
+                    <div style="display:flex;gap:8px;margin-bottom:8px;">
+                        <input id="newConstraintInput" placeholder="e.g. 1 <= nums.length <= 2 * 10^4" style="flex:1;">
+                        <button type="button" class="btn btn-outline" onclick="addConstraintFromInput()">+ Add</button>
+                    </div>
+                    <div id="constraintsTagsContainer" style="min-height:32px;display:flex;flex-wrap:wrap;"></div>
+                    <textarea id="pConstraints" style="display:none;"></textarea>
+                </div>
+
+                <!-- Test Cases Builder -->
+                <div style="margin-top:24px;border-top:1px solid var(--border);padding-top:20px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+                        <div>
+                            <h4 style="font-size:0.95rem;font-weight:700;">Examples & Test Cases</h4>
+                            <p style="font-size:0.78rem;color:var(--muted);">Provide sample cases (visible with explanation) and hidden test cases (judged on submission).</p>
+                        </div>
+                        <button type="button" class="btn btn-primary" onclick="addTestCaseCard()" style="font-size:0.8rem;padding:6px 14px;">
+                            + Add Example / Test Case
+                        </button>
+                    </div>
+                    <div id="testCasesContainer"></div>
+                </div>
+
+                <!-- Starter Code -->
+                <div style="margin-top:24px;border-top:1px solid var(--border);padding-top:20px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                        <h4 style="font-size:0.95rem;font-weight:700;">Language Starter Code</h4>
+                        <button type="button" class="btn btn-outline" style="font-size:0.78rem;padding:4px 10px;" onclick="autoGenerateStarterCode(false)">
+                            🪄 Auto-Generate Boilerplates
+                        </button>
+                    </div>
+
+                    <div class="code-lang-tabs">
+                        <button type="button" class="code-lang-tab active" onclick="switchStarterTab('python', this)">Python 3</button>
+                        <button type="button" class="code-lang-tab" onclick="switchStarterTab('cpp', this)">C++ 17</button>
+                        <button type="button" class="code-lang-tab" onclick="switchStarterTab('java', this)">Java 11</button>
+                        <button type="button" class="code-lang-tab" onclick="switchStarterTab('javascript', this)">JavaScript</button>
+                        <button type="button" class="code-lang-tab" onclick="switchStarterTab('c', this)">C</button>
+                    </div>
+
+                    <div id="starterPanels">
+                        <textarea id="starter_python" rows="5" placeholder="def solution(nums):\n    pass" style="font-family:monospace;font-size:0.82rem;"></textarea>
+                        <textarea id="starter_cpp" rows="5" placeholder="class Solution {\npublic:\n    int solution(vector<int>& nums) {\n    }\n};" style="display:none;font-family:monospace;font-size:0.82rem;"></textarea>
+                        <textarea id="starter_java" rows="5" placeholder="class Solution {\n    public int solution(int[] nums) {\n    }\n}" style="display:none;font-family:monospace;font-size:0.82rem;"></textarea>
+                        <textarea id="starter_javascript" rows="5" placeholder="function solution(nums) {\n}" style="display:none;font-family:monospace;font-size:0.82rem;"></textarea>
+                        <textarea id="starter_c" rows="5" placeholder="int solution(int* nums, int numsSize) {\n}" style="display:none;font-family:monospace;font-size:0.82rem;"></textarea>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div style="display:flex;gap:10px;margin-top:24px;border-top:1px solid var(--border);padding-top:16px;">
+                    <button class="btn btn-success" id="btnSaveProblem" onclick="saveProblem()" style="padding:10px 24px;font-size:0.9rem;">
+                        💾 Save Problem to PostgreSQL
+                    </button>
+                    <button class="btn btn-outline" onclick="document.getElementById('addProblemForm').style.display='none'">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+
+            <!-- ── QUESTIONS CATALOG TABLE ── -->
+            <div style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;">
+                <h3 style="margin:0;font-size:1.05rem;font-weight:700;color:var(--text);">Current Questions in Database</h3>
+                <div style="font-size:0.78rem;color:var(--muted);">All active questions available in platform & contests</div>
+            </div>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Title</th>
+                            <th>Function</th>
+                            <th>Difficulty</th>
+                            <th>Points</th>
+                            <th>Test Cases</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="problemsBody">
+                        <tr>
+                            <td colspan="8" class="empty">Loading questions...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ── CONTESTS ── -->
+        <div id="tab-contests" class="tab-panel">
+            <div class="toolbar">
+                <button class="btn btn-primary" onclick="showContestForm()">+ New Contest</button>
+                <button class="btn btn-outline" onclick="loadContests()">🔄 Refresh</button>
+            </div>
+            <div id="contestForm" class="form-card" style="display:none;">
+                <h3>Create / Update Contest</h3>
+                <input type="hidden" id="contestFormId">
+                <div class="form-group"><label>Name *</label><input id="cName" placeholder="PAT Round 1"></div>
+                <div class="form-group"><label>Description</label><textarea id="cDesc" rows="2"></textarea></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Start Time *</label><input id="cStart" type="datetime-local"></div>
+                    <div class="form-group"><label>End Time *</label><input id="cEnd" type="datetime-local"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select id="cStatus">
+                            <option>DRAFT</option>
+                            <option>UPCOMING</option>
+                            <option>ACTIVE</option>
+                            <option>ENDED</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Anti-Cheat</label>
+                        <select id="cAntiCheat">
+                            <option value="true">Enabled</option>
+                            <option value="false">Disabled</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="display:flex;gap:10px;">
+                    <button class="btn btn-success" onclick="saveContest()">Save</button>
+                    <button class="btn btn-outline"
+                        onclick="document.getElementById('contestForm').style.display='none'">Cancel</button>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Status</th>
+                            <th>Start</th>
+                            <th>End</th>
+                            <th>Anti-Cheat</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="contestsBody">
+                        <tr>
+                            <td colspan="7" class="empty">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ── IMPORT / EXPORT ── -->
+        <div id="tab-import" class="tab-panel">
+            <div class="form-card">
+                <h3>📗 Import Students from Excel</h3>
+                <p style="font-size:0.85rem;color:var(--muted);margin-bottom:16px;">
+                    Upload <code>data/allowed_users.xlsx</code> to the server, then click Sync. Students are created
+                    with default password <code>student123</code>.
+                </p>
+                <button class="btn btn-primary" onclick="syncExcel()">🔄 Sync Excel File</button>
+                <div id="syncStatus" style="margin-top:12px;font-size:0.85rem;font-weight:600;"></div>
+            </div>
+            <div class="form-card">
+                <h3>📥 Export Student Report (Excel)</h3>
+                <div class="filters" style="border:none;padding:0;background:transparent;margin-bottom:16px;">
+                    <label>Batch:</label>
+                    <select id="eBatch">
+                        <option value="">All</option>
+                        <option>2023</option>
+                        <option>2024</option>
+                    </select>
+                    <label>Dept:</label>
+                    <select id="eDept">
+                        <option value="">All</option>
+                        <option>EEE</option>
+                        <option>ICE</option>
+                    </select>
+                </div>
+                <button class="btn btn-success" onclick="exportExcelFiltered()">📥 Download Excel</button>
+            </div>
         </div>
     </div>
 
     <script>
-        // Auth Check
-        const token = localStorage.getItem('token');
-        if (!token) {
-            window.location.href = '/auth.html';
-        }
+        let token = localStorage.getItem('token');
+        let user = {};
+        try { user = JSON.parse(localStorage.getItem('user') || '{}'); } catch (_) {}
 
-        // Authenticated Fetch
-        async function authFetch(url, options = {}) {
-            const headers = {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-                ...options.headers
-            };
-
-            const response = await fetch(url, { ...options, headers });
-            if (response.status === 401 || response.status === 403) {
-                alert('Session expired or access denied.');
-                window.location.href = '/auth.html';
-                throw new Error('Unauthorized');
+        function checkAuth() {
+            if (!token || user.role !== 'admin') {
+                document.getElementById('adminAuthOverlay').style.display = 'flex';
+                return false;
             }
-            return response;
+            document.getElementById('adminAuthOverlay').style.display = 'none';
+            document.getElementById('adminName').textContent = user.name || 'Admin';
+            return true;
         }
 
-        function logout() {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            window.location.href = '/';
-        }
-
-        function switchTab(event, tabName) {
-            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-            event.currentTarget.classList.add('active');
-            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-            document.getElementById(tabName).classList.add('active');
-        }
-
-        // Filter variables
-        let currentBatch = '';
-        let currentDept = '';
-        let currentClass = '';
-
-        function applyFilters() {
-            currentBatch = document.getElementById('filterBatch').value;
-            currentDept = document.getElementById('filterDept').value;
-            currentClass = document.getElementById('filterClass').value;
-            loadData();
-        }
-
-        function clearFilters() {
-            document.getElementById('filterBatch').value = '';
-            document.getElementById('filterDept').value = '';
-            document.getElementById('filterClass').value = '';
-            applyFilters();
-        }
-
-        async function loadData() {
-            // Construct Query String
-            const params = new URLSearchParams();
-            if (currentBatch) params.append('batch', currentBatch);
-            if (currentDept) params.append('department', currentDept);
-            if (currentClass) params.append('class', currentClass);
-            const queryString = params.toString();
-
-            await Promise.all([
-                loadLeaderboard(queryString),
-                loadSubmissions(queryString),
-                loadViolations(),
-                loadProblemsPreview()
-            ]);
-        }
-
-        async function loadLeaderboard(qs) {
-            // Leaderboard implementation in backend usually returns everyone. 
-            // If we want to filter leaderboard, we need backend support or frontend filtering.
-            // Backend support not explicitly added to leaderboard route in plan.
-            // Let's stick to Submissions filtering as prioritized.
-            // But actually, "Filter students by... Download student list" implies seeing only those students.
-            // Let's modify leaderboard to use the params if backend supported it?
-            // Checking admin.routes.js ... /submissions supported filtering.
-            // Leaderboard route is in /judge.routes.js. I didn't modify it.
-            // So Leaderboard will show everyone.
+        async function handleAdminLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('adminEmailInput').value.trim();
+            const password = document.getElementById('adminPasswordInput').value;
+            const errEl = document.getElementById('adminLoginError');
+            const btn = document.getElementById('adminLoginBtn');
+            errEl.style.display = 'none';
+            btn.textContent = 'Signing in...';
+            btn.disabled = true;
 
             try {
-                const response = await authFetch('/api/judge/leaderboard');
-                const data = await response.json();
-                const tbody = document.getElementById('leaderboardBody');
-
-                // Frontend Filtering for Leaderboard (Optional but good UX)
-                // Need to filter data based on user attributes not in the leaderboard response?
-                // The leaderboard response has name, reg_no, total_score.
-                // It DOES NOT have batch/dept.
-                // So we cannot really filter leaderboard accurately without backend change.
-                // I will skip filtering leaderboard for now as it wasn't strictly requested (admin panel filters usually for data management/export).
-
-                if (data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No data</td></tr>';
-                    return;
-                }
-
-                tbody.innerHTML = data.map((entry, i) => `
-                    <tr>
-                        <td><strong>${i + 1}</strong></td>
-                        <td>${entry.name}</td>
-                        <td><code>${entry.reg_no}</code></td>
-                        <td><strong>${entry.total_score || 0}</strong></td>
-                        <td><span class="badge badge-success">${entry.problems_solved || 0}</span></td>
-                    </tr>
-                `).join('');
-
-                updateStats(data.length, 'totalStudents');
-            } catch (error) { console.error(error); }
-        }
-
-        async function loadSubmissions(qs) {
-            try {
-                const response = await authFetch(`/api/admin/submissions?${qs}`);
-                const data = await response.json();
-                const tbody = document.getElementById('submissionsBody');
-
-                if (data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No submissions found</td></tr>';
-                    return;
-                }
-
-                tbody.innerHTML = data.map(sub => `
-                    <tr>
-                        <td>${sub.name}</td>
-                        <td><code>${sub.reg_no}</code></td>
-                        <td>${sub.problem_id}</td>
-                        <td>${sub.language}</td>
-                        <td><span class="badge ${sub.status === 'Accepted' ? 'badge-success' : 'badge-danger'}">${sub.status}</span></td>
-                        <td>${sub.score}</td>
-                        <td>${new Date(sub.created_at).toLocaleTimeString()}</td>
-                    </tr>
-                `).join('');
-
-                updateStats(data.length, 'totalSubmissions');
-            } catch (error) { console.error(error); }
-        }
-
-        async function loadViolations() {
-            try {
-                const response = await authFetch('/api/admin/violations');
-                const data = await response.json(); // Flat list
-                const tbody = document.getElementById('violationsBody');
-
-                // Group by user
-                const grouped = {};
-                data.forEach(v => {
-                    if (!grouped[v.reg_no]) {
-                        grouped[v.reg_no] = {
-                            name: v.name,
-                            reg_no: v.reg_no,
-                            logs: []
-                        };
-                    }
-                    grouped[v.reg_no].logs.push(v);
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
                 });
+                const data = await res.json();
+                if (res.ok && data.user?.role === 'admin') {
+                    token = data.token;
+                    user = data.user;
+                    localStorage.setItem('token', token);
+                    localStorage.setItem('user', JSON.stringify(user));
+                    document.getElementById('adminAuthOverlay').style.display = 'none';
+                    document.getElementById('adminName').textContent = user.name || 'Admin';
+                    loadStats();
+                    loadLeaderboard();
+                } else {
+                    errEl.textContent = data.error || (data.user?.role !== 'admin' ? 'This account is not an administrator.' : 'Invalid credentials.');
+                    errEl.style.display = 'block';
+                }
+            } catch (err) {
+                errEl.textContent = 'Connection error: ' + err.message;
+                errEl.style.display = 'block';
+            } finally {
+                btn.textContent = 'Sign In to Dashboard';
+                btn.disabled = false;
+            }
+        }
 
-                const groupArray = Object.values(grouped);
+        // ── Auth Fetch ─────────────────────────────────
+        async function authFetch(url, opts = {}) {
+            const res = await fetch(url, {
+                ...opts,
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, ...opts.headers }
+            });
+            if (res.status === 401 || res.status === 403) {
+                localStorage.clear();
+                document.getElementById('adminAuthOverlay').style.display = 'flex';
+            }
+            return res;
+        }
 
-                if (groupArray.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No violations</td></tr>';
+        // ── Tab Switching ──────────────────────────────
+        function switchTab(name, btn) {
+            if (!btn) {
+                btn = document.querySelector(`.tab[data-tab="${name}"]`);
+            }
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+            const panel = document.getElementById(`tab-${name}`);
+            if (panel) panel.classList.add('active');
+            if (btn) btn.classList.add('active');
+            if (name === 'leaderboard') loadLeaderboard();
+            if (name === 'submissions') loadSubmissions();
+            if (name === 'violations') loadViolations();
+            if (name === 'problems') loadProblems();
+            if (name === 'contests') loadContests();
+        }
+
+        // ── Load Stats ────────────────────────────────
+        async function loadStats() {
+            try {
+                const res = await authFetch('/api/admin/stats');
+                const data = await res.json();
+                document.getElementById('stat-students').textContent = data.totalStudents;
+                document.getElementById('stat-problems').textContent = data.totalProblems;
+                document.getElementById('stat-contests').textContent = data.totalContests;
+                document.getElementById('stat-submissions').textContent = data.totalSubmissions;
+                document.getElementById('stat-accepted').textContent = data.acceptedSubmissions;
+                document.getElementById('stat-violations').textContent = data.totalViolations;
+
+                if (data.activeContest) {
+                    const end = new Date(data.activeContest.end_time);
+                    document.getElementById('contestBanner').innerHTML = `
+                <div class="contest-banner">
+                    <div>
+                        <h3>Active Contest: ${data.activeContest.name}</h3>
+                        <p>Ends: ${end.toLocaleString()}</p>
+                    </div>
+                    <button class="btn btn-outline" style="color:white;border-color:rgba(255,255,255,0.3);"
+                        onclick="endContest(${data.activeContest.id})">End Contest</button>
+                </div>`;
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        // ── Leaderboard ───────────────────────────────
+        async function loadLeaderboard() {
+            const res = await authFetch('/api/judge/leaderboard');
+            const data = await res.json();
+            const tbody = document.getElementById('leaderboardBody');
+            if (!data.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#64748b;">No data</td></tr>'; return; }
+            tbody.innerHTML = data.map((e, i) => `<tr>
+        <td><strong>${i + 1}</strong></td>
+        <td>${e.name}</td>
+        <td><code>${e.reg_no}</code></td>
+        <td>${e.class_name || '—'}</td>
+        <td><strong>${e.total_score}</strong></td>
+        <td><span class="badge badge-success">${e.problems_solved}</span></td>
+    </tr>`).join('');
+        }
+
+        // ── Submissions ───────────────────────────────
+        function clearFilters() {
+            document.getElementById('fBatch').value = '';
+            document.getElementById('fDept').value = '';
+            loadSubmissions();
+        }
+
+        async function loadSubmissions() {
+            const batch = document.getElementById('fBatch').value;
+            const dept = document.getElementById('fDept').value;
+            const qs = new URLSearchParams();
+            if (batch) qs.append('batch', batch);
+            if (dept) qs.append('department', dept);
+
+            const res = await authFetch(`/api/admin/submissions?${qs}`);
+            const data = await res.json();
+            const tbody = document.getElementById('submissionsBody');
+            if (!data.length) { tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#64748b;">No submissions</td></tr>'; return; }
+            tbody.innerHTML = data.map(s => `<tr>
+        <td>${s.name}</td>
+        <td><code>${s.reg_no}</code></td>
+        <td>${s.problem_title}</td>
+        <td>${s.language}</td>
+        <td><span class="badge ${s.status === 'Accepted' ? 'badge-success' : 'badge-danger'}">${s.status}</span></td>
+        <td>${s.score}</td>
+        <td>${s.execution_time_ms ? s.execution_time_ms + 'ms' : '—'}</td>
+        <td>${new Date(s.submitted_at).toLocaleString()}</td>
+    </tr>`).join('');
+        }
+
+        // ── Violations ────────────────────────────────
+        async function loadViolations() {
+            const res = await authFetch('/api/admin/violations');
+            const data = await res.json();
+            const tbody = document.getElementById('violationsBody');
+            if (!data.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#64748b;">No violations</td></tr>'; return; }
+            tbody.innerHTML = data.map(v => `<tr>
+        <td>${v.name}</td>
+        <td><code>${v.reg_no}</code></td>
+        <td><span class="badge badge-warning">${v.type}</span></td>
+        <td>${v.contest_name || '—'}</td>
+        <td>${new Date(v.occurred_at).toLocaleString()}</td>
+    </tr>`).join('');
+        }
+
+        // ── Problems ──────────────────────────────────
+        let adminProblemsCache = [];
+
+        async function loadProblems() {
+            try {
+                const res = await authFetch('/api/admin/problems');
+                const data = await res.json();
+                adminProblemsCache = data || [];
+                const tbody = document.getElementById('problemsBody');
+                const badge = document.getElementById('problemCountBadge');
+                if (badge) badge.textContent = `${adminProblemsCache.length} Questions`;
+                if (!data.length) {
+                    tbody.innerHTML = '<tr><td colspan="8"><div class="empty"><div class="icon">🧩</div>No questions yet. Upload or paste JSON above to add questions!</div></td></tr>';
                     return;
                 }
-
-                tbody.innerHTML = groupArray.map(g => `
-                    <tr>
-                        <td>${g.name}</td>
-                        <td><code>${g.reg_no}</code></td>
-                        <td><span class="badge badge-danger">${g.logs.length}</span></td>
-                        <td>${g.logs.slice(0, 5).map(l => `${l.type} <small>(${new Date(l.timestamp).toLocaleTimeString()})</small>`).join('<br>')}</td>
-                    </tr>
-                `).join('');
-
-                updateStats(data.length, 'totalViolations');
-            } catch (error) { console.error(error); }
+                tbody.innerHTML = data.map(p => {
+                    const totalTc = p.testCases ? p.testCases.length : 0;
+                    const sampleTc = p.testCases ? p.testCases.filter(t => t.is_sample).length : 0;
+                    const hiddenTc = totalTc - sampleTc;
+                    const diffBadgeClass = p.difficulty === 'Easy' ? 'badge-success' : p.difficulty === 'Hard' ? 'badge-danger' : 'badge-warning';
+                    return `<tr>
+                        <td>#${p.id}</td>
+                        <td><strong>${escapeHtml(p.title)}</strong></td>
+                        <td><code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:0.8rem;">${escapeHtml(p.function_name || 'solution')}()</code></td>
+                        <td><span class="badge ${diffBadgeClass}">${p.difficulty}</span></td>
+                        <td><strong>${p.points}</strong></td>
+                        <td><span style="font-size:0.78rem;background:#f8fafc;padding:3px 8px;border-radius:6px;border:1px solid #e2e8f0;font-weight:600;">${totalTc} (${sampleTc} sample, ${hiddenTc} hidden)</span></td>
+                        <td><span class="badge ${p.is_active ? 'badge-success' : 'badge-muted'}">${p.is_active ? 'Active' : 'Hidden'}</span></td>
+                        <td style="white-space:nowrap;">
+                            <button class="btn btn-outline" style="padding:4px 8px;font-size:0.75rem;" onclick="copyProblemJsonById(${p.id})">📋 JSON</button>
+                            <button class="btn btn-outline" style="padding:4px 8px;font-size:0.75rem;" onclick="editProblemById(${p.id})">✏️ Edit</button>
+                            <button class="btn btn-danger" style="padding:4px 8px;font-size:0.75rem;" onclick="deleteProblem(${p.id},'${p.title.replace(/'/g, "\\'")}')">🗑️ Delete</button>
+                        </td>
+                    </tr>`;
+                }).join('');
+            } catch (err) {
+                const tbody = document.getElementById('problemsBody');
+                if (tbody) tbody.innerHTML = `<tr><td colspan="8" style="color:red;text-align:center;">Failed to load questions: ${err.message}</td></tr>`;
+            }
         }
 
-        const statsStore = {};
-        function updateStats(val, key) {
-            statsStore[key] = val;
-            renderStats();
+        function toggleManualForm() {
+            const form = document.getElementById('addProblemForm');
+            if (!form) return;
+            if (form.style.display === 'none' || !form.style.display) {
+                showAddProblemForm();
+            } else {
+                form.style.display = 'none';
+            }
         }
 
-        function renderStats() {
-            document.getElementById('stats').innerHTML = `
-                <div class="stat-card">
-                    <h3>Total Students</h3>
-                    <div class="number">${statsStore.totalStudents || 0}</div>
+        // ── Problem Studio State & Logic ────────────────
+        let currentConstraints = [];
+        let activeStarterLang = 'python';
+
+        function showAddProblemForm() {
+            document.getElementById('editProblemId').value = '';
+            document.getElementById('problemFormTitle').textContent = 'Manual Problem Form';
+            document.getElementById('pTitle').value = '';
+            document.getElementById('pFuncName').value = '';
+            document.getElementById('pDesc').value = '';
+            document.getElementById('pPoints').value = '100';
+            document.getElementById('pDiff').value = 'Medium';
+
+            currentConstraints = [];
+            renderConstraints();
+
+            // Default starter test cases
+            document.getElementById('testCasesContainer').innerHTML = '';
+            addTestCaseCard({ input: { nums: [1, 2, 3] }, output: 6, explanation: "Sample explanation", isSample: true });
+            addTestCaseCard({ input: { nums: [0] }, output: 0, explanation: "Edge case", isSample: false });
+
+            autoGenerateStarterCode(true);
+
+            document.getElementById('addProblemForm').style.display = 'block';
+            document.getElementById('addProblemForm').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function editProblemById(id) {
+            const p = adminProblemsCache.find(x => x.id === id);
+            if (!p) return;
+            document.getElementById('editProblemId').value = p.id;
+            document.getElementById('problemFormTitle').textContent = 'Edit Question: ' + p.title;
+            document.getElementById('pTitle').value = p.title || '';
+            document.getElementById('pFuncName').value = p.function_name || '';
+            document.getElementById('pDiff').value = p.difficulty || 'Medium';
+            document.getElementById('pPoints').value = p.points || 100;
+            document.getElementById('pDesc').value = p.description || '';
+
+            // Constraints
+            currentConstraints = p.constraints ? (p.constraints.includes('\n') ? p.constraints.split('\n') : [p.constraints]) : [];
+            renderConstraints();
+
+            // Test cases
+            const tcContainer = document.getElementById('testCasesContainer');
+            tcContainer.innerHTML = '';
+            if (Array.isArray(p.testCases) && p.testCases.length > 0) {
+                p.testCases.forEach(tc => {
+                    addTestCaseCard({
+                        input: tc.input_data,
+                        output: tc.output_data,
+                        explanation: tc.explanation,
+                        isSample: tc.is_sample
+                    });
+                });
+            } else {
+                addTestCaseCard();
+            }
+
+            // Starter codes
+            if (p.starterCode) {
+                if (p.starterCode.python) document.getElementById('starter_python').value = p.starterCode.python;
+                if (p.starterCode.cpp) document.getElementById('starter_cpp').value = p.starterCode.cpp;
+                if (p.starterCode.java) document.getElementById('starter_java').value = p.starterCode.java;
+                if (p.starterCode.javascript) document.getElementById('starter_javascript').value = p.starterCode.javascript;
+                if (p.starterCode.c) document.getElementById('starter_c').value = p.starterCode.c;
+            }
+
+            document.getElementById('addProblemForm').style.display = 'block';
+            document.getElementById('addProblemForm').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Constraints Manager
+        function renderConstraints() {
+            const container = document.getElementById('constraintsTagsContainer');
+            if (!container) return;
+            container.innerHTML = currentConstraints.map((c, i) => `
+                <div class="constraint-tag">
+                    <span>${c}</span>
+                    <button type="button" onclick="removeConstraint(${i})">×</button>
                 </div>
-                <div class="stat-card">
-                    <h3>Submissions (Filtered)</h3>
-                    <div class="number">${statsStore.totalSubmissions || 0}</div>
+            `).join('');
+            document.getElementById('pConstraints').value = currentConstraints.join('\n');
+        }
+
+        function addConstraintFromInput() {
+            const input = document.getElementById('newConstraintInput');
+            const val = input.value.trim();
+            if (val && !currentConstraints.includes(val)) {
+                currentConstraints.push(val);
+                renderConstraints();
+                input.value = '';
+            }
+        }
+
+        function removeConstraint(idx) {
+            currentConstraints.splice(idx, 1);
+            renderConstraints();
+        }
+
+        // Dynamic Test Cases Manager
+        let tcCounter = 0;
+        function addTestCaseCard(tc = null) {
+            tcCounter++;
+            const container = document.getElementById('testCasesContainer');
+            const cardId = `tc_card_${tcCounter}`;
+
+            const inputStr = tc && tc.input !== undefined
+                ? (typeof tc.input === 'object' ? JSON.stringify(tc.input, null, 2) : String(tc.input))
+                : '{\n  "param1": "value1"\n}';
+
+            const outputStr = tc && tc.output !== undefined
+                ? (typeof tc.output === 'object' ? JSON.stringify(tc.output) : String(tc.output))
+                : 'true';
+
+            const explanationStr = tc && tc.explanation ? tc.explanation : '';
+            const isSample = tc ? (tc.isSample !== false) : true;
+
+            const card = document.createElement('div');
+            card.className = 'testcase-card';
+            card.id = cardId;
+            card.innerHTML = `
+                <div class="testcase-header">
+                    <span class="tc-title" style="color:var(--text);font-weight:700;">
+                        ${isSample ? '📘 Sample Example' : '🔒 Hidden Judge Test'}
+                    </span>
+                    <button type="button" class="btn btn-outline" style="color:#ef4444;border-color:transparent;padding:2px 8px;font-size:0.9rem;" onclick="document.getElementById('${cardId}').remove()">
+                        ✕ Delete
+                    </button>
                 </div>
-                <div class="stat-card">
-                    <h3>Total Violations</h3>
-                    <div class="number">${statsStore.totalViolations || 0}</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Input (JSON key-value) *</label>
+                        <textarea class="tc-input" rows="3" style="font-family:monospace;font-size:0.8rem;">${inputStr}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Expected Output *</label>
+                        <textarea class="tc-output" rows="3" style="font-family:monospace;font-size:0.8rem;">${outputStr}</textarea>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Explanation (Shown to students for sample examples)</label>
+                    <input class="tc-explanation" placeholder="e.g. Explanation of how input produces output..." value="${explanationStr.replace(/"/g, '&quot;')}">
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
+                    <input type="checkbox" class="tc-is-sample" id="check_${cardId}" ${isSample ? 'checked' : ''} onchange="updateTestCaseSampleHeader('${cardId}', this.checked)" style="width:auto;">
+                    <label for="check_${cardId}" style="margin-bottom:0;cursor:pointer;font-size:0.8rem;color:var(--muted);">
+                        Show as visible Sample in Problem Description
+                    </label>
                 </div>
             `;
+            container.appendChild(card);
         }
 
-        function exportReport() {
-            const params = new URLSearchParams();
-            if (currentBatch) params.append('batch', currentBatch);
-            if (currentDept) params.append('department', currentDept);
-            if (currentClass) params.append('class', currentClass);
-            const qs = params.toString();
-
-            authFetch(`/api/admin/export?${qs}`)
-                .then(resp => resp.blob())
-                .then(blob => {
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'contest_report.csv';
-                    document.body.appendChild(a);
-                    a.click();
-                    a.remove();
-                })
-                .catch(err => alert('Export failed'));
-        }
-
-        async function syncExcel() {
-            if (!confirm('Sync allowed users from Excel?')) return;
-            try {
-                const res = await authFetch('/api/admin/sync-excel', { method: 'POST' });
-                const data = await res.json();
-                alert(data.message);
-            } catch (e) { }
-        }
-
-        async function resetContestData() {
-            if (!confirm('⚠️ ARE YOU SURE?\n\nThis will DELETE ALL submissions and violation logs for ALL students.\nThis action cannot be undone.\n\nMake sure you have downloaded the reports first.')) {
-                return;
-            }
-
-            if (!confirm('Double Check: Do you really want to wipe the data?')) {
-                return;
-            }
-
-            try {
-                const res = await authFetch('/api/admin/reset', { method: 'DELETE' });
-                const data = await res.json();
-                if (res.ok) {
-                    alert('✅ ' + data.message);
-                    loadData(); // Refresh logs
-                } else {
-                    alert('Error: ' + data.error);
-                }
-            } catch (error) {
-                console.error('Reset error:', error);
-                alert('Error connecting to server.');
+        function updateTestCaseSampleHeader(cardId, isChecked) {
+            const card = document.getElementById(cardId);
+            if (!card) return;
+            const titleEl = card.querySelector('.tc-title');
+            if (titleEl) {
+                titleEl.textContent = isChecked ? '📘 Sample Example' : '🔒 Hidden Judge Test';
             }
         }
 
-        // Contest Status Management
-        async function toggleContest() {
-            const btn = document.getElementById('contestToggleBtn');
-            const isEnding = btn.textContent.includes('End');
-            const confirmMsg = isEnding
-                ? '⚠️ Are you sure you want to END the contest?\nAll students will be auto-submitted and redirected to insights.'
-                : 'Are you sure you want to RESUME the contest?';
+        // Starter Code Management
+        function switchStarterTab(lang, btn) {
+            activeStarterLang = lang;
+            document.querySelectorAll('.code-lang-tab').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            ['python', 'cpp', 'java', 'javascript', 'c'].forEach(l => {
+                const el = document.getElementById(`starter_${l}`);
+                if (el) el.style.display = (l === lang) ? 'block' : 'none';
+            });
+        }
 
-            if (!confirm(confirmMsg)) return;
+        function autoGenerateStarterCode(onlyIfEmpty = false) {
+            const funcName = document.getElementById('pFuncName').value.trim() || 'solution';
+            const pyEl = document.getElementById('starter_python');
+            const cppEl = document.getElementById('starter_cpp');
+            const javaEl = document.getElementById('starter_java');
+            const jsEl = document.getElementById('starter_javascript');
+            const cEl = document.getElementById('starter_c');
 
-            try {
-                const response = await authFetch('/api/admin/contest/status', {
-                    method: 'POST',
-                    body: JSON.stringify({ active: !isEnding })
-                });
-                const data = await response.json();
-
-                if (data.active) {
-                    btn.textContent = '🛑 End Contest';
-                    btn.style.background = '#ef4444';
-                } else {
-                    btn.textContent = '▶️ Resume Contest';
-                    btn.style.background = '#22c55e';
-                }
-                alert(data.message);
-            } catch (error) {
-                alert('Failed to update status');
+            if (!onlyIfEmpty || !pyEl.value.trim()) {
+                pyEl.value = `def ${funcName}(*args):\n    # Write your solution here\n    pass`;
+            }
+            if (!onlyIfEmpty || !cppEl.value.trim()) {
+                cppEl.value = `class Solution {\npublic:\n    int ${funcName}(vector<int>& nums) {\n        // Write your solution here\n        return 0;\n    }\n};`;
+            }
+            if (!onlyIfEmpty || !javaEl.value.trim()) {
+                javaEl.value = `class Solution {\n    public int ${funcName}(int[] nums) {\n        // Write your solution here\n        return 0;\n    }\n}`;
+            }
+            if (!onlyIfEmpty || !jsEl.value.trim()) {
+                jsEl.value = `function ${funcName}(...args) {\n    // Write your solution here\n}`;
+            }
+            if (!onlyIfEmpty || !cEl.value.trim()) {
+                cEl.value = `int ${funcName}(int* nums, int numsSize) {\n    // Write your solution here\n    return 0;\n}`;
             }
         }
 
-        // Anti-Cheat Status Management
-        async function toggleAntiCheat() {
-            const btn = document.getElementById('antiCheatToggleBtn');
-            const isDisabling = btn.textContent.includes('Disable');
-            const confirmMsg = isDisabling
-                ? '⚠️ Are you sure you want to DISABLE Anti-Cheat?\nStudents will be able to copy-paste and switch tabs without logging violations.'
-                : 'Are you sure you want to ENABLE Anti-Cheat?';
-
-            if (!confirm(confirmMsg)) return;
-
-            try {
-                const response = await authFetch('/api/admin/anti-cheat/status', {
-                    method: 'POST',
-                    body: JSON.stringify({ active: !isDisabling })
-                });
-                const data = await response.json();
-
-                if (data.active) {
-                    btn.textContent = '🛡️ Disable Anti-Cheat';
-                    btn.style.background = '#eab308';
-                } else {
-                    btn.textContent = '🛡️ Enable Anti-Cheat';
-                    btn.style.background = '#22c55e';
-                }
-                alert(data.message);
-            } catch (error) {
-                alert('Failed to update anti-cheat status');
-            }
+        // ── Questions JSON Management & Upload Studio ────
+        function copySampleJson() {
+            const code = document.getElementById('sampleJsonCodeBlock').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                alert('📋 Sample JSON script copied to clipboard!\nYou can paste this format into ChatGPT / Gemini / Claude to generate any question, or paste it directly on the right.');
+            }).catch(() => {
+                alert('Could not copy automatically. Please select the text and copy manually.');
+            });
         }
 
-        // Problems Management
-        async function loadProblemsPreview() {
-            try {
-                // Determine the correct API endpoint for fetching problems
-                // Using judge route as it is public-ish/student facing, but protected by authFetch here
-                const response = await authFetch('/api/judge/problems');
-                const data = await response.json();
-                document.getElementById('problemsPreview').textContent = JSON.stringify(data, null, 2);
-            } catch (error) {
-                document.getElementById('problemsPreview').textContent = 'Error loading preview.';
-            }
+        function downloadSampleJson() {
+            const code = document.getElementById('sampleJsonCodeBlock').textContent;
+            const blob = new Blob([code], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'sample_question_template.json';
+            a.click();
         }
 
-        async function downloadWithFormat() {
-            try {
-                const response = await authFetch('/api/judge/problems');
-                const data = await response.json();
-
-                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `problems_backup_${new Date().toISOString().slice(0, 10)}.json`;
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-            } catch (error) {
-                alert('Failed to download problems.');
-            }
+        function clearJsonInput() {
+            document.getElementById('jsonUploadText').value = '';
+            document.getElementById('selectedFileName').textContent = 'Accepts single question or array of multiple questions';
+            document.getElementById('fileUploadInput').value = '';
+            const badge = document.getElementById('jsonFormatBadge');
+            badge.textContent = 'Waiting for input...';
+            badge.style.background = '#f1f5f9';
+            badge.style.color = '#64748b';
+            const statusMsg = document.getElementById('uploadStatusMsg');
+            if (statusMsg) statusMsg.textContent = '';
         }
 
-        async function uploadProblems() {
-            const fileInput = document.getElementById('problemsFile');
-            const statusDiv = document.getElementById('uploadStatus');
-            const file = fileInput.files[0];
-
-            if (!file) {
-                alert('Please select a JSON file first.');
-                return;
-            }
-
-            statusDiv.textContent = 'Reading file...';
-            statusDiv.style.color = 'blue';
-
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            document.getElementById('selectedFileName').textContent = `📄 Selected: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
             const reader = new FileReader();
-            reader.onload = async function (e) {
-                try {
-                    const jsonContent = JSON.parse(e.target.result);
-
-                    if (!Array.isArray(jsonContent)) {
-                        throw new Error('File must contain an Array of problem objects.');
-                    }
-
-                    statusDiv.textContent = 'Uploading...';
-
-                    const response = await authFetch('/api/admin/problems', {
-                        method: 'POST',
-                        body: JSON.stringify(jsonContent)
-                    });
-
-                    const result = await response.json();
-
-                    if (response.ok) {
-                        statusDiv.textContent = `✅ Success! ${result.count || ''} problems updated.`;
-                        statusDiv.style.color = 'green';
-                        loadProblemsPreview(); // Refresh preview
-                        fileInput.value = ''; // Clear input
-                    } else {
-                        throw new Error(result.error || 'Upload failed');
-                    }
-
-                } catch (error) {
-                    console.error(error);
-                    statusDiv.textContent = '❌ Error: ' + error.message;
-                    statusDiv.style.color = 'red';
-                }
+            reader.onload = (e) => {
+                document.getElementById('jsonUploadText').value = e.target.result;
+                validateUploadJson();
             };
             reader.readAsText(file);
         }
 
-        // Initial Load
-        loadData();
+        function validateUploadJson() {
+            const raw = document.getElementById('jsonUploadText').value.trim();
+            const badge = document.getElementById('jsonFormatBadge');
+            const statusMsg = document.getElementById('uploadStatusMsg');
+            if (!raw) {
+                badge.textContent = 'Waiting for input...';
+                badge.style.background = '#f1f5f9';
+                badge.style.color = '#64748b';
+                if (statusMsg) statusMsg.textContent = '';
+                return null;
+            }
+            try {
+                const parsed = JSON.parse(raw);
+                let count = 0;
+                if (Array.isArray(parsed)) {
+                    count = parsed.length;
+                } else if (parsed && typeof parsed === 'object' && parsed.title) {
+                    count = 1;
+                } else {
+                    throw new Error('Expected a question object { title, ... } or array [ { ... } ]');
+                }
+                badge.textContent = `✓ Valid JSON (${count} question${count > 1 ? 's' : ''} detected)`;
+                badge.style.background = '#ecfdf5';
+                badge.style.color = '#059669';
+                if (statusMsg) statusMsg.textContent = '';
+                return parsed;
+            } catch (err) {
+                badge.textContent = `❌ Syntax Error`;
+                badge.style.background = '#fef2f2';
+                badge.style.color = '#dc2626';
+                if (statusMsg) {
+                    statusMsg.style.color = '#dc2626';
+                    statusMsg.textContent = `⚠️ Invalid JSON: ${err.message}`;
+                }
+                return null;
+            }
+        }
+
+        async function uploadOrApplyJson() {
+            const raw = document.getElementById('jsonUploadText').value.trim();
+            if (!raw) {
+                alert('Please choose a .json file or paste your question JSON script first.');
+                return;
+            }
+
+            let parsed;
+            try {
+                parsed = JSON.parse(raw);
+            } catch (err) {
+                alert('JSON Syntax Error:\n' + err.message + '\n\nPlease ensure your JSON is valid before uploading.');
+                return;
+            }
+
+            const btn = document.getElementById('btnUploadJson');
+            const status = document.getElementById('uploadStatusMsg');
+            btn.disabled = true;
+            btn.textContent = '⏳ Uploading & Configuring All Requirements...';
+            status.style.color = '#3b82f6';
+            status.textContent = 'Saving questions, generating multi-language boilerplates & configuring test cases in PostgreSQL...';
+
+            try {
+                const res = await authFetch('/api/admin/problems/import-json', {
+                    method: 'POST',
+                    body: JSON.stringify(parsed)
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    status.style.color = '#059669';
+                    status.innerHTML = `✅ <strong>Success:</strong> ${data.message}`;
+                    alert(`🎉 Upload Complete!\n\n${data.message}\n\nAll requirements (starter code in 5 languages, sample & hidden test cases, points, and constraints) have been configured!`);
+                    loadProblems();
+                } else {
+                    status.style.color = '#dc2626';
+                    status.textContent = `❌ Error: ${data.error || 'Failed to import JSON'}`;
+                    alert('Error: ' + (data.error || 'Failed to upload JSON'));
+                }
+            } catch (err) {
+                status.style.color = '#dc2626';
+                status.textContent = `❌ Connection Error: ${err.message}`;
+                alert('Connection error: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🚀 Upload & Automatically Apply All Requirements';
+            }
+        }
+
+        function exportAllProblemsJson() {
+            authFetch('/api/admin/problems/export-json')
+                .then(r => r.blob())
+                .then(blob => {
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = `problems_${Date.now()}.json`;
+                    a.click();
+                })
+                .catch(err => alert('Failed to export questions: ' + err.message));
+        }
+
+        function copyProblemJsonById(id) {
+            const p = adminProblemsCache.find(x => x.id === id);
+            if (!p) return alert('Problem not found');
+            const formatted = {
+                title: p.title,
+                description: p.description,
+                difficulty: p.difficulty,
+                points: p.points,
+                functionName: p.function_name || 'solution',
+                constraints: p.constraints ? (p.constraints.includes('\n') ? p.constraints.split('\n') : [p.constraints]) : [],
+                starterCode: p.starterCode || {},
+                testCases: (p.testCases || []).map(tc => ({
+                    input: tc.input_data,
+                    output: tc.output_data,
+                    explanation: tc.explanation || '',
+                    isSample: tc.is_sample
+                }))
+            };
+            navigator.clipboard.writeText(JSON.stringify(formatted, null, 2)).then(() => {
+                alert(`📋 JSON for "${p.title}" copied to clipboard!`);
+            }).catch(() => {
+                alert('Could not copy to clipboard.');
+            });
+        }
+
+
+        function escapeHtml(str) {
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        // ── Save Problem to PostgreSQL ───────────────────
+        async function saveProblem() {
+            const id = document.getElementById('editProblemId').value;
+            const title = document.getElementById('pTitle').value.trim();
+            const description = document.getElementById('pDesc').value.trim();
+            const difficulty = document.getElementById('pDiff').value;
+            const points = parseInt(document.getElementById('pPoints').value) || 100;
+            const functionName = document.getElementById('pFuncName').value.trim();
+
+            if (!title || !description) {
+                return alert('Title and description are required.');
+            }
+
+            // Collect constraints
+            const constraints = currentConstraints.join('\n');
+
+            // Collect test cases
+            const testCaseCards = document.querySelectorAll('#testCasesContainer .testcase-card');
+            const testCases = [];
+            for (const card of testCaseCards) {
+                const inputRaw = card.querySelector('.tc-input').value.trim();
+                const outputRaw = card.querySelector('.tc-output').value.trim();
+                const explanation = card.querySelector('.tc-explanation').value.trim();
+                const isSample = card.querySelector('.tc-is-sample').checked;
+
+                let parsedInput;
+                try {
+                    parsedInput = JSON.parse(inputRaw);
+                } catch (_) {
+                    parsedInput = inputRaw;
+                }
+
+                let parsedOutput;
+                try {
+                    parsedOutput = JSON.parse(outputRaw);
+                } catch (_) {
+                    parsedOutput = outputRaw;
+                }
+
+                testCases.push({
+                    input: parsedInput,
+                    output: parsedOutput,
+                    explanation,
+                    isSample
+                });
+            }
+
+            // Collect starter code
+            const starterCode = {
+                python: document.getElementById('starter_python').value,
+                cpp: document.getElementById('starter_cpp').value,
+                java: document.getElementById('starter_java').value,
+                javascript: document.getElementById('starter_javascript').value,
+                c: document.getElementById('starter_c').value
+            };
+
+            const body = {
+                title,
+                description,
+                difficulty,
+                points,
+                functionName,
+                constraints,
+                testCases,
+                starterCode
+            };
+
+            const btn = document.getElementById('btnSaveProblem');
+            btn.disabled = true;
+            btn.textContent = 'Saving to PostgreSQL...';
+
+            try {
+                const url = id ? `/api/admin/problems/${id}` : '/api/admin/problems';
+                const meth = id ? 'PUT' : 'POST';
+                const res = await authFetch(url, { method: meth, body: JSON.stringify(body) });
+                const data = await res.json();
+
+                if (res.ok) {
+                    alert('🎉 ' + (data.message || 'Problem saved successfully!'));
+                    loadProblems();
+                    document.getElementById('addProblemForm').style.display = 'none';
+                } else {
+                    alert('Error saving problem: ' + data.error);
+                }
+            } catch (err) {
+                alert('Connection error: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '💾 Save Problem to PostgreSQL';
+            }
+        }
+
+        async function deleteProblem(id, title) {
+            if (!confirm(`Deactivate problem "${title}"?`)) return;
+            const res = await authFetch(`/api/admin/problems/${id}`, { method: 'DELETE' });
+            const data = await res.json();
+            if (res.ok) { alert(data.message); loadProblems(); }
+            else alert('Error: ' + data.error);
+        }
+
+
+        // ── Contests ──────────────────────────────────
+        async function loadContests() {
+            const res = await authFetch('/api/contests');
+            const data = await res.json();
+            const tbody = document.getElementById('contestsBody');
+            if (!data.length) { tbody.innerHTML = '<tr><td colspan="7"><div class="empty"><div class="icon">🏁</div>No contests</div></td></tr>'; return; }
+            tbody.innerHTML = data.map(c => `<tr>
+        <td>${c.id}</td>
+        <td><strong>${c.name}</strong></td>
+        <td><span class="badge ${c.status === 'ACTIVE' ? 'badge-success' : c.status === 'ENDED' ? 'badge-muted' : 'badge-info'}">${c.status}</span></td>
+        <td>${new Date(c.start_time).toLocaleString()}</td>
+        <td>${new Date(c.end_time).toLocaleString()}</td>
+        <td><span class="badge ${c.anti_cheat ? 'badge-success' : 'badge-danger'}">${c.anti_cheat ? 'On' : 'Off'}</span></td>
+        <td>
+            <button class="btn btn-outline" style="padding:4px 10px;font-size:0.78rem;" onclick="editContest(${c.id})">Edit</button>
+            ${c.status !== 'ENDED' ? `<button class="btn btn-danger" style="padding:4px 10px;font-size:0.78rem;" onclick="endContest(${c.id})">End</button>` : ''}
+        </td>
+    </tr>`).join('');
+        }
+
+        function showContestForm() {
+            document.getElementById('contestFormId').value = '';
+            document.getElementById('contestForm').style.display = 'block';
+            document.getElementById('contestForm').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        async function editContest(id) {
+            const res = await authFetch(`/api/contests/${id}`);
+            const c = await res.json();
+            document.getElementById('contestFormId').value = id;
+            document.getElementById('cName').value = c.name;
+            document.getElementById('cDesc').value = c.description || '';
+            document.getElementById('cStatus').value = c.status;
+            document.getElementById('cAntiCheat').value = String(c.anti_cheat);
+            // Format for datetime-local input
+            const fmt = d => new Date(d).toISOString().slice(0, 16);
+            document.getElementById('cStart').value = fmt(c.start_time);
+            document.getElementById('cEnd').value = fmt(c.end_time);
+            document.getElementById('contestForm').style.display = 'block';
+            document.getElementById('contestForm').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        async function saveContest() {
+            const id = document.getElementById('contestFormId').value;
+            const body = {
+                name: document.getElementById('cName').value,
+                description: document.getElementById('cDesc').value,
+                startTime: document.getElementById('cStart').value,
+                endTime: document.getElementById('cEnd').value,
+                status: document.getElementById('cStatus').value,
+                antiCheat: document.getElementById('cAntiCheat').value === 'true'
+            };
+            if (!body.name || !body.startTime || !body.endTime) return alert('Name, start and end time required.');
+            const url = id ? `/api/contests/${id}` : '/api/contests';
+            const meth = id ? 'PUT' : 'POST';
+            const res = await authFetch(url, { method: meth, body: JSON.stringify(body) });
+            const data = await res.json();
+            if (res.ok) { alert(data.message); loadContests(); document.getElementById('contestForm').style.display = 'none'; loadStats(); }
+            else alert('Error: ' + data.error);
+        }
+
+        async function endContest(id) {
+            if (!confirm('End this contest?')) return;
+            const res = await authFetch(`/api/contests/${id}`, { method: 'PUT', body: JSON.stringify({ status: 'ENDED' }) });
+            const data = await res.json();
+            if (res.ok) { alert('Contest ended.'); loadContests(); loadStats(); }
+            else alert('Error: ' + data.error);
+        }
+
+        // ── Import/Export ─────────────────────────────
+        async function syncExcel() {
+            const status = document.getElementById('syncStatus');
+            status.textContent = '⏳ Syncing...';
+            try {
+                const res = await authFetch('/api/admin/sync-excel', { method: 'POST' });
+                const data = await res.json();
+                status.style.color = res.ok ? 'green' : 'red';
+                status.textContent = res.ok ? `✅ ${data.message}` : `❌ ${data.error}`;
+                if (res.ok) loadStats();
+            } catch (e) { status.textContent = '❌ ' + e.message; }
+        }
+
+        function exportExcel() {
+            const batch = document.getElementById('fBatch').value;
+            const dept = document.getElementById('fDept').value;
+            const qs = new URLSearchParams();
+            if (batch) qs.append('batch', batch);
+            if (dept) qs.append('department', dept);
+            exportExcelRaw(qs);
+        }
+
+        function exportExcelFiltered() {
+            const batch = document.getElementById('eBatch').value;
+            const dept = document.getElementById('eDept').value;
+            const qs = new URLSearchParams();
+            if (batch) qs.append('batch', batch);
+            if (dept) qs.append('department', dept);
+            exportExcelRaw(qs);
+        }
+
+        function exportExcelRaw(qs) {
+            authFetch(`/api/admin/export?${qs}`)
+                .then(r => r.blob())
+                .then(blob => {
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = `report_${Date.now()}.xlsx`;
+                    a.click();
+                })
+                .catch(() => alert('Export failed.'));
+        }
+
+        async function resetData() {
+            if (!confirm('⚠️ This will delete ALL submissions, violations, and participant records. This cannot be undone. Continue?')) return;
+            if (!confirm('Are you absolutely sure?')) return;
+            const res = await authFetch('/api/admin/reset', { method: 'DELETE' });
+            const data = await res.json();
+            alert(res.ok ? '✅ ' + data.message : '❌ ' + data.error);
+            loadStats(); loadSubmissions(); loadViolations();
+        }
+
+        function logout() { localStorage.clear(); window.location.href = '/'; }
+
+        // ── Init ──────────────────────────────────────
+        if (checkAuth()) {
+            loadStats();
+            loadLeaderboard();
+        }
     </script>
+
 </body>
 
 </html>

@@ -1,486 +1,1098 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coding Contest Platform</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
+    <title>CodeItAnywhere - Coding Contest</title>
+
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <!-- CodeMirror -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ["Inter", "sans-serif"],
+                        mono: ["JetBrains Mono", "monospace"]
+                    }
+                }
+            }
+        };
+    </script>
+
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --surface-2: #f1f5f9;
+            --surface-3: #e2e8f0;
+            --border: #e2e8f0;
+            --text: #0f172a;
+            --muted: #64748b;
+            --editor: #ffffff;
+            --editor-text: #1e293b;
+            --accent: #10b981;
+            --accent-hover: #059669;
+        }
+
+        html.dark {
+            --bg: #0f141a;
+            --surface: #1a1a1a;
+            --surface-2: #242424;
+            --surface-3: #333333;
+            --border: #333333;
+            --text: #eff2f6;
+            --muted: #9ca3af;
+            --editor: #181818;
+            --editor-text: #d4d4d4;
+            --accent: #00af9b;
+            --accent-hover: #009786;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #1e1e1e;
-            color: #d4d4d4;
-            height: 100vh;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
             overflow: hidden;
+            height: 100vh;
         }
 
-        .warning-banner {
-            background: #ff4444;
-            color: white;
-            padding: 10px;
-            text-align: center;
-            font-weight: bold;
-            display: none;
-        }
+        .surface { background: var(--surface); }
+        .surface-2 { background: var(--surface-2); }
+        .surface-3 { background: var(--surface-3); }
+        .border-theme { border-color: var(--border); }
+        .muted { color: var(--muted); }
 
-        .container {
+        .theme-btn {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            color: var(--text);
+            transition: all .15s ease;
+        }
+        .theme-btn:hover { background: var(--surface-3); }
+
+        .theme-toggle {
+            width: 46px;
+            height: 24px;
+            border-radius: 9999px;
+            position: relative;
+            background: #27272a;
+            border: 1px solid #3f3f46;
+            cursor: pointer;
+            padding: 2px;
+            transition: background-color .2s ease;
+        }
+        .theme-toggle-knob {
+            width: 18px;
+            height: 18px;
+            border-radius: 9999px;
+            background: #ffffff;
             display: flex;
-            height: calc(100vh - 60px);
-        }
-
-        .header {
-            background: #2d2d30;
-            padding: 15px 20px;
-            display: flex;
-            justify-content: space-between;
             align-items: center;
-            border-bottom: 2px solid #007acc;
+            justify-content: center;
+            color: #09090b;
+            font-size: 10px;
+            transition: transform .2s ease, background-color .2s ease, color .2s ease;
+            transform: translateX(22px);
+        }
+        html:not(.dark) .theme-toggle-knob {
+            transform: translateX(0);
+            background: #09090b;
+            color: #ffffff;
         }
 
-        .timer {
-            font-size: 24px;
-            font-weight: bold;
-            color: #4ec9b0;
-        }
-
-        .timer.warning {
-            color: #ff6b6b;
-        }
-
-        .student-info input {
-            padding: 8px 12px;
-            background: #3c3c3c;
-            border: 1px solid #555;
-            color: #d4d4d4;
-            border-radius: 4px;
-            margin-left: 10px;
-        }
-
-        .violations {
-            color: #ff6b6b;
-            font-size: 14px;
-        }
-
-        .left-panel {
-            width: 40%;
-            background: #252526;
-            overflow-y: auto;
-            padding: 20px;
-            border-right: 1px solid #3c3c3c;
-        }
-
-        .right-panel {
-            width: 60%;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .problem-selector {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-
-        .problem-btn {
-            padding: 10px 20px;
-            background: #3c3c3c;
-            border: 2px solid #555;
-            color: #d4d4d4;
-            cursor: pointer;
-            border-radius: 4px;
-            transition: all 0.3s;
-        }
-
-        .problem-btn:hover {
-            background: #4c4c4c;
-        }
-
-        .problem-btn.active {
-            background: #007acc;
-            border-color: #007acc;
-            color: white;
-        }
-
-        .problem-btn.solved {
-            background: #4ec9b0;
-            border-color: #4ec9b0;
-            color: #1e1e1e;
-        }
-
-        .problem-content {
-            display: none;
-        }
-
-        .problem-content.active {
-            display: block;
-        }
-
-        .problem-title {
-            font-size: 24px;
-            color: #4ec9b0;
-            margin-bottom: 15px;
-        }
-
-        .problem-description {
-            line-height: 1.8;
-            margin-bottom: 20px;
-        }
-
-        .test-cases {
-            background: #1e1e1e;
-            padding: 15px;
-            border-radius: 4px;
-            margin-top: 15px;
-        }
-
-        .test-case {
-            margin-bottom: 15px;
-        }
-
-        .test-case h4 {
-            color: #569cd6;
-            margin-bottom: 5px;
-        }
-
-        pre {
-            background: #2d2d30;
-            padding: 10px;
-            border-radius: 4px;
-            overflow-x: auto;
-        }
-
-        .editor-section {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 20px;
-        }
-
-        .language-selector {
-            margin-bottom: 10px;
-        }
-
-        .language-selector select {
-            padding: 8px 12px;
-            background: #3c3c3c;
-            border: 1px solid #555;
-            color: #d4d4d4;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
+        /* CodeMirror Customization */
         .CodeMirror {
             height: 100% !important;
-            font-size: 14px;
-            border: 1px solid #3c3c3c;
-            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace !important;
+            font-size: 13px !important;
+            line-height: 1.6 !important;
+            background: var(--editor) !important;
+            color: var(--editor-text) !important;
+        }
+        .CodeMirror-gutters {
+            background: var(--editor) !important;
+            border-right: 1px solid var(--border) !important;
+        }
+        .CodeMirror-linenumber {
+            color: var(--muted) !important;
+        }
+        .CodeMirror-cursor {
+            border-left: 2px solid var(--accent) !important;
         }
 
-        .actions {
-            padding: 20px;
-            background: #2d2d30;
-            display: flex;
-            gap: 10px;
-            border-top: 1px solid #3c3c3c;
-        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
 
-        button {
-            padding: 10px 25px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s;
-        }
+        #panel-description { width: 45%; }
+        #panel-editor { width: 55%; }
 
-        .btn-run {
-            background: #4ec9b0;
-            color: #1e1e1e;
-        }
-
-        .btn-run:hover {
-            background: #5edcc4;
-        }
-
-        .btn-submit {
-            background: #007acc;
-            color: white;
-        }
-
-        .btn-submit:hover {
-            background: #0098ff;
-        }
-
-        .btn-leaderboard {
-            background: #6a5acd;
-            color: white;
-        }
-
-        .output-section {
-            background: #1e1e1e;
-            padding: 15px;
-            border-radius: 4px;
-            margin-top: 10px;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-
-        .output-section h3 {
-            color: #569cd6;
-            margin-bottom: 10px;
-        }
-
-        .result {
-            margin-bottom: 10px;
-            padding: 10px;
-            border-radius: 4px;
-        }
-
-        .result.pass {
-            background: rgba(78, 201, 176, 0.2);
-            border-left: 3px solid #4ec9b0;
-        }
-
-        .result.fail {
-            background: rgba(255, 107, 107, 0.2);
-            border-left: 3px solid #ff6b6b;
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background: #2d2d30;
-            padding: 30px;
-            border-radius: 8px;
-            max-width: 800px;
-            max-height: 80vh;
-            overflow-y: auto;
-            width: 90%;
-        }
-
-        .modal-content h2 {
-            color: #4ec9b0;
-            margin-bottom: 20px;
-        }
-
-        .leaderboard-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .leaderboard-table th,
-        .leaderboard-table td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #3c3c3c;
-        }
-
-        .leaderboard-table th {
-            background: #1e1e1e;
-            color: #569cd6;
-        }
-
-        .leaderboard-table tr:hover {
-            background: #3c3c3c;
-        }
-
-        .rank-1 {
-            color: #ffd700;
-            font-weight: bold;
-        }
-
-        .rank-2 {
-            color: #c0c0c0;
-            font-weight: bold;
-        }
-
-        .rank-3 {
-            color: #cd7f32;
-            font-weight: bold;
-        }
-
-        .close-modal {
-            background: #ff4444;
-            color: white;
-            margin-top: 20px;
-        }
-
-        .login-screen {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-
-        .login-box {
-            background: white;
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-            text-align: center;
-            max-width: 400px;
-            width: 90%;
-        }
-
-        .login-box h1 {
-            color: #333;
-            margin-bottom: 30px;
-        }
-
-        .login-box input {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 15px;
-            border: 2px solid #ddd;
-            border-radius: 5px;
-            font-size: 16px;
-        }
-
-        .login-box button {
-            width: 100%;
-            padding: 12px;
-            background: #667eea;
-            color: white;
-            font-size: 16px;
-        }
-
-        .login-box button:hover {
-            background: #5568d3;
-        }
-
-        .contest-hidden {
-            display: none;
+        @media (max-width: 1024px) {
+            #panel-description { width: 100%; display: flex; }
+            #panel-editor { width: 100%; display: none; }
+            .mobile-active-desc #panel-description { display: flex; }
+            .mobile-active-desc #panel-editor { display: none; }
+            .mobile-active-code #panel-description { display: none; }
+            .mobile-active-code #panel-editor { display: flex; }
         }
     </style>
 </head>
 
-<body>
+<body class="flex flex-col h-screen">
+
+    <!-- =====================================================
+         MAIN HEADER
+    ===================================================== -->
+    <header class="surface border-b border-theme px-3 py-2 flex items-center justify-between shrink-0 z-30">
+        <!-- LEFT: LOGO + PROBLEM LIST -->
+        <div class="flex items-center gap-3">
+            <a href="/" class="flex items-center gap-2 hover:opacity-90 transition">
+                <div class="w-7 h-7 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold text-sm">
+                    &lt;/&gt;
+                </div>
+                <div class="hidden sm:block">
+                    <div class="text-sm font-bold tracking-tight">CodeItAnywhere</div>
+                    <div class="text-[10px] muted">Contest Arena</div>
+                </div>
+            </a>
+
+            <!-- PROBLEM LIST DROPDOWN TRIGGER -->
+            <div class="relative">
+                <button id="problemListBtn" class="theme-btn px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-2">
+                    <span id="currentProblemNavTitle">Loading Problems...</span>
+                    <i class="fa-solid fa-chevron-down text-[9px] muted"></i>
+                </button>
+
+                <!-- DROPDOWN MENU -->
+                <div id="problemDropdownMenu" class="hidden absolute left-0 mt-1 w-72 surface border border-theme rounded-lg shadow-2xl py-1 z-50 max-h-80 overflow-y-auto">
+                    <div class="px-3 py-2 border-b border-theme text-[11px] font-semibold uppercase tracking-wider muted">
+                        Select Problem
+                    </div>
+                    <div id="problemDropdownItems">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- PREV / NEXT ARROWS -->
+            <div class="hidden sm:flex items-center gap-1 muted text-xs">
+                <button id="prevProblemBtn" class="p-1.5 hover:text-white rounded hover:bg-white/5" title="Previous Problem">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <button id="nextProblemBtn" class="p-1.5 hover:text-white rounded hover:bg-white/5" title="Next Problem">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- CENTER: CONTEST STATUS -->
+        <div class="flex items-center gap-2 surface-2 border border-theme px-3 py-1 rounded-full text-xs">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span id="onlineCountText" class="font-semibold text-emerald-500">Live Contest Active</span>
+        </div>
+
+        <!-- RIGHT: THEME, TIMER, USER -->
+        <div class="flex items-center gap-2">
+            <!-- LIGHT / DARK TOGGLE -->
+            <button id="themeToggle" class="theme-toggle" type="button" title="Toggle theme">
+                <span id="themeKnob" class="theme-toggle-knob">
+                    <i id="themeIcon" class="fa-solid fa-moon"></i>
+                </span>
+            </button>
+
+            <!-- TIMER -->
+            <button id="timerBtn" class="p-2 muted hover:text-white flex items-center gap-1 text-xs" title="Session Timer">
+                <i class="fa-regular fa-clock"></i>
+                <span id="timerText" class="font-mono hidden sm:inline">60:00</span>
+            </button>
+
+            <!-- USER PROFILE / LOGOUT -->
+            <div class="flex items-center gap-2 border-l border-theme pl-2">
+                <span id="userNameBadge" class="text-xs font-semibold muted hidden md:inline">Student</span>
+                <button id="logoutBtn" class="p-1.5 muted hover:text-rose-400 text-xs" title="Sign Out">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- =====================================================
+         SECONDARY TOOLBAR (RUN / SUBMIT)
+    ===================================================== -->
+    <nav class="surface border-b border-theme px-3 py-1.5 flex items-center justify-between shrink-0 z-20">
+        <!-- MOBILE TABS -->
+        <div class="flex gap-1 lg:hidden">
+            <button id="mobileDescTab" onclick="switchMobileView('desc')" class="theme-btn px-3 py-1 rounded-md text-xs font-semibold">
+                <i class="fa-regular fa-file-lines mr-1 text-emerald-500"></i> Description
+            </button>
+            <button id="mobileCodeTab" onclick="switchMobileView('code')" class="theme-btn px-3 py-1 rounded-md text-xs font-semibold">
+                <i class="fa-solid fa-code mr-1 text-blue-500"></i> Code
+            </button>
+        </div>
+
+        <div class="hidden lg:flex items-center gap-2 text-xs muted">
+            <span id="contestTitleBanner" class="font-semibold text-emerald-400">CodeItAnywhere Platform Contest</span>
+        </div>
+
+        <!-- RUN & SUBMIT BUTTONS -->
+        <div class="flex items-center gap-2">
+            <button id="runTop" class="theme-btn px-3.5 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 hover:text-emerald-400">
+                <i class="fa-solid fa-play text-[10px]"></i>
+                <span>Run Code</span>
+            </button>
+
+            <button id="submitTop" class="px-4 py-1.5 rounded-md text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 flex items-center gap-1.5 shadow-lg shadow-emerald-600/20 transition">
+                <i class="fa-solid fa-cloud-arrow-up text-[11px]"></i>
+                <span>Submit</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- =====================================================
+         MAIN WORKSPACE: LEFT (PROBLEM) | RIGHT (CODE + CONSOLE)
+    ===================================================== -->
+    <main id="workspaceContainer" class="flex-1 flex overflow-hidden mobile-active-desc">
+
+        <!-- =================================================
+             LEFT PANEL: PROBLEM DESCRIPTION
+        ================================================= -->
+        <section id="panel-description" class="surface flex flex-col overflow-y-auto border-r border-theme">
+            <!-- PROBLEM HEADER -->
+            <div class="p-4 border-b border-theme shrink-0">
+                <div class="flex items-center justify-between gap-3 mb-2">
+                    <h1 id="problemTitle" class="text-xl font-bold tracking-tight">Loading Problem...</h1>
+                    <span id="problemStatusBadge" class="text-xs font-semibold text-emerald-500 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-0.5 rounded-full">
+                        <i class="fa-solid fa-circle-check mr-1"></i> Active
+                    </span>
+                </div>
+
+                <!-- BADGES -->
+                <div class="flex items-center gap-2">
+                    <span id="problemDifficultyBadge" class="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-semibold border border-emerald-500/20">
+                        Easy
+                    </span>
+                    <span id="problemPointsBadge" class="text-[11px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 font-semibold border border-blue-500/20">
+                        100 Points
+                    </span>
+                </div>
+            </div>
+
+            <!-- DESCRIPTION CONTENT -->
+            <div class="p-4 space-y-5 text-sm leading-relaxed overflow-y-auto flex-1">
+                <!-- HTML DESCRIPTION -->
+                <div id="problemDescriptionText" class="prose prose-invert max-w-none text-sm space-y-3">
+                    <p class="muted">Loading problem description...</p>
+                </div>
+
+                <!-- EXAMPLES SECTION -->
+                <div class="space-y-3">
+                    <div class="text-xs font-bold uppercase tracking-wider muted">Examples & Testcases</div>
+                    <div id="examplesContainer" class="space-y-3">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- CONSTRAINTS SECTION -->
+                <div class="space-y-2 border-t border-theme pt-4">
+                    <div class="text-xs font-bold uppercase tracking-wider muted">Constraints</div>
+                    <ul id="constraintsList" class="list-disc list-inside space-y-1 text-xs muted font-mono">
+                        <!-- Populated dynamically -->
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- =================================================
+             RIGHT PANEL: CODE EDITOR & TESTCASE CONSOLE
+        ================================================= -->
+        <section id="panel-editor" class="editor flex flex-col flex-1 border-l border-theme overflow-hidden">
+
+            <!-- EDITOR TOOLBAR -->
+            <div class="surface-2 border-b border-theme px-3 py-1.5 flex items-center justify-between shrink-0 z-10">
+                <!-- LANGUAGE SELECTOR DROPDOWN -->
+                <div class="relative flex items-center gap-2">
+                    <button id="langDropdownBtn" class="theme-btn px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1.5">
+                        <span id="currentLangText">Python 3</span>
+                        <i class="fa-solid fa-chevron-down text-[9px] muted"></i>
+                    </button>
+
+                    <!-- LANG DROPDOWN -->
+                    <div id="langDropdownMenu" class="hidden absolute top-8 left-0 w-36 surface border border-theme rounded-lg shadow-xl py-1 z-50">
+                        <button onclick="selectLanguage('python')" class="w-full text-left px-3 py-1.5 text-xs hover:bg-white/10 flex items-center justify-between">
+                            <span>Python 3</span> <i class="fa-brands fa-python text-blue-400"></i>
+                        </button>
+                        <button onclick="selectLanguage('cpp')" class="w-full text-left px-3 py-1.5 text-xs hover:bg-white/10 flex items-center justify-between">
+                            <span>C++ (17)</span> <span class="text-[10px] text-emerald-400 font-mono">g++</span>
+                        </button>
+                        <button onclick="selectLanguage('java')" class="w-full text-left px-3 py-1.5 text-xs hover:bg-white/10 flex items-center justify-between">
+                            <span>Java (11)</span> <i class="fa-brands fa-java text-amber-500"></i>
+                        </button>
+                        <button onclick="selectLanguage('javascript')" class="w-full text-left px-3 py-1.5 text-xs hover:bg-white/10 flex items-center justify-between">
+                            <span>JavaScript</span> <i class="fa-brands fa-js text-yellow-400"></i>
+                        </button>
+                        <button onclick="selectLanguage('c')" class="w-full text-left px-3 py-1.5 text-xs hover:bg-white/10 flex items-center justify-between">
+                            <span>C (gcc)</span> <span class="text-[10px] text-cyan-400 font-mono">gcc</span>
+                        </button>
+                    </div>
+
+                    <span class="text-[11px] text-emerald-500 flex items-center gap-1">
+                        <i class="fa-solid fa-shield-halved"></i> Auto-Save
+                    </span>
+                </div>
+
+                <!-- ACTIONS -->
+                <div class="flex items-center gap-2 muted text-xs">
+                    <button id="resetCodeBtn" class="p-1 hover:text-white" title="Reset Code to Template">
+                        <i class="fa-solid fa-arrow-rotate-left"></i>
+                    </button>
+                    <button id="formatCodeBtn" class="p-1 hover:text-white" title="Format Code">
+                        <i class="fa-solid fa-code"></i>
+                    </button>
+                    <button id="fullscreenBtn" class="p-1 hover:text-white" title="Fullscreen">
+                        <i class="fa-solid fa-expand"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- CODE EDITOR CONTAINER -->
+            <div id="editorWrapper" class="flex-1 relative w-full overflow-hidden bg-[#181818]">
+                <textarea id="codeEditor" style="display:none;"></textarea>
+            </div>
+
+            <!-- EDITOR STATUS BAR -->
+            <div class="surface-2 border-t border-theme px-3 py-1 flex items-center justify-between text-[10px] muted shrink-0 font-mono">
+                <div class="flex items-center gap-2">
+                    <span id="editorStatusText" class="text-emerald-400">Ready</span>
+                    <span>•</span>
+                    <span id="autoSaveIndicator">Saved</span>
+                </div>
+                <span id="cursorPosIndicator">Ln 1, Col 1</span>
+            </div>
+
+            <!-- =================================================
+                 BOTTOM CONSOLE: TESTCASES & RESULTS
+            ================================================= -->
+            <div id="console" class="surface border-t border-theme h-48 flex flex-col shrink-0">
+                <!-- CONSOLE HEADER TABS -->
+                <div class="surface-2 border-b border-theme px-3 py-1.5 flex items-center justify-between shrink-0">
+                    <div class="flex gap-4">
+                        <button id="tabTestcaseBtn" onclick="switchConsoleTab('testcase')" class="text-xs font-semibold border-b-2 border-emerald-500 pb-1 text-emerald-500 flex items-center gap-1.5">
+                            <i class="fa-regular fa-square-check"></i> Testcase
+                        </button>
+                        <button id="tabResultBtn" onclick="switchConsoleTab('result')" class="text-xs font-semibold muted pb-1 flex items-center gap-1.5 hover:text-white">
+                            <i class="fa-solid fa-terminal"></i> Test Result
+                        </button>
+                    </div>
+
+                    <button onclick="toggleConsole()" class="muted hover:text-white" title="Toggle Console">
+                        <i id="consoleToggleIcon" class="fa-solid fa-chevron-up text-xs"></i>
+                    </button>
+                </div>
+
+                <!-- TAB 1: TESTCASE INPUT VIEW -->
+                <div id="consoleBodyTestcase" class="flex-1 p-3 overflow-auto space-y-2.5">
+                    <!-- CASE TABS -->
+                    <div id="caseTabsHeader" class="flex items-center gap-1.5">
+                        <!-- Populated dynamically -->
+                    </div>
+
+                    <!-- ACTIVE CASE INPUT DISPLAY -->
+                    <div id="caseInputDisplay" class="font-mono text-xs space-y-2">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- TAB 2: TEST RESULT VIEW -->
+                <div id="consoleBodyResult" class="hidden flex-1 p-3 overflow-auto space-y-2.5">
+                    <div id="resultContent" class="font-mono text-xs text-muted">
+                        Click <span class="text-emerald-400 font-semibold">"Run Code"</span> to execute against sample cases, or <span class="text-emerald-400 font-semibold">"Submit"</span> to judge against all hidden test cases.
+                    </div>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- =====================================================
+         MAIN JAVASCRIPT APP LOGIC
+    ===================================================== -->
     <script>
+        // ──────────────────────────────────────────────
+        // State
+        // ──────────────────────────────────────────────
+        let problems = [];
+        let currentProblemIdx = 0;
+        let currentProblem = null;
+        let currentLanguage = 'python';
+        let editor = null;
+        let activeCaseIndex = 0;
+        let consoleOpen = true;
+        let timerSeconds = 3600;
+        let timerInterval = null;
+
         const token = localStorage.getItem('token');
-        if (!token) {
-            window.location.href = '/auth.html';
+        const userStr = localStorage.getItem('user');
+        let user = {};
+        try { user = JSON.parse(userStr || '{}'); } catch (_) {}
+
+        // Auth Header
+        if (user.name) {
+            document.getElementById('userNameBadge').textContent = user.name;
         }
 
-        // Decode token to get user info if needed or just use localStorage user
-        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        // ──────────────────────────────────────────────
+        // Toast Helper
+        // ──────────────────────────────────────────────
+        function showToast(msg, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            const bg = type === 'success' ? 'bg-emerald-600' : type === 'error' ? 'bg-rose-600' : 'bg-zinc-800';
+            toast.className = `${bg} text-white text-xs px-3.5 py-2 rounded-lg shadow-xl flex items-center gap-2 border border-white/10 transition-all duration-300 opacity-0 translate-y-2`;
+            toast.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-check' : type === 'error' ? 'fa-triangle-exclamation' : 'fa-circle-info'}"></i><span>${msg}</span>`;
+            container.appendChild(toast);
+            requestAnimationFrame(() => {
+                toast.classList.remove('opacity-0', 'translate-y-2');
+            });
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // ──────────────────────────────────────────────
+        // Initialization
+        // ──────────────────────────────────────────────
+        async function init() {
+            initCodeMirror();
+            initTheme();
+            initTimer();
+            initListeners();
+            await fetchProblems();
+        }
+
+        // ──────────────────────────────────────────────
+        // CodeMirror Setup
+        // ──────────────────────────────────────────────
+        function initCodeMirror() {
+            editor = CodeMirror.fromTextArea(document.getElementById('codeEditor'), {
+                mode: 'python',
+                theme: 'dracula',
+                lineNumbers: true,
+                autoCloseBrackets: true,
+                matchBrackets: true,
+                indentUnit: 4,
+                tabSize: 4,
+                indentWithTabs: false
+            });
+
+            editor.on('cursorActivity', () => {
+                const pos = editor.getCursor();
+                document.getElementById('cursorPosIndicator').textContent = `Ln ${pos.line + 1}, Col ${pos.ch + 1}`;
+            });
+
+            editor.on('change', () => {
+                document.getElementById('autoSaveIndicator').textContent = 'Editing...';
+                clearTimeout(window._autoSaveTimer);
+                window._autoSaveTimer = setTimeout(() => {
+                    document.getElementById('autoSaveIndicator').textContent = 'Saved';
+                    if (currentProblem) {
+                        const key = `draft_${currentProblem.id}_${currentLanguage}`;
+                        localStorage.setItem(key, editor.getValue());
+                    }
+                }, 800);
+            });
+        }
+
+        // ──────────────────────────────────────────────
+        // Fetch Problems from Backend API
+        // ──────────────────────────────────────────────
+        async function fetchProblems() {
+            try {
+                const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+                const res = await fetch('/api/judge/problems', { headers });
+
+                if (!res.ok) {
+                    throw new Error(`Failed to load problems (${res.status})`);
+                }
+
+                problems = await res.json();
+
+                if (!problems || problems.length === 0) {
+                    document.getElementById('problemTitle').textContent = 'No Problems Available';
+                    document.getElementById('problemDescriptionText').innerHTML = '<p class="muted">No contest problems are currently active. Please check with the administrator.</p>';
+                    return;
+                }
+
+                // Check URL parameter e.g. ?problem=2
+                const urlParams = new URLSearchParams(window.location.search);
+                const probIdParam = urlParams.get('problem');
+                if (probIdParam) {
+                    const matchIdx = problems.findIndex(p => p.id == probIdParam);
+                    if (matchIdx !== -1) currentProblemIdx = matchIdx;
+                }
+
+                renderProblemDropdown();
+                loadProblem(currentProblemIdx);
+
+            } catch (err) {
+                console.error('Error fetching problems:', err);
+                showToast('Error loading problems: ' + err.message, 'error');
+            }
+        }
+
+        // ──────────────────────────────────────────────
+        // Render Problem Dropdown
+        // ──────────────────────────────────────────────
+        function renderProblemDropdown() {
+            const container = document.getElementById('problemDropdownItems');
+            container.innerHTML = problems.map((p, idx) => {
+                const diffColor = p.difficulty === 'Easy' ? 'text-emerald-400' : p.difficulty === 'Medium' ? 'text-amber-400' : 'text-rose-400';
+                return `
+                    <button onclick="selectProblem(${idx})" class="w-full text-left px-3 py-2 text-xs hover:bg-white/10 flex items-center justify-between border-b border-theme/50 last:border-0 ${idx === currentProblemIdx ? 'bg-white/5 font-semibold text-emerald-400' : ''}">
+                        <span class="truncate pr-2">${idx + 1}. ${p.title}</span>
+                        <span class="${diffColor} text-[10px] uppercase shrink-0 font-mono">${p.difficulty}</span>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        window.selectProblem = function(idx) {
+            document.getElementById('problemDropdownMenu').classList.add('hidden');
+            loadProblem(idx);
+        };
+
+        // ──────────────────────────────────────────────
+        // Load & Render Problem
+        // ──────────────────────────────────────────────
+        function loadProblem(idx) {
+            if (idx < 0 || idx >= problems.length) return;
+            currentProblemIdx = idx;
+            currentProblem = problems[currentProblemIdx];
+
+            // Update Top Bar
+            document.getElementById('currentProblemNavTitle').textContent = `${currentProblemIdx + 1}. ${currentProblem.title}`;
+
+            // Update Description Panel
+            document.getElementById('problemTitle').textContent = `${currentProblemIdx + 1}. ${currentProblem.title}`;
+            
+            const diffEl = document.getElementById('problemDifficultyBadge');
+            diffEl.textContent = currentProblem.difficulty || 'Medium';
+            diffEl.className = `text-[11px] px-2.5 py-0.5 rounded-full font-semibold border ${
+                currentProblem.difficulty === 'Easy' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                currentProblem.difficulty === 'Hard' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' :
+                'bg-amber-500/10 text-amber-400 border-amber-500/20'
+            }`;
+
+            document.getElementById('problemPointsBadge').textContent = `${currentProblem.points || 100} Points`;
+            document.getElementById('problemDescriptionText').innerHTML = currentProblem.description || '<p>No description provided.</p>';
+
+            // Render Examples
+            const exContainer = document.getElementById('examplesContainer');
+            const sampleCases = (currentProblem.testCases || []).slice(0, 3);
+
+            if (sampleCases.length > 0) {
+                exContainer.innerHTML = sampleCases.map((tc, i) => {
+                    const inputStr = typeof tc.input === 'object' ? 
+                        Object.entries(tc.input).map(([k, v]) => `${k} = ${JSON.stringify(v)}`).join(', ') : 
+                        String(tc.input);
+                    const outputStr = typeof tc.output === 'object' ? JSON.stringify(tc.output) : String(tc.output);
+                    
+                    return `
+                        <div class="surface-2 border border-theme rounded-lg p-3.5 space-y-2">
+                            <div class="font-semibold text-xs uppercase tracking-wide text-zinc-300">Example ${i + 1}</div>
+                            <div class="font-mono text-xs space-y-1.5">
+                                <div><span class="muted">Input:</span> <span class="text-emerald-400">${escapeHtml(inputStr)}</span></div>
+                                <div><span class="muted">Output:</span> <span class="text-amber-400 font-semibold">${escapeHtml(outputStr)}</span></div>
+                                ${tc.explanation ? `<div class="font-sans text-xs text-zinc-400 pt-1 border-t border-theme/40"><span class="muted font-semibold">Explanation:</span> ${escapeHtml(tc.explanation)}</div>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                exContainer.innerHTML = '<div class="muted text-xs">No sample testcases provided.</div>';
+            }
+
+            // Render Constraints
+            const constrList = document.getElementById('constraintsList');
+            const constraints = currentProblem.constraints || [];
+            if (Array.isArray(constraints) && constraints.length > 0) {
+                constrList.innerHTML = constraints.map(c => `<li>${escapeHtml(c)}</li>`).join('');
+            } else {
+                constrList.innerHTML = '<li>Standard competitive constraints apply.</li>';
+            }
+
+            // Load Starter Code
+            loadStarterCode();
+
+            // Setup Console Case Tabs
+            setupConsoleTestcases();
+
+            // Refresh dropdown active state
+            renderProblemDropdown();
+        }
+
+        function escapeHtml(str) {
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        // ──────────────────────────────────────────────
+        // Starter Code Management
+        // ──────────────────────────────────────────────
+        function loadStarterCode() {
+            if (!currentProblem || !editor) return;
+
+            // Check if draft exists in localStorage
+            const draftKey = `draft_${currentProblem.id}_${currentLanguage}`;
+            const savedDraft = localStorage.getItem(draftKey);
+
+            if (savedDraft) {
+                editor.setValue(savedDraft);
+            } else if (currentProblem.starterCode && currentProblem.starterCode[currentLanguage]) {
+                editor.setValue(currentProblem.starterCode[currentLanguage]);
+            } else {
+                // Default fallback template
+                const fn = currentProblem.functionName || 'solution';
+                if (currentLanguage === 'python') {
+                    editor.setValue(`def ${fn}(*args):\n    # Write your solution here\n    pass\n`);
+                } else if (currentLanguage === 'javascript') {
+                    editor.setValue(`function ${fn}(...args) {\n    // Write your solution here\n}\n`);
+                } else if (currentLanguage === 'cpp') {
+                    editor.setValue(`class Solution {\npublic:\n    // Write your solution here\n};\n`);
+                } else if (currentLanguage === 'java') {
+                    editor.setValue(`class Solution {\n    // Write your solution here\n}\n`);
+                } else {
+                    editor.setValue(`// Write your solution here\n`);
+                }
+            }
+
+            editor.clearHistory();
+            setTimeout(() => editor.refresh(), 50);
+        }
+
+        window.selectLanguage = function(lang) {
+            currentLanguage = lang;
+            const names = { python: 'Python 3', cpp: 'C++ (17)', java: 'Java (11)', javascript: 'JavaScript', c: 'C (gcc)' };
+            document.getElementById('currentLangText').textContent = names[lang] || lang;
+            document.getElementById('langDropdownMenu').classList.add('hidden');
+
+            const modeMap = {
+                python: 'python',
+                javascript: 'javascript',
+                cpp: 'text/x-c++src',
+                c: 'text/x-csrc',
+                java: 'text/x-java'
+            };
+            editor.setOption('mode', modeMap[lang] || lang);
+            loadStarterCode();
+            showToast(`Switched language to ${names[lang]}`);
+        };
+
+        // ──────────────────────────────────────────────
+        // Console Test Cases
+        // ──────────────────────────────────────────────
+        function setupConsoleTestcases() {
+            const tabsContainer = document.getElementById('caseTabsHeader');
+            const sampleCases = currentProblem?.testCases || [];
+            activeCaseIndex = 0;
+
+            if (sampleCases.length === 0) {
+                tabsContainer.innerHTML = '<span class="muted text-xs">No sample cases.</span>';
+                document.getElementById('caseInputDisplay').innerHTML = '';
+                return;
+            }
+
+            tabsContainer.innerHTML = sampleCases.map((tc, idx) => `
+                <button onclick="switchCaseTab(${idx})" class="px-3 py-1 rounded-md text-xs font-semibold ${idx === activeCaseIndex ? 'theme-btn text-emerald-400' : 'muted hover:text-white'}">
+                    Case ${idx + 1}
+                </button>
+            `).join('');
+
+            renderActiveCaseInput();
+        }
+
+        window.switchCaseTab = function(idx) {
+            activeCaseIndex = idx;
+            const buttons = document.querySelectorAll('#caseTabsHeader button');
+            buttons.forEach((b, i) => {
+                b.className = `px-3 py-1 rounded-md text-xs font-semibold ${i === activeCaseIndex ? 'theme-btn text-emerald-400' : 'muted hover:text-white'}`;
+            });
+            renderActiveCaseInput();
+        };
+
+        function renderActiveCaseInput() {
+            const container = document.getElementById('caseInputDisplay');
+            const sampleCases = currentProblem?.testCases || [];
+            const tc = sampleCases[activeCaseIndex];
+            if (!tc) { container.innerHTML = ''; return; }
+
+            if (typeof tc.input === 'object' && tc.input !== null) {
+                container.innerHTML = Object.entries(tc.input).map(([k, v]) => `
+                    <div>
+                        <span class="muted block text-[11px] mb-0.5">${escapeHtml(k)} =</span>
+                        <div class="surface-2 border border-theme rounded-md px-2.5 py-1 text-emerald-400">${escapeHtml(JSON.stringify(v))}</div>
+                    </div>
+                `).join('');
+            } else {
+                container.innerHTML = `
+                    <div>
+                        <span class="muted block text-[11px] mb-0.5">Input:</span>
+                        <div class="surface-2 border border-theme rounded-md px-2.5 py-1 text-emerald-400">${escapeHtml(String(tc.input))}</div>
+                    </div>
+                `;
+            }
+        }
+
+        window.switchConsoleTab = function(tab) {
+            const tabTestcase = document.getElementById('tabTestcaseBtn');
+            const tabResult = document.getElementById('tabResultBtn');
+            const bodyTestcase = document.getElementById('consoleBodyTestcase');
+            const bodyResult = document.getElementById('consoleBodyResult');
+
+            if (tab === 'testcase') {
+                tabTestcase.className = "text-xs font-semibold border-b-2 border-emerald-500 pb-1 text-emerald-500 flex items-center gap-1.5";
+                tabResult.className = "text-xs font-semibold muted pb-1 flex items-center gap-1.5 hover:text-white";
+                bodyTestcase.classList.remove('hidden');
+                bodyResult.classList.add('hidden');
+            } else {
+                tabResult.className = "text-xs font-semibold border-b-2 border-emerald-500 pb-1 text-emerald-500 flex items-center gap-1.5";
+                tabTestcase.className = "text-xs font-semibold muted pb-1 flex items-center gap-1.5 hover:text-white";
+                bodyResult.classList.remove('hidden');
+                bodyTestcase.classList.add('hidden');
+            }
+        };
+
+        window.toggleConsole = function() {
+            const c = document.getElementById('console');
+            const icon = document.getElementById('consoleToggleIcon');
+            consoleOpen = !consoleOpen;
+            if (consoleOpen) {
+                c.style.height = '12rem';
+                icon.className = 'fa-solid fa-chevron-up text-xs';
+            } else {
+                c.style.height = '2.25rem';
+                icon.className = 'fa-solid fa-chevron-down text-xs';
+            }
+        };
+
+        // ──────────────────────────────────────────────
+        // Execution: RUN CODE (POST /api/judge/run)
+        // ──────────────────────────────────────────────
+        async function executeRun() {
+            if (!currentProblem) return;
+
+            if (!consoleOpen) toggleConsole();
+            switchConsoleTab('result');
+
+            const contentEl = document.getElementById('resultContent');
+            contentEl.innerHTML = `
+                <div class="flex items-center gap-2 p-4 text-xs font-mono text-emerald-400">
+                    <i class="fa-solid fa-circle-notch fa-spin"></i>
+                    <span>Compiling & executing sample test cases...</span>
+                </div>
+            `;
+
+            try {
+                const res = await fetch('/api/judge/run', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        code: editor.getValue(),
+                        language: currentLanguage,
+                        problemId: currentProblem.id
+                    })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    contentEl.innerHTML = `
+                        <div class="p-3 bg-rose-500/10 border border-rose-500/30 rounded-lg space-y-2 text-xs">
+                            <div class="font-bold text-rose-400 flex items-center gap-1.5">
+                                <i class="fa-solid fa-circle-xmark"></i> ${escapeHtml(data.error || 'Execution Failed')}
+                            </div>
+                        </div>
+                    `;
+                    showToast('Execution Error', 'error');
+                    return;
+                }
+
+                const allPassed = data.results.every(r => r.passed);
+                const runtime = data.executionTimeMs || 0;
+
+                contentEl.innerHTML = `
+                    <div class="space-y-3 font-mono text-xs">
+                        <div class="flex items-center justify-between border-b border-theme pb-2">
+                            <div class="flex items-center gap-2">
+                                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold border ${allPassed ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-rose-500/10 text-rose-400 border-rose-500/30'}">
+                                    <i class="fa-solid ${allPassed ? 'fa-check' : 'fa-xmark'} mr-1"></i>
+                                    ${allPassed ? 'Accepted' : 'Wrong Answer'}
+                                </span>
+                                <span class="muted">Runtime: ${runtime} ms</span>
+                            </div>
+                            <span class="text-[11px] muted">${data.results.filter(r=>r.passed).length} / ${data.results.length} passed</span>
+                        </div>
+
+                        <div class="space-y-2">
+                            ${data.results.map((r, i) => `
+                                <div class="surface-2 border border-theme rounded-md p-2.5 space-y-1">
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-semibold ${r.passed ? 'text-emerald-400' : 'text-rose-400'}">Case ${i + 1}: ${r.passed ? 'Passed' : 'Failed'}</span>
+                                    </div>
+                                    <div><span class="muted">Input:</span> ${escapeHtml(JSON.stringify(r.input))}</div>
+                                    <div><span class="muted">Your Output:</span> <span class="${r.passed ? 'text-emerald-400' : 'text-rose-400'} font-semibold">${escapeHtml(JSON.stringify(r.actual))}</span></div>
+                                    <div><span class="muted">Expected:</span> <span class="text-amber-400">${escapeHtml(JSON.stringify(r.expected))}</span></div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+
+                showToast(allPassed ? 'Sample cases passed!' : 'Some sample cases failed.', allPassed ? 'success' : 'error');
+
+            } catch (err) {
+                contentEl.innerHTML = `<div class="text-rose-400 text-xs">Error: ${escapeHtml(err.message)}</div>`;
+                showToast('Execution request failed.', 'error');
+            }
+        }
+
+        // ──────────────────────────────────────────────
+        // Execution: SUBMIT (POST /api/judge/submit)
+        // ──────────────────────────────────────────────
+        async function executeSubmit() {
+            if (!currentProblem) return;
+
+            if (!consoleOpen) toggleConsole();
+            switchConsoleTab('result');
+
+            const contentEl = document.getElementById('resultContent');
+            contentEl.innerHTML = `
+                <div class="flex items-center gap-2 p-4 text-xs font-mono text-emerald-400">
+                    <i class="fa-solid fa-circle-notch fa-spin"></i>
+                    <span>Judging submission across all hidden test cases...</span>
+                </div>
+            `;
+
+            try {
+                const res = await fetch('/api/judge/submit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        code: editor.getValue(),
+                        language: currentLanguage,
+                        problemId: currentProblem.id
+                    })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    contentEl.innerHTML = `
+                        <div class="p-3 bg-rose-500/10 border border-rose-500/30 rounded-lg text-xs space-y-2">
+                            <div class="font-bold text-rose-400 flex items-center gap-1.5">
+                                <i class="fa-solid fa-triangle-exclamation"></i> ${escapeHtml(data.error || 'Submission failed')}
+                            </div>
+                        </div>
+                    `;
+                    showToast('Submission error', 'error');
+                    return;
+                }
+
+                const accepted = data.status === 'Accepted';
+                contentEl.innerHTML = `
+                    <div class="space-y-3 font-mono text-xs">
+                        <div class="flex items-center justify-between border-b border-theme pb-2">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-bold px-2.5 py-1 rounded-full border ${accepted ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-rose-500/10 text-rose-400 border-rose-500/30'}">
+                                    <i class="fa-solid ${accepted ? 'fa-circle-check' : 'fa-circle-xmark'} mr-1"></i> ${escapeHtml(data.status)}
+                                </span>
+                                <span class="font-semibold ${accepted ? 'text-emerald-400' : 'text-zinc-300'}">${data.passedTests} / ${data.totalTests} testcases passed</span>
+                            </div>
+                            <span class="text-xs font-bold text-blue-400">Score: ${data.score}</span>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2 text-[11px]">
+                            <div class="surface-2 border border-theme p-2.5 rounded-md">
+                                <span class="muted block">Execution Time</span>
+                                <span class="text-white font-bold text-xs">${data.executionTimeMs || 0} ms</span>
+                            </div>
+                            <div class="surface-2 border border-theme p-2.5 rounded-md">
+                                <span class="muted block">Status</span>
+                                <span class="font-bold text-xs ${accepted ? 'text-emerald-400' : 'text-rose-400'}">${escapeHtml(data.status)}</span>
+                            </div>
+                        </div>
+
+                        ${data.errorMessage ? `<div class="p-2.5 bg-rose-500/10 border border-rose-500/30 rounded text-rose-300 text-[11px]">${escapeHtml(data.errorMessage)}</div>` : ''}
+                    </div>
+                `;
+
+                showToast(accepted ? '🎉 Accepted! Solution verified.' : `Verdict: ${data.status}`, accepted ? 'success' : 'error');
+
+            } catch (err) {
+                contentEl.innerHTML = `<div class="text-rose-400 text-xs">Submit error: ${escapeHtml(err.message)}</div>`;
+                showToast('Submit failed.', 'error');
+            }
+        }
+
+        // ──────────────────────────────────────────────
+        // Listeners & Controls
+        // ──────────────────────────────────────────────
+        function initListeners() {
+            // Problem List Button Dropdown
+            const probListBtn = document.getElementById('problemListBtn');
+            const probMenu = document.getElementById('problemDropdownMenu');
+            probListBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                probMenu.classList.toggle('hidden');
+            });
+            document.addEventListener('click', () => probMenu.classList.add('hidden'));
+
+            // Navigation Arrows
+            document.getElementById('prevProblemBtn').addEventListener('click', () => {
+                if (problems.length === 0) return;
+                const nextIdx = (currentProblemIdx - 1 + problems.length) % problems.length;
+                loadProblem(nextIdx);
+            });
+            document.getElementById('nextProblemBtn').addEventListener('click', () => {
+                if (problems.length === 0) return;
+                const nextIdx = (currentProblemIdx + 1) % problems.length;
+                loadProblem(nextIdx);
+            });
+
+            // Lang Dropdown
+            const langBtn = document.getElementById('langDropdownBtn');
+            const langMenu = document.getElementById('langDropdownMenu');
+            langBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                langMenu.classList.toggle('hidden');
+            });
+            document.addEventListener('click', () => langMenu.classList.add('hidden'));
+
+            // Reset Code
+            document.getElementById('resetCodeBtn').addEventListener('click', () => {
+                if (confirm('Reset your code back to the original starter template?')) {
+                    if (currentProblem) {
+                        localStorage.removeItem(`draft_${currentProblem.id}_${currentLanguage}`);
+                    }
+                    loadStarterCode();
+                    showToast('Code reset to starter template');
+                }
+            });
+
+            // Fullscreen
+            document.getElementById('fullscreenBtn').addEventListener('click', () => {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(() => {});
+                } else {
+                    document.exitFullscreen().catch(() => {});
+                }
+            });
+
+            // Top Run / Submit
+            document.getElementById('runTop').addEventListener('click', executeRun);
+            document.getElementById('submitTop').addEventListener('click', executeSubmit);
+
+            // Logout
+            document.getElementById('logoutBtn').addEventListener('click', () => {
+                if (confirm('Are you sure you want to sign out?')) {
+                    localStorage.clear();
+                    window.location.href = '/index.html';
+                }
+            });
+
+            // Anti-Cheat (Tab switch detection)
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    showToast('⚠️ Warning: Leaving the contest tab is monitored!', 'error');
+                    fetch('/api/judge/log-violation', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            type: 'tab_switch',
+                            details: 'Student switched away from contest tab'
+                        })
+                    }).catch(() => {});
+                }
+            });
+        }
+
+        // ──────────────────────────────────────────────
+        // Timer
+        // ──────────────────────────────────────────────
+        function initTimer() {
+            const timerEl = document.getElementById('timerText');
+            timerInterval = setInterval(() => {
+                if (timerSeconds > 0) {
+                    timerSeconds--;
+                    const m = Math.floor(timerSeconds / 60).toString().padStart(2, '0');
+                    const s = (timerSeconds % 60).toString().padStart(2, '0');
+                    timerEl.textContent = `${m}:${s}`;
+                }
+            }, 1000);
+        }
+
+        // ──────────────────────────────────────────────
+        // Theme
+        // ──────────────────────────────────────────────
+        function initTheme() {
+            const toggle = document.getElementById('themeToggle');
+            const icon = document.getElementById('themeIcon');
+            toggle.addEventListener('click', () => {
+                document.documentElement.classList.toggle('dark');
+                const isDark = document.documentElement.classList.contains('dark');
+                icon.className = isDark ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
+                if (editor) editor.setOption('theme', isDark ? 'dracula' : 'default');
+            });
+        }
+
+        // Mobile View Switcher
+        window.switchMobileView = function(view) {
+            const main = document.getElementById('workspaceContainer');
+            if (view === 'desc') {
+                main.classList.add('mobile-active-desc');
+                main.classList.remove('mobile-active-code');
+            } else {
+                main.classList.add('mobile-active-code');
+                main.classList.remove('mobile-active-desc');
+                if (editor) setTimeout(() => editor.refresh(), 50);
+            }
+        };
+
+        // Start
+        window.addEventListener('DOMContentLoaded', init);
     </script>
-
-    <!-- Contest Screen -->
-    <!-- Removed login screen as auth is handled via auth.html -->
-
-
-    <!-- Contest Screen -->
-    <div id="contestScreen" class="contest-hidden">
-        <div class="warning-banner" id="warningBanner">
-            ⚠️ TAB SWITCH DETECTED! This violation has been logged.
-        </div>
-
-        <div class="header">
-            <div>
-                <span style="color: #4ec9b0; font-size: 20px;">🏆</span>
-                <span style="font-weight: bold; margin-left: 10px;">Coding Contest</span>
-                <span class="student-info" id="studentDisplay"></span>
-            </div>
-            <div class="timer" id="timer">60:00</div>
-            <div class="violations">
-                Tab Switches: <span id="violationCount">0</span>
-            </div>
-        </div>
-
-        <div class="container">
-            <div class="left-panel">
-                <div class="problem-selector" id="problemSelector">
-                    <!-- Problems will be loaded here -->
-                </div>
-                <div id="problemsContainer">
-                    <!-- Problem content will be loaded here -->
-                </div>
-            </div>
-
-            <div class="right-panel">
-                <div class="editor-section">
-                    <div class="language-selector">
-                        <select id="languageSelect" onchange="changeLanguage()">
-                            <option value="python">Python</option>
-                            <option value="javascript">JavaScript</option>
-                            <option value="cpp">C++</option>
-                            <option value="c">C</option>
-                            <option value="text/x-java">Java</option>
-                        </select>
-                    </div>
-                    <textarea id="codeEditor"></textarea>
-                    <div class="output-section" id="outputSection" style="display: none;">
-                        <h3>Results</h3>
-                        <div id="results"></div>
-                    </div>
-                </div>
-
-                <div class="actions">
-                    <button class="btn-run" onclick="runCode()">▶ Run Code</button>
-                    <button class="btn-submit" onclick="submitCode()">📤 Submit</button>
-                    <button class="btn-leaderboard" onclick="showLeaderboard()">🏆 Leaderboard</button>
-                    <button class="btn-end" onclick="endTest()" style="background: #e11d48; color: white;">End
-                        Test</button>
-                    <button class="btn-cancel" onclick="logout()"
-                        style="background: #475569; color: white;">Logout</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Leaderboard Modal -->
-    <div id="leaderboardModal" class="modal">
-        <div class="modal-content">
-            <h2>🏆 Leaderboard</h2>
-            <table class="leaderboard-table">
-                <thead>
-                    <tr>
-                        <th>Rank</th>
-                        <th>Name</th>
-                        <th>Roll Number</th>
-                        <th>Score</th>
-                        <th>Problems Solved</th>
-                    </tr>
-                </thead>
-                <tbody id="leaderboardBody">
-                    <!-- Leaderboard data will be loaded here -->
-                </tbody>
-            </table>
-            <button class="close-modal" onclick="closeLeaderboard()">Close</button>
-        </div>
-    </div>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/clike/clike.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/matchbrackets.min.js"></script>
-    <script src="app.js"></script>
 </body>
-
 </html>
