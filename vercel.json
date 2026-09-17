@@ -5,7 +5,7 @@
   "rewrites": [
     {
       "source": "/api/:match*",
-      "destination": "https://codeitanywhere-backend.onrender.com/api/:match*"
+      "destination": "https://codeitanywheree.onrender.com/api/:match*"
     }
   ],
   "headers": [
