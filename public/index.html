@@ -729,10 +729,6 @@ body::after{
           <input class="form-input" id="regEmail" type="email" placeholder="name@example.com" required autocomplete="email">
         </div>
 
-        <div class="form-group">
-          <label class="form-label" for="regNo">REGISTER / ROLL NUMBER (OPTIONAL)</label>
-          <input class="form-input" id="regNo" type="text" placeholder="e.g. 21CS101 (Optional)">
-        </div>
 
         <div class="form-group">
           <label class="form-label" for="regPassword">PASSWORD (MIN 6 CHARACTERS)</label>
@@ -1039,7 +1035,6 @@ async function handleRegister(e) {
 
   const name = document.getElementById('regName').value.trim();
   const email = document.getElementById('regEmail').value.trim();
-  const reg_no = document.getElementById('regNo')?.value.trim() || null;
   const password = document.getElementById('regPassword').value;
   const btn = document.getElementById('regSubmitBtn');
 
@@ -1057,7 +1052,7 @@ async function handleRegister(e) {
     const res = await fetch('/api/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, reg_no, password })
+      body: JSON.stringify({ name, email, password })
     });
     const data = await res.json();
 
