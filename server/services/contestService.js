@@ -78,18 +78,57 @@ async function createContest({ name, description, startTime, endTime, durationMi
 }
 
 /**
- * Update contest fields.
+ * Update contest fields dynamically.
  */
-async function updateContest(id, { name, description, startTime, endTime, durationMinutes, status, antiCheat }) {
+async function updateContest(id, fields = {}) {
+    const updates = [];
+    const values = [];
+    let idx = 1;
+
+    if (fields.name !== undefined) {
+        updates.push(`name = $${idx++}`);
+        values.push(fields.name);
+    }
+    if (fields.description !== undefined) {
+        updates.push(`description = $${idx++}`);
+        values.push(fields.description);
+    }
+    if (fields.startTime !== undefined) {
+        updates.push(`start_time = $${idx++}`);
+        values.push(fields.startTime);
+    }
+    if (fields.endTime !== undefined) {
+        updates.push(`end_time = $${idx++}`);
+        values.push(fields.endTime);
+    } else if (fields.status === 'ENDED') {
+        updates.push(`end_time = NOW()`);
+    }
+    if (fields.durationMinutes !== undefined) {
+        updates.push(`duration_minutes = $${idx++}`);
+        values.push(fields.durationMinutes);
+    }
+    if (fields.status !== undefined) {
+        updates.push(`status = $${idx++}`);
+        values.push(fields.status);
+    }
+    if (fields.antiCheat !== undefined) {
+        updates.push(`anti_cheat = $${idx++}`);
+        values.push(fields.antiCheat);
+    }
+
+    if (updates.length === 0) {
+        const res = await db.query('SELECT * FROM contests WHERE id = $1', [id]);
+        return res.rows[0] || null;
+    }
+
+    updates.push(`updated_at = NOW()`);
+    values.push(id);
+
     const result = await db.query(
-        `UPDATE contests
-         SET name=$1, description=$2, start_time=$3, end_time=$4, duration_minutes=$5,
-             status=$6, anti_cheat=$7, updated_at=NOW()
-         WHERE id=$8
-         RETURNING *`,
-        [name, description, startTime, endTime, durationMinutes, status, antiCheat, id]
+        `UPDATE contests SET ${updates.join(', ')} WHERE id = $${idx} RETURNING *`,
+        values
     );
-    return result.rows[0];
+    return result.rows[0] || null;
 }
 
 /**
