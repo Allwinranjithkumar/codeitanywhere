@@ -167,6 +167,8 @@ router.post('/submit', async (req, res, next) => {
             results:        safeResults,
             passed,
             total,
+            passedTests:    passed,
+            totalTests:     total,
             allPassed,
             score,
             status,

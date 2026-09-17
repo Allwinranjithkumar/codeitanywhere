@@ -1257,7 +1257,7 @@
                                 <span class="text-xs font-bold px-2.5 py-1 rounded-full border ${accepted ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-rose-500/10 text-rose-400 border-rose-500/30'}">
                                     <i class="fa-solid ${accepted ? 'fa-circle-check' : 'fa-circle-xmark'} mr-1"></i> ${escapeHtml(data.status)}
                                 </span>
-                                <span class="font-semibold ${accepted ? 'text-emerald-400' : 'text-zinc-300'}">${data.passedTests} / ${data.totalTests} testcases passed</span>
+                                <span class="font-semibold ${accepted ? 'text-emerald-400' : 'text-zinc-300'}">${data.passedTests !== undefined ? data.passedTests : (data.passed ?? 0)} / ${data.totalTests !== undefined ? data.totalTests : (data.total ?? 0)} testcases passed</span>
                             </div>
                             <span class="text-xs font-bold text-blue-400">Score: ${data.score}</span>
                         </div>
