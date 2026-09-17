@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin — CodeItAnywhere</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <!-- Universal API Config for Vercel/Render -->
     <script src="api-config.js"></script>
     <style>
@@ -77,6 +79,244 @@
 
         .btn-logout:hover {
             background: rgba(239, 68, 68, 0.35);
+        }
+
+        /* ── Theme Toggle (Contest Page Style) ── */
+        .theme-toggle {
+            width: 46px;
+            height: 24px;
+            border-radius: 9999px;
+            position: relative;
+            background: #27272a;
+            border: 1px solid #3f3f46;
+            cursor: pointer;
+            padding: 2px;
+            transition: background-color .2s ease;
+            display: inline-flex;
+            align-items: center;
+        }
+        .theme-toggle-knob {
+            width: 18px;
+            height: 18px;
+            border-radius: 9999px;
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #09090b;
+            font-size: 10px;
+            transition: transform .2s ease, background-color .2s ease, color .2s ease;
+            transform: translateX(22px);
+        }
+        html:not(.dark) .theme-toggle-knob {
+            transform: translateX(0);
+            background: #09090b;
+            color: #ffffff;
+        }
+
+        /* ── Dark Theme Overrides ── */
+        html.dark {
+            --bg: #09090b;
+            --surface: #121215;
+            --border: #27272a;
+            --text: #f4f4f5;
+            --muted: #a1a1aa;
+        }
+        html.dark body {
+            background: var(--bg);
+            color: var(--text);
+        }
+        html.dark .header {
+            background: #121215;
+            border-bottom: 1px solid #27272a;
+        }
+        html.dark .stat-card,
+        html.dark .form-card,
+        html.dark .table-card,
+        html.dark .table-wrap,
+        html.dark .filters,
+        html.dark .ai-card-glow,
+        html.dark .gpt-wrapper,
+        html.dark .modal-content {
+            background: #121215 !important;
+            border-color: #27272a !important;
+            color: var(--text) !important;
+        }
+        html.dark th {
+            background: #18181b !important;
+            color: #a1a1aa !important;
+            border-color: #27272a !important;
+        }
+        html.dark td {
+            border-color: #27272a !important;
+            color: #e4e4e7 !important;
+        }
+        html.dark tr:hover td {
+            background: #1c1c21 !important;
+        }
+        html.dark input,
+        html.dark select,
+        html.dark textarea {
+            background: #18181b !important;
+            color: #f4f4f5 !important;
+            border-color: #3f3f46 !important;
+        }
+        html.dark input::placeholder,
+        html.dark textarea::placeholder {
+            color: #71717a !important;
+        }
+        html.dark .tabs {
+            background: #121215;
+            border-color: #27272a;
+        }
+        html.dark .tab {
+            color: #a1a1aa;
+        }
+        html.dark .tab:hover {
+            color: #f4f4f5;
+        }
+        html.dark .tab.active {
+            background: var(--primary);
+            color: #ffffff;
+        }
+        html.dark .btn-outline {
+            border-color: #3f3f46;
+            color: #d4d4d8;
+        }
+        html.dark .btn-outline:hover {
+            background: #27272a;
+        }
+        html.dark .btn-secondary {
+            background: #27272a;
+            color: #f4f4f5;
+            border-color: #3f3f46;
+        }
+        html.dark .btn-secondary:hover {
+            background: #3f3f46;
+        }
+        html.dark pre {
+            background: #18181b !important;
+            border-color: #27272a !important;
+            color: #e4e4e7 !important;
+        }
+        html.dark code {
+            background: #27272a !important;
+            color: #a5b4fc !important;
+        }
+        html.dark .scorecard-tile {
+            background: #18181b !important;
+            border-color: #27272a !important;
+            color: #f4f4f5 !important;
+        }
+        html.dark .scorecard-sub {
+            color: #a1a1aa !important;
+        }
+        html.dark .rec-card {
+            background: #18181b !important;
+            border-color: #27272a !important;
+        }
+        html.dark .rec-action {
+            color: #f4f4f5 !important;
+        }
+        html.dark .rec-evidence {
+            background: #121215 !important;
+            color: #a1a1aa !important;
+        }
+        html.dark .ai-chip {
+            background: #18181b !important;
+            color: #d4d4d8 !important;
+            border-color: #27272a !important;
+        }
+        html.dark .ai-chip:hover {
+            border-color: #6366f1 !important;
+            color: #c7d2fe !important;
+        }
+        html.dark .ai-chip.selected {
+            background: linear-gradient(135deg, #6366f1, #4f46e5) !important;
+            color: white !important;
+        }
+        html.dark #aiPatternChips {
+            background: #18181b !important;
+            border-color: #27272a !important;
+        }
+        html.dark #wbStatement,
+        html.dark #wbInputFormat,
+        html.dark #wbOutputFormat {
+            background: #18181b !important;
+            border-color: #27272a !important;
+            color: #e4e4e7 !important;
+        }
+        html.dark #wbTitle {
+            color: #f4f4f5 !important;
+        }
+        html.dark #anIntegritySection {
+            background: #1c1917 !important;
+            border-color: #78350f !important;
+        }
+        html.dark .report-table th {
+            background: #18181b !important;
+            color: #a1a1aa !important;
+        }
+        html.dark .report-table td {
+            color: #e4e4e7 !important;
+            border-color: #27272a !important;
+        }
+        html.dark .report-sec-title {
+            color: #f4f4f5 !important;
+        }
+        html.dark .gpt-header,
+        html.dark .gpt-input-container {
+            background: #121215 !important;
+            border-color: #27272a !important;
+        }
+        html.dark .gpt-messages-feed {
+            background: #09090b !important;
+        }
+        html.dark .prompt-card {
+            background: #18181b !important;
+            border-color: #27272a !important;
+        }
+        html.dark .prompt-card .pc-title {
+            color: #f4f4f5 !important;
+        }
+        html.dark .prompt-card .pc-desc {
+            color: #a1a1aa !important;
+        }
+        html.dark .gpt-ai-text {
+            color: #e4e4e7 !important;
+        }
+        html.dark .gpt-problem-card {
+            background: #121215 !important;
+            border-color: #27272a !important;
+        }
+        html.dark .gpt-pc-desc {
+            background: #18181b !important;
+            color: #e4e4e7 !important;
+        }
+        html.dark .gpt-tc-item {
+            background: #18181b !important;
+            border-color: #27272a !important;
+            color: #e4e4e7 !important;
+        }
+        html.dark .gpt-input-box {
+            background: #18181b !important;
+            border-color: #3f3f46 !important;
+        }
+        html.dark .gpt-input-box textarea {
+            color: #f4f4f5 !important;
+        }
+        html.dark .stat-card h3 {
+            color: #a1a1aa !important;
+        }
+        html.dark .stat-card .number {
+            color: #f4f4f5 !important;
+        }
+        html.dark h2, html.dark h3, html.dark h4 {
+            color: #f4f4f5 !important;
+        }
+        html.dark .badge-muted {
+            background: #27272a !important;
+            color: #a1a1aa !important;
         }
 
         /* Layout */
@@ -1106,7 +1346,12 @@
 
     <div class="header">
         <h1>CodeItAnywhere — Admin Panel</h1>
-        <div style="display:flex;align-items:center;gap:12px;">
+        <div style="display:flex;align-items:center;gap:14px;">
+            <button id="themeToggle" class="theme-toggle" type="button" title="Toggle theme">
+                <span id="themeKnob" class="theme-toggle-knob">
+                    <i id="themeIcon" class="fa-solid fa-moon"></i>
+                </span>
+            </button>
             <span class="admin-badge" id="adminName">Admin</span>
             <button class="btn-logout" onclick="logout()">Logout</button>
         </div>
@@ -1152,7 +1397,6 @@
             <button class="tab" data-tab="contests" onclick="switchTab('contests',this)">Contests</button>
             <button class="tab" data-tab="aistudio" onclick="switchTab('aistudio',this)">AI Problem Studio</button>
             <button class="tab" data-tab="aianalyst" onclick="switchTab('aianalyst',this)">AI Contest Analyst</button>
-            <button class="tab" data-tab="import" onclick="switchTab('import',this)">Import/Export</button>
         </div>
 
         <!-- ── LEADERBOARD ── -->
@@ -1888,32 +2132,6 @@
             </div>
         </div>
 
-        <!-- ── IMPORT / EXPORT ── -->
-        <div id="tab-import" class="tab-panel">
-            <div class="form-card">
-                <h3>Import Students from Excel</h3>
-                <p style="font-size:0.85rem;color:var(--muted);margin-bottom:16px;">
-                    Upload <code>data/allowed_users.xlsx</code> to the server, then click Sync. Students are created
-                    with default password <code>student123</code>.
-                </p>
-                <button class="btn btn-primary" onclick="syncExcel()">Sync Excel File</button>
-                <div id="syncStatus" style="margin-top:12px;font-size:0.85rem;font-weight:600;"></div>
-            </div>
-            <div class="form-card">
-                <h3>Export Contest Post-Mortem Report (Test-Wise)</h3>
-                <p style="font-size:0.85rem;color:var(--muted);margin-bottom:16px;">
-                    Select a contest or test to export its comprehensive AI post-mortem intelligence, problem analytics, DSA pattern matrix, recommendations, and student guidance into a clean Excel spreadsheet.
-                </p>
-                <div style="display:flex;gap:12px;align-items:center;max-width:650px;margin-bottom:16px;">
-                    <select id="exportContestSelect" style="flex:1;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.88rem;">
-                        <option value="">Select a contest / test to export...</option>
-                    </select>
-                    <button class="btn btn-success" onclick="exportPostMortemExcel()" style="white-space:nowrap;padding:10px 20px;font-weight:700;">
-                        Download Post-Mortem (Excel)
-                    </button>
-                </div>
-            </div>
-        </div>
     </div>
 
     <script>
@@ -2000,7 +2218,6 @@
             if (name === 'contests') loadContests();
             if (name === 'aistudio') loadAIStudio();
             if (name === 'aianalyst') loadAIAnalyst();
-            if (name === 'import') loadExportContests();
         }
 
         // ── Load Stats ────────────────────────────────
@@ -2754,49 +2971,6 @@
             else alert('Error: ' + data.error);
         }
 
-        // ── Import/Export ─────────────────────────────
-        async function syncExcel() {
-            const status = document.getElementById('syncStatus');
-            status.textContent = 'Syncing...';
-            try {
-                const res = await authFetch('/api/admin/sync-excel', { method: 'POST' });
-                const data = await res.json();
-                status.style.color = res.ok ? 'green' : 'red';
-                status.textContent = res.ok ? `${data.message}` : `${data.error}`;
-                if (res.ok) loadStats();
-            } catch (e) { status.textContent = '' + e.message; }
-        }
-
-        function exportExcel() {
-            const batch = document.getElementById('fBatch').value;
-            const dept = document.getElementById('fDept').value;
-            const qs = new URLSearchParams();
-            if (batch) qs.append('batch', batch);
-            if (dept) qs.append('department', dept);
-            exportExcelRaw(qs);
-        }
-
-        function exportExcelFiltered() {
-            const batch = document.getElementById('eBatch').value;
-            const dept = document.getElementById('eDept').value;
-            const qs = new URLSearchParams();
-            if (batch) qs.append('batch', batch);
-            if (dept) qs.append('department', dept);
-            exportExcelRaw(qs);
-        }
-
-        function exportExcelRaw(qs) {
-            authFetch(`/api/admin/export?${qs}`)
-                .then(r => r.blob())
-                .then(blob => {
-                    const a = document.createElement('a');
-                    a.href = URL.createObjectURL(blob);
-                    a.download = `report_${Date.now()}.xlsx`;
-                    a.click();
-                })
-                .catch(() => alert('Export failed.'));
-        }
-
         async function resetData() {
             if (!confirm('This will delete ALL submissions, violations, and participant records. This cannot be undone. Continue?')) return;
             if (!confirm('Are you absolutely sure?')) return;
@@ -3463,6 +3637,29 @@
                 }).join('');
             }
         }
+
+        // ── Theme (Like Contest Page) ────────────────
+        function initTheme() {
+            const toggle = document.getElementById('themeToggle');
+            const icon = document.getElementById('themeIcon');
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            if (savedTheme === 'dark') {
+                document.documentElement.classList.add('dark');
+                if (icon) icon.className = 'fa-solid fa-moon';
+            } else {
+                document.documentElement.classList.remove('dark');
+                if (icon) icon.className = 'fa-solid fa-sun';
+            }
+            if (toggle) {
+                toggle.addEventListener('click', () => {
+                    document.documentElement.classList.toggle('dark');
+                    const isDark = document.documentElement.classList.contains('dark');
+                    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+                    if (icon) icon.className = isDark ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
+                });
+            }
+        }
+        initTheme();
 
         function logout() { localStorage.clear(); window.location.href = '/'; }
 
