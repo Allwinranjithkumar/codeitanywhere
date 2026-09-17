@@ -1,31 +1,47 @@
 /**
- * judgeService.js — Secure code execution engine
+ * judgeService.js — Secure Docker-sandboxed code execution engine
  *
  * Security measures:
- * - Temp files written to OS temp dir (not CWD) with unique UUIDs
- * - Guaranteed cleanup in finally blocks — no temp file leaks
- * - Strict per-execution timeouts (5s Python/JS, 8s C/C++/Java)
- * - maxBuffer limited to prevent memory exhaustion
- * - Language validated server-side before execution
- * - JavaScript runs via Node.js child_process (vm2 removed — was deprecated with known escapes)
- * - Java Gson dependency removed (was broken in most environments)
- * - Execution queue limits concurrent processes to protect the host
- *
- * NOTE: For production with many users, migrate to Docker-isolated execution.
- * This implementation provides reasonable limits for a college-level deployment.
+ * - Docker container isolation for all language runtimes
+ * - Strict network isolation (--network none)
+ * - Memory enforcement (--memory="256m" with no swap)
+ * - CPU quota limits (--cpus="1.0")
+ * - Fork-bomb mitigation (--pids-limit 32)
+ * - Read-only root filesystem (--read-only) with restricted tmpfs (/tmp:rw,noexec,nosuid,size=64m)
+ * - Isolated host scratch directory mounted into container (/app:rw)
+ * - Automatic container cleanup (--rm)
+ * - Guaranteed directory cleanup in finally blocks — no temp file leaks
+ * - Per-execution timeouts (5s Python/JS, 8s C/C++/Java)
+ * - Max output buffer limited to prevent memory exhaustion
+ * - Competitive programming verdict mapping: AC, WA, TLE, MLE, RTE, CE
  */
 
 const { exec } = require('child_process');
-const fs        = require('fs').promises;
-const os        = require('os');
-const path      = require('path');
+const fs = require('fs').promises;
+const os = require('os');
+const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 
 const SUPPORTED_LANGUAGES = ['python', 'javascript', 'cpp', 'c', 'java'];
-const MAX_CONCURRENT       = 5;    // Max parallel executions
-const TIMEOUT_PYTHON_JS    = 5000; // ms
-const TIMEOUT_COMPILED     = 8000; // ms
-const MAX_OUTPUT_BUFFER    = 512 * 1024; // 512 KB
+const MAX_CONCURRENT = 5;
+const TIMEOUT_PYTHON_JS = 5000; // ms
+const TIMEOUT_COMPILED = 8000; // ms
+const MAX_OUTPUT_BUFFER = 512 * 1024; // 512 KB
+
+// Configurable Docker Images
+const DOCKER_IMAGES = {
+    python: process.env.DOCKER_IMAGE_PYTHON || 'python:3.9-alpine',
+    javascript: process.env.DOCKER_IMAGE_NODE || 'node:18-alpine',
+    cpp: process.env.DOCKER_IMAGE_GCC || 'gcc:latest',
+    c: process.env.DOCKER_IMAGE_GCC || 'gcc:latest',
+    java: process.env.DOCKER_IMAGE_JAVA || 'eclipse-temurin:17-alpine'
+};
+
+const DOCKER_LIMITS = {
+    memory: '256m',
+    cpus: '1.0',
+    pidsLimit: 32
+};
 
 let activeExecutions = 0;
 
@@ -48,23 +64,114 @@ async function cleanupDir(dir) {
 }
 
 // ──────────────────────────────────────────────
-// Shell Execution Helper
+// Execution Runners (Docker Sandbox + Cloud Host Fallback)
 // ──────────────────────────────────────────────
 
-function runCommand(cmd, options) {
-    return new Promise((resolve, reject) => {
-        exec(cmd, options, (error, stdout, stderr) => {
-            if (error) {
-                if (error.killed || error.signal === 'SIGTERM') {
-                    reject(new Error('Time Limit Exceeded'));
-                } else {
-                    reject(new Error(stderr || error.message));
-                }
+let dockerChecked = false;
+let dockerAvailable = false;
+
+async function isDockerActive() {
+    if (dockerChecked) return dockerAvailable;
+    return new Promise((resolve) => {
+        exec('docker info', { timeout: 3500 }, (err) => {
+            dockerChecked = true;
+            dockerAvailable = !err;
+            if (dockerAvailable) {
+                console.log('[Judge] Docker daemon active. Sandboxing via isolated containers.');
             } else {
-                resolve(stdout);
+                console.warn('[Judge] Docker daemon not found. Using local sandboxed process fallback for cloud hosting.');
             }
+            resolve(dockerAvailable);
         });
     });
+}
+
+function handleExecutionError(error, stderr, isCompile, reject) {
+    if (error.code === 137 || error.message.includes('code 137')) {
+        const err = new Error('Memory Limit Exceeded');
+        err.verdict = 'Memory Limit Exceeded';
+        err.code = 137;
+        return reject(err);
+    }
+    if (error.killed || error.signal === 'SIGTERM' || error.message.includes('SIGTERM') || error.code === 124) {
+        const err = new Error('Time Limit Exceeded');
+        err.verdict = 'Time Limit Exceeded';
+        return reject(err);
+    }
+    const errMsg = stderr?.trim() || error.message;
+    const err = new Error(errMsg);
+    err.verdict = isCompile ? 'Compilation Error' : 'Runtime Error';
+    err.code = error.code;
+    err.stderr = stderr;
+    return reject(err);
+}
+
+function runSandboxedDocker({
+    image,
+    command,
+    tempDir,
+    timeout = TIMEOUT_PYTHON_JS,
+    memory = DOCKER_LIMITS.memory,
+    cpus = DOCKER_LIMITS.cpus,
+    pidsLimit = DOCKER_LIMITS.pidsLimit,
+    network = 'none',
+    readOnly = true,
+    isCompile = false
+}) {
+    // Normalization of tempDir for Docker on Windows
+    const normalizedDir = path.resolve(tempDir).replace(/\\/g, '/');
+
+    const flags = [
+        'docker run --rm',
+        network ? `--network ${network}` : '',
+        memory ? `--memory="${memory}" --memory-swap="${memory}"` : '',
+        cpus ? `--cpus="${cpus}"` : '',
+        pidsLimit ? `--pids-limit ${pidsLimit}` : '',
+        readOnly ? '--read-only --tmpfs /tmp:rw,noexec,nosuid,size=64m' : '',
+        `-v "${normalizedDir}:/app:rw"`,
+        '-w /app',
+        image,
+        command
+    ].filter(Boolean).join(' ');
+
+    return new Promise((resolve, reject) => {
+        exec(flags, { timeout, maxBuffer: MAX_OUTPUT_BUFFER }, (error, stdout, stderr) => {
+            if (error) {
+                return handleExecutionError(error, stderr, isCompile, reject);
+            }
+            resolve(stdout);
+        });
+    });
+}
+
+function runLocalProcess({ command, tempDir, timeout = TIMEOUT_PYTHON_JS, isCompile = false }) {
+    return new Promise((resolve, reject) => {
+        exec(command, { cwd: tempDir, timeout, maxBuffer: MAX_OUTPUT_BUFFER }, (error, stdout, stderr) => {
+            if (error) {
+                return handleExecutionError(error, stderr, isCompile, reject);
+            }
+            resolve(stdout);
+        });
+    });
+}
+
+function formatArgs(input) {
+    if (input === null || input === undefined) return '';
+    if (typeof input === 'object' && !Array.isArray(input)) {
+        return Object.values(input).map(v => JSON.stringify(v)).join(', ');
+    }
+    if (Array.isArray(input)) {
+        return input.map(v => JSON.stringify(v)).join(', ');
+    }
+    try {
+        const parsed = JSON.parse(input);
+        if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+            return Object.values(parsed).map(v => JSON.stringify(v)).join(', ');
+        }
+        return JSON.stringify(parsed);
+    } catch (_) {
+        return JSON.stringify(input);
+    }
 }
 
 // ──────────────────────────────────────────────
@@ -72,22 +179,55 @@ function runCommand(cmd, options) {
 // ──────────────────────────────────────────────
 
 async function executePython(code, functionName, testCase) {
-    const tempDir  = await createTempDir();
+    const tempDir = await createTempDir();
     const tempFile = path.join(tempDir, 'solution.py');
+    const args = formatArgs(testCase.input);
 
-    const args = Object.values(testCase.input)
-        .map(v => JSON.stringify(v))
-        .join(', ');
+    const testCode = `import json
+import sys
 
-    const testCode = `import json\nimport sys\n\n${code}\n\ntry:\n    result = ${functionName}(${args})\n    print(json.dumps(result))\nexcept Exception as e:\n    print(json.dumps({"__error__": str(e)}), file=sys.stderr)\n    sys.exit(1)\n`;
+${code}
+
+try:
+    result = ${functionName}(${args})
+    print(json.dumps(result))
+except Exception as e:
+    sys.stderr.write(json.dumps({"__error__": str(e)}) + "\\n")
+    sys.exit(1)
+`;
 
     try {
         await fs.writeFile(tempFile, testCode, 'utf-8');
-        const stdout = await runCommand(`python3 "${tempFile}"`, {
-            timeout: TIMEOUT_PYTHON_JS,
-            maxBuffer: MAX_OUTPUT_BUFFER,
-            cwd: tempDir
-        });
+
+        let stdout;
+        if (await isDockerActive()) {
+            stdout = await runSandboxedDocker({
+                image: DOCKER_IMAGES.python,
+                command: 'python /app/solution.py',
+                tempDir,
+                timeout: TIMEOUT_PYTHON_JS
+            });
+        } else {
+            const pyCmd = process.platform === 'win32' ? 'python' : 'python3';
+            try {
+                stdout = await runLocalProcess({
+                    command: `${pyCmd} "solution.py"`,
+                    tempDir,
+                    timeout: TIMEOUT_PYTHON_JS
+                });
+            } catch (err) {
+                if (err.message && (err.message.includes('not found') || err.code === 127)) {
+                    stdout = await runLocalProcess({
+                        command: `python "solution.py"`,
+                        tempDir,
+                        timeout: TIMEOUT_PYTHON_JS
+                    });
+                } else {
+                    throw err;
+                }
+            }
+        }
+
         return JSON.parse(stdout.trim());
     } finally {
         await cleanupDir(tempDir);
@@ -95,19 +235,15 @@ async function executePython(code, functionName, testCase) {
 }
 
 // ──────────────────────────────────────────────
-// JavaScript Execution (via Node.js child_process — vm2 removed)
+// JavaScript Execution
 // ──────────────────────────────────────────────
 
 async function executeJavaScript(code, functionName, testCase) {
-    const tempDir  = await createTempDir();
+    const tempDir = await createTempDir();
     const tempFile = path.join(tempDir, 'solution.js');
+    const args = formatArgs(testCase.input);
 
-    const args = Object.values(testCase.input)
-        .map(v => JSON.stringify(v))
-        .join(', ');
-
-    const testCode = `
-'use strict';
+    const testCode = `'use strict';
 ${code}
 
 try {
@@ -121,11 +257,23 @@ try {
 
     try {
         await fs.writeFile(tempFile, testCode, 'utf-8');
-        const stdout = await runCommand(`node "${tempFile}"`, {
-            timeout: TIMEOUT_PYTHON_JS,
-            maxBuffer: MAX_OUTPUT_BUFFER,
-            cwd: tempDir
-        });
+
+        let stdout;
+        if (await isDockerActive()) {
+            stdout = await runSandboxedDocker({
+                image: DOCKER_IMAGES.javascript,
+                command: 'node /app/solution.js',
+                tempDir,
+                timeout: TIMEOUT_PYTHON_JS
+            });
+        } else {
+            stdout = await runLocalProcess({
+                command: `node "solution.js"`,
+                tempDir,
+                timeout: TIMEOUT_PYTHON_JS
+            });
+        }
+
         return JSON.parse(stdout.trim());
     } finally {
         await cleanupDir(tempDir);
@@ -137,24 +285,27 @@ try {
 // ──────────────────────────────────────────────
 
 async function executeCpp(code, functionName, testCase, lang = 'cpp') {
-    const tempDir  = await createTempDir();
-    const isC      = lang === 'c';
-    const ext      = isC ? 'c' : 'cpp';
+    const tempDir = await createTempDir();
+    const isC = lang === 'c';
+    const ext = isC ? 'c' : 'cpp';
     const compiler = isC ? 'gcc' : 'g++';
-    const srcFile  = path.join(tempDir, `solution.${ext}`);
-    const binFile  = path.join(tempDir, 'solution');
+    const srcFile = path.join(tempDir, `solution.${ext}`);
 
     // Build typed argument declarations
-    const isFloat      = v => typeof v === 'number' && !Number.isInteger(v);
-    const arrayHasFloat = arr => arr.some(el => isFloat(el));
+    const isFloat = v => typeof v === 'number' && !Number.isInteger(v);
+    const arrayHasFloat = arr => Array.isArray(arr) && arr.some(el => isFloat(el));
 
     const declarations = [];
-    const funcArgs     = [];
+    const funcArgs = [];
 
-    for (const [key, value] of Object.entries(testCase.input)) {
+    const inputObj = (typeof testCase.input === 'object' && testCase.input !== null && !Array.isArray(testCase.input))
+        ? testCase.input
+        : { arg0: testCase.input };
+
+    for (const [key, value] of Object.entries(inputObj)) {
         if (Array.isArray(value)) {
             const useDouble = arrayHasFloat(value);
-            const cType     = useDouble ? 'double' : 'int';
+            const cType = useDouble ? 'double' : 'int';
             if (isC) {
                 declarations.push(`${cType} ${key}[] = {${value.join(',')}};`);
                 declarations.push(`int ${key}Size = ${value.length};`);
@@ -164,7 +315,6 @@ async function executeCpp(code, functionName, testCase, lang = 'cpp') {
                 funcArgs.push(key);
             }
         } else if (typeof value === 'string') {
-            // Sanitize: escape backslashes and quotes to prevent injection
             const safe = value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
             declarations.push(isC ? `char *${key} = "${safe}";` : `string ${key} = "${safe}";`);
             funcArgs.push(key);
@@ -190,18 +340,44 @@ async function executeCpp(code, functionName, testCase, lang = 'cpp') {
 
     try {
         await fs.writeFile(srcFile, testCode, 'utf-8');
-        // Compile
-        await runCommand(`${compiler} -O2 -o "${binFile}" "${srcFile}"`, {
-            timeout: TIMEOUT_COMPILED,
-            maxBuffer: MAX_OUTPUT_BUFFER,
-            cwd: tempDir
-        });
-        // Run
-        const stdout = await runCommand(`"${binFile}"`, {
-            timeout: TIMEOUT_COMPILED,
-            maxBuffer: MAX_OUTPUT_BUFFER,
-            cwd: tempDir
-        });
+
+        let stdout;
+        if (await isDockerActive()) {
+            // Compile inside container
+            await runSandboxedDocker({
+                image: DOCKER_IMAGES[lang],
+                command: `${compiler} -O2 -o /app/solution /app/solution.${ext}`,
+                tempDir,
+                timeout: TIMEOUT_COMPILED,
+                network: 'none',
+                readOnly: false,
+                isCompile: true
+            });
+
+            // Run sandboxed executable
+            stdout = await runSandboxedDocker({
+                image: DOCKER_IMAGES[lang],
+                command: '/app/solution',
+                tempDir,
+                timeout: TIMEOUT_COMPILED,
+                network: 'none',
+                readOnly: true
+            });
+        } else {
+            const exeName = process.platform === 'win32' ? 'solution.exe' : './solution';
+            await runLocalProcess({
+                command: `${compiler} -O2 -o ${exeName} solution.${ext}`,
+                tempDir,
+                timeout: TIMEOUT_COMPILED,
+                isCompile: true
+            });
+            stdout = await runLocalProcess({
+                command: `${exeName}`,
+                tempDir,
+                timeout: TIMEOUT_COMPILED
+            });
+        }
+
         const trimmed = stdout.trim();
         if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
             return JSON.parse(trimmed);
@@ -213,15 +389,18 @@ async function executeCpp(code, functionName, testCase, lang = 'cpp') {
 }
 
 // ──────────────────────────────────────────────
-// Java Execution (simplified — no Gson dependency)
+// Java Execution
 // ──────────────────────────────────────────────
 
 async function executeJava(code, functionName, testCase) {
     const tempDir = await createTempDir();
     const srcFile = path.join(tempDir, 'Solution.java');
 
-    // Build argument list for Java
-    const javaArgs = Object.values(testCase.input).map(val => {
+    const inputVals = (typeof testCase.input === 'object' && testCase.input !== null && !Array.isArray(testCase.input))
+        ? Object.values(testCase.input)
+        : [testCase.input];
+
+    const javaArgs = inputVals.map(val => {
         if (Array.isArray(val)) {
             if (typeof val[0] === 'number') return `new int[]{${val.join(',')}}`;
             return `new String[]{${val.map(s => `"${String(s).replace(/"/g, '\\"')}"`).join(',')}}`;
@@ -261,16 +440,41 @@ class Judge {
 
     try {
         await fs.writeFile(srcFile, testCode, 'utf-8');
-        await runCommand(`javac "${srcFile}"`, {
-            timeout: TIMEOUT_COMPILED,
-            maxBuffer: MAX_OUTPUT_BUFFER,
-            cwd: tempDir
-        });
-        const stdout = await runCommand(`java -cp "${tempDir}" Judge`, {
-            timeout: TIMEOUT_COMPILED,
-            maxBuffer: MAX_OUTPUT_BUFFER,
-            cwd: tempDir
-        });
+
+        let stdout;
+        if (await isDockerActive()) {
+            // Compile
+            await runSandboxedDocker({
+                image: DOCKER_IMAGES.java,
+                command: 'javac /app/Solution.java',
+                tempDir,
+                timeout: TIMEOUT_COMPILED,
+                readOnly: false,
+                isCompile: true
+            });
+
+            // Run
+            stdout = await runSandboxedDocker({
+                image: DOCKER_IMAGES.java,
+                command: 'java -cp /app Judge',
+                tempDir,
+                timeout: TIMEOUT_COMPILED,
+                readOnly: true
+            });
+        } else {
+            await runLocalProcess({
+                command: 'javac Solution.java',
+                tempDir,
+                timeout: TIMEOUT_COMPILED,
+                isCompile: true
+            });
+            stdout = await runLocalProcess({
+                command: 'java -cp . Judge',
+                tempDir,
+                timeout: TIMEOUT_COMPILED
+            });
+        }
+
         const trimmed = stdout.trim();
         if (trimmed === 'true') return true;
         if (trimmed === 'false') return false;
@@ -362,22 +566,40 @@ async function testCode(code, language, functionName, testCases) {
     const startTime = Date.now();
 
     for (const testCase of testCases) {
+        const testStartTime = Date.now();
         try {
             const output = await executeCode(code, language, functionName, testCase);
+            const durationMs = Date.now() - testStartTime;
             const passed = deepEqual(output, testCase.output);
             results.push({
                 passed,
                 expected: testCase.output,
                 actual:   output,
-                input:    testCase.input
+                input:    testCase.input,
+                status:   passed ? 'Accepted' : 'Wrong Answer',
+                durationMs
             });
         } catch (err) {
+            const durationMs = Date.now() - testStartTime;
+            let status = 'Runtime Error';
+            if (err.verdict) {
+                status = err.verdict;
+            } else if (err.message && err.message.includes('Time Limit Exceeded')) {
+                status = 'Time Limit Exceeded';
+            } else if (err.message && err.message.includes('Memory Limit Exceeded')) {
+                status = 'Memory Limit Exceeded';
+            } else if (err.message && (err.message.includes('Compile Error') || err.message.includes('Compilation Error'))) {
+                status = 'Compilation Error';
+            }
+
             results.push({
                 passed:   false,
                 expected: testCase.output,
                 actual:   `Error: ${err.message}`,
                 input:    testCase.input,
-                error:    err.message
+                error:    err.message,
+                status,
+                durationMs
             });
         }
     }

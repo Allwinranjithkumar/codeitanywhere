@@ -6,6 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CodeItAnywhere - Coding Contest</title>
 
+    <!-- Universal API Config for Vercel/Render -->
+    <script src="api-config.js"></script>
+
     <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 
@@ -148,6 +151,25 @@
 
         #panel-description { width: 45%; }
         #panel-editor { width: 55%; }
+
+        /* LeetCode Examples styling */
+        .example-block {
+            border-left: 2px solid #52525b;
+            padding-left: 1rem;
+            padding-top: 0.25rem;
+            padding-bottom: 0.25rem;
+            margin-top: 0.35rem;
+            margin-bottom: 0.75rem;
+        }
+        .prose code, .example-block code, code {
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #e4e4e7;
+            padding: 0.1rem 0.35rem;
+            border-radius: 0.25rem;
+            font-size: 0.88em;
+        }
 
         @media (max-width: 1024px) {
             #panel-description { width: 100%; display: flex; }
@@ -306,23 +328,25 @@
                     <p class="muted">Loading problem description...</p>
                 </div>
 
-                <!-- EXAMPLES SECTION -->
-                <div class="space-y-3">
-                    <div class="text-xs font-bold uppercase tracking-wider muted">Examples & Testcases</div>
-                    <div id="examplesContainer" class="space-y-3">
-                        <!-- Populated dynamically -->
-                    </div>
+                <!-- EXAMPLES SECTION (LEETCODE STYLE) -->
+                <div id="examplesContainer" class="space-y-4 pt-1">
+                    <!-- Populated dynamically -->
                 </div>
 
-                <!-- CONSTRAINTS SECTION -->
+                <!-- CONSTRAINTS SECTION (LEETCODE STYLE) -->
                 <div class="space-y-2 border-t border-theme pt-4">
-                    <div class="text-xs font-bold uppercase tracking-wider muted">Constraints</div>
-                    <ul id="constraintsList" class="list-disc list-inside space-y-1 text-xs muted font-mono">
+                    <div class="font-bold text-sm text-zinc-100">Constraints:</div>
+                    <ul id="constraintsList" class="list-disc list-inside space-y-1.5 text-xs text-zinc-300 font-mono">
                         <!-- Populated dynamically -->
                     </ul>
                 </div>
             </div>
         </section>
+
+        <!-- HORIZONTAL RESIZER SPLITTER (LEETCODE STYLE) -->
+        <div id="horizontalSplitter" class="hidden lg:flex w-1.5 hover:w-2 bg-zinc-800/60 hover:bg-emerald-500/50 cursor-col-resize items-center justify-center select-none transition-all z-20 group -mx-[1px] relative" title="Drag to resize problem vs editor">
+            <div class="h-8 w-0.5 rounded-full bg-zinc-600 group-hover:bg-emerald-400 transition-colors"></div>
+        </div>
 
         <!-- =================================================
              RIGHT PANEL: CODE EDITOR & TESTCASE CONSOLE
@@ -338,13 +362,13 @@
                         <i class="fa-solid fa-chevron-down text-[9px] muted"></i>
                     </button>
 
-                    <!-- LANG DROPDOWN -->
-                    <div id="langDropdownMenu" class="hidden absolute top-8 left-0 w-36 surface border border-theme rounded-lg shadow-xl py-1 z-50">
+                    <!-- DROPDOWN MENU -->
+                    <div id="langDropdownMenu" class="hidden absolute top-full left-0 mt-1 w-36 surface border border-theme rounded-md shadow-2xl py-1 z-30">
                         <button onclick="selectLanguage('python')" class="w-full text-left px-3 py-1.5 text-xs hover:bg-white/10 flex items-center justify-between">
                             <span>Python 3</span> <i class="fa-brands fa-python text-blue-400"></i>
                         </button>
                         <button onclick="selectLanguage('cpp')" class="w-full text-left px-3 py-1.5 text-xs hover:bg-white/10 flex items-center justify-between">
-                            <span>C++ (17)</span> <span class="text-[10px] text-emerald-400 font-mono">g++</span>
+                            <span>C++ (17)</span> <span class="text-[10px] text-blue-400 font-mono">g++</span>
                         </button>
                         <button onclick="selectLanguage('java')" class="w-full text-left px-3 py-1.5 text-xs hover:bg-white/10 flex items-center justify-between">
                             <span>Java (11)</span> <i class="fa-brands fa-java text-amber-500"></i>
@@ -381,45 +405,54 @@
                 <textarea id="codeEditor" style="display:none;"></textarea>
             </div>
 
-            <!-- EDITOR STATUS BAR -->
-            <div class="surface-2 border-t border-theme px-3 py-1 flex items-center justify-between text-[10px] muted shrink-0 font-mono">
-                <div class="flex items-center gap-2">
-                    <span id="editorStatusText" class="text-emerald-400">Ready</span>
+            <!-- EDITOR STATUS BAR & DYNAMIC CONSOLE RESIZER (LEETCODE STYLE) -->
+            <div id="consoleResizer" class="surface-2 border-t border-b border-theme px-3 py-1.5 flex items-center justify-between text-[10px] muted shrink-0 font-mono cursor-row-resize select-none relative group hover:bg-[#282828] transition-colors" title="Drag upward/downward to dynamically resize console • Double-click to toggle">
+                <div class="flex items-center gap-2 pointer-events-none">
+                    <span id="editorStatusText" class="text-emerald-400 font-semibold">Ready</span>
                     <span>•</span>
                     <span id="autoSaveIndicator">Saved</span>
                 </div>
-                <span id="cursorPosIndicator">Ln 1, Col 1</span>
+
+                <!-- DRAG HANDLE GRIP -->
+                <div class="absolute left-1/2 -translate-x-1/2 flex items-center gap-1 opacity-50 group-hover:opacity-100 transition-opacity pointer-events-none">
+                    <div class="w-8 h-1 rounded-full bg-zinc-500 group-hover:bg-emerald-400 transition-colors"></div>
+                </div>
+
+                <div class="flex items-center gap-2 pointer-events-none">
+                    <span id="cursorPosIndicator">Ln 1, Col 1</span>
+                    <i class="fa-solid fa-up-down text-[9px] text-zinc-500 group-hover:text-emerald-400 ml-1"></i>
+                </div>
             </div>
 
             <!-- =================================================
                  BOTTOM CONSOLE: TESTCASES & RESULTS
             ================================================= -->
-            <div id="console" class="surface border-t border-theme h-48 flex flex-col shrink-0">
+            <div id="console" class="surface flex flex-col shrink-0 overflow-hidden" style="height: 230px; min-height: 38px;">
                 <!-- CONSOLE HEADER TABS -->
-                <div class="surface-2 border-b border-theme px-3 py-1.5 flex items-center justify-between shrink-0">
-                    <div class="flex gap-4">
-                        <button id="tabTestcaseBtn" onclick="switchConsoleTab('testcase')" class="text-xs font-semibold border-b-2 border-emerald-500 pb-1 text-emerald-500 flex items-center gap-1.5">
+                <div class="surface-2 border-b border-theme px-3 py-1.5 flex items-center justify-between shrink-0 select-none">
+                    <div class="flex items-center gap-4">
+                        <button id="tabTestcaseBtn" onclick="switchConsoleTab('testcase')" class="text-xs font-semibold border-b-2 border-emerald-500 pb-1 text-emerald-500 flex items-center gap-1.5 transition">
                             <i class="fa-regular fa-square-check"></i> Testcase
                         </button>
-                        <button id="tabResultBtn" onclick="switchConsoleTab('result')" class="text-xs font-semibold muted pb-1 flex items-center gap-1.5 hover:text-white">
+                        <button id="tabResultBtn" onclick="switchConsoleTab('result')" class="text-xs font-semibold muted pb-1 flex items-center gap-1.5 hover:text-white transition">
                             <i class="fa-solid fa-terminal"></i> Test Result
                         </button>
                     </div>
 
-                    <button onclick="toggleConsole()" class="muted hover:text-white" title="Toggle Console">
+                    <button onclick="toggleConsole()" class="muted hover:text-white p-1 rounded hover:bg-white/5 transition" title="Toggle Console (Expand/Collapse)">
                         <i id="consoleToggleIcon" class="fa-solid fa-chevron-up text-xs"></i>
                     </button>
                 </div>
 
                 <!-- TAB 1: TESTCASE INPUT VIEW -->
-                <div id="consoleBodyTestcase" class="flex-1 p-3 overflow-auto space-y-2.5">
+                <div id="consoleBodyTestcase" class="flex-1 p-3 overflow-auto space-y-3">
                     <!-- CASE TABS -->
-                    <div id="caseTabsHeader" class="flex items-center gap-1.5">
+                    <div id="caseTabsHeader" class="flex items-center gap-1.5 flex-wrap">
                         <!-- Populated dynamically -->
                     </div>
 
-                    <!-- ACTIVE CASE INPUT DISPLAY -->
-                    <div id="caseInputDisplay" class="font-mono text-xs space-y-2">
+                    <!-- ACTIVE CASE INPUT & EXPECTED OUTPUT DISPLAY -->
+                    <div id="caseInputDisplay" class="font-mono text-xs space-y-2.5">
                         <!-- Populated dynamically -->
                     </div>
                 </div>
@@ -427,7 +460,14 @@
                 <!-- TAB 2: TEST RESULT VIEW -->
                 <div id="consoleBodyResult" class="hidden flex-1 p-3 overflow-auto space-y-2.5">
                     <div id="resultContent" class="font-mono text-xs text-muted">
-                        Click <span class="text-emerald-400 font-semibold">"Run Code"</span> to execute against sample cases, or <span class="text-emerald-400 font-semibold">"Submit"</span> to judge against all hidden test cases.
+                        <div class="surface-2 border border-theme rounded-lg p-4 text-center space-y-2">
+                            <i class="fa-solid fa-terminal text-emerald-400 text-lg"></i>
+                            <div class="text-zinc-300 font-semibold">Ready to test your code</div>
+                            <div class="text-[11px] muted">Click <span class="text-emerald-400 font-semibold font-mono">"Run Code"</span> to evaluate sample test cases, or <span class="text-emerald-400 font-semibold font-mono">"Submit"</span> for full scoring.</div>
+                            <button onclick="executeRun()" class="mt-2 theme-btn px-3.5 py-1.5 rounded-md text-xs font-semibold inline-flex items-center gap-1.5 hover:text-emerald-400">
+                                <i class="fa-solid fa-play text-[10px]"></i> Run Code
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -492,6 +532,8 @@
             initTheme();
             initTimer();
             initListeners();
+            initConsoleResizer();
+            initWorkspaceResizer();
             await fetchProblems();
         }
 
@@ -611,30 +653,39 @@
             document.getElementById('problemPointsBadge').textContent = `${currentProblem.points || 100} Points`;
             document.getElementById('problemDescriptionText').innerHTML = currentProblem.description || '<p>No description provided.</p>';
 
-            // Render Examples
+            // Render Examples (LeetCode Style)
             const exContainer = document.getElementById('examplesContainer');
             const sampleCases = (currentProblem.testCases || []).slice(0, 3);
 
             if (sampleCases.length > 0) {
                 exContainer.innerHTML = sampleCases.map((tc, i) => {
-                    const inputStr = typeof tc.input === 'object' ? 
-                        Object.entries(tc.input).map(([k, v]) => `${k} = ${JSON.stringify(v)}`).join(', ') : 
-                        String(tc.input);
-                    const outputStr = typeof tc.output === 'object' ? JSON.stringify(tc.output) : String(tc.output);
-                    
+                    let inputStr = '';
+                    if (typeof tc.input === 'object' && tc.input !== null && !Array.isArray(tc.input)) {
+                        inputStr = Object.entries(tc.input)
+                            .map(([k, v]) => `${k} = ${typeof v === 'string' ? `"${v}"` : JSON.stringify(v)}`)
+                            .join(', ');
+                    } else if (typeof tc.input === 'object') {
+                        inputStr = JSON.stringify(tc.input);
+                    } else {
+                        inputStr = String(tc.input ?? '');
+                    }
+
+                    const rawOutput = tc.output !== undefined ? tc.output : tc.expected_output;
+                    const outputStr = (typeof rawOutput === 'object') ? JSON.stringify(rawOutput) : String(rawOutput ?? '');
+
                     return `
-                        <div class="surface-2 border border-theme rounded-lg p-3.5 space-y-2">
-                            <div class="font-semibold text-xs uppercase tracking-wide text-zinc-300">Example ${i + 1}</div>
-                            <div class="font-mono text-xs space-y-1.5">
-                                <div><span class="muted">Input:</span> <span class="text-emerald-400">${escapeHtml(inputStr)}</span></div>
-                                <div><span class="muted">Output:</span> <span class="text-amber-400 font-semibold">${escapeHtml(outputStr)}</span></div>
-                                ${tc.explanation ? `<div class="font-sans text-xs text-zinc-400 pt-1 border-t border-theme/40"><span class="muted font-semibold">Explanation:</span> ${escapeHtml(tc.explanation)}</div>` : ''}
+                        <div class="space-y-1.5 my-3.5">
+                            <div class="font-bold text-sm text-zinc-100">Example ${i + 1}:</div>
+                            <div class="example-block space-y-1.5 text-[13.5px] leading-relaxed select-text font-sans">
+                                <div><strong class="text-zinc-100 font-bold font-sans">Input:</strong> <span class="font-mono text-zinc-200 ml-1">${escapeHtml(inputStr)}</span></div>
+                                <div><strong class="text-zinc-100 font-bold font-sans">Output:</strong> <span class="font-mono text-zinc-200 ml-1">${escapeHtml(outputStr)}</span></div>
+                                ${tc.explanation ? `<div><strong class="text-zinc-100 font-bold font-sans">Explanation:</strong> <span class="text-zinc-300 font-sans leading-relaxed text-[13.5px] ml-1">${escapeHtml(tc.explanation)}</span></div>` : ''}
                             </div>
                         </div>
                     `;
                 }).join('');
             } else {
-                exContainer.innerHTML = '<div class="muted text-xs">No sample testcases provided.</div>';
+                exContainer.innerHTML = '<div class="muted text-sm">No sample testcases provided.</div>';
             }
 
             // Render Constraints
@@ -721,13 +772,13 @@
             activeCaseIndex = 0;
 
             if (sampleCases.length === 0) {
-                tabsContainer.innerHTML = '<span class="muted text-xs">No sample cases.</span>';
+                tabsContainer.innerHTML = '<span class="muted text-xs">No sample cases available.</span>';
                 document.getElementById('caseInputDisplay').innerHTML = '';
                 return;
             }
 
             tabsContainer.innerHTML = sampleCases.map((tc, idx) => `
-                <button onclick="switchCaseTab(${idx})" class="px-3 py-1 rounded-md text-xs font-semibold ${idx === activeCaseIndex ? 'theme-btn text-emerald-400' : 'muted hover:text-white'}">
+                <button onclick="switchCaseTab(${idx})" class="px-3 py-1 rounded-md text-xs font-semibold transition ${idx === activeCaseIndex ? 'theme-btn text-emerald-400 border-emerald-500/40 shadow-sm' : 'muted hover:text-white hover:bg-white/5'}">
                     Case ${idx + 1}
                 </button>
             `).join('');
@@ -739,7 +790,7 @@
             activeCaseIndex = idx;
             const buttons = document.querySelectorAll('#caseTabsHeader button');
             buttons.forEach((b, i) => {
-                b.className = `px-3 py-1 rounded-md text-xs font-semibold ${i === activeCaseIndex ? 'theme-btn text-emerald-400' : 'muted hover:text-white'}`;
+                b.className = `px-3 py-1 rounded-md text-xs font-semibold transition ${i === activeCaseIndex ? 'theme-btn text-emerald-400 border-emerald-500/40 shadow-sm' : 'muted hover:text-white hover:bg-white/5'}`;
             });
             renderActiveCaseInput();
         };
@@ -748,23 +799,56 @@
             const container = document.getElementById('caseInputDisplay');
             const sampleCases = currentProblem?.testCases || [];
             const tc = sampleCases[activeCaseIndex];
-            if (!tc) { container.innerHTML = ''; return; }
+            if (!tc) { container.innerHTML = '<div class="muted text-xs">No case selected.</div>'; return; }
 
-            if (typeof tc.input === 'object' && tc.input !== null) {
-                container.innerHTML = Object.entries(tc.input).map(([k, v]) => `
+            // 1. Format Inputs
+            let inputHtml = '';
+            if (typeof tc.input === 'object' && tc.input !== null && !Array.isArray(tc.input)) {
+                inputHtml = Object.entries(tc.input).map(([k, v]) => `
                     <div>
-                        <span class="muted block text-[11px] mb-0.5">${escapeHtml(k)} =</span>
-                        <div class="surface-2 border border-theme rounded-md px-2.5 py-1 text-emerald-400">${escapeHtml(JSON.stringify(v))}</div>
+                        <span class="text-zinc-400 block text-[11px] font-semibold mb-1">${escapeHtml(k)} =</span>
+                        <div class="surface-2 border border-theme rounded-md px-3 py-1.5 text-emerald-400 font-mono text-xs whitespace-pre-wrap select-text leading-relaxed">${escapeHtml(typeof v === 'object' ? JSON.stringify(v) : String(v))}</div>
                     </div>
                 `).join('');
             } else {
-                container.innerHTML = `
+                const inputVal = typeof tc.input === 'object' ? JSON.stringify(tc.input, null, 2) : String(tc.input ?? '');
+                inputHtml = `
                     <div>
-                        <span class="muted block text-[11px] mb-0.5">Input:</span>
-                        <div class="surface-2 border border-theme rounded-md px-2.5 py-1 text-emerald-400">${escapeHtml(String(tc.input))}</div>
+                        <span class="text-zinc-400 block text-[11px] font-semibold mb-1">Input:</span>
+                        <div class="surface-2 border border-theme rounded-md px-3 py-1.5 text-emerald-400 font-mono text-xs whitespace-pre-wrap select-text leading-relaxed">${escapeHtml(inputVal)}</div>
                     </div>
                 `;
             }
+
+            // 2. Format Expected Output
+            const rawOutput = tc.output !== undefined ? tc.output : tc.expected_output;
+            let outputVal = '';
+            if (rawOutput !== undefined && rawOutput !== null) {
+                outputVal = typeof rawOutput === 'object' ? JSON.stringify(rawOutput, null, 2) : String(rawOutput);
+            }
+
+            let outputHtml = '';
+            if (outputVal !== '') {
+                outputHtml = `
+                    <div class="pt-1">
+                        <span class="text-zinc-400 block text-[11px] font-semibold mb-1">Expected Output:</span>
+                        <div class="surface-2 border border-amber-500/30 bg-amber-500/5 rounded-md px-3 py-1.5 text-amber-300 font-mono font-bold text-xs whitespace-pre-wrap select-text leading-relaxed">${escapeHtml(outputVal)}</div>
+                    </div>
+                `;
+            }
+
+            // 3. Format Explanation if available
+            let explanationHtml = '';
+            if (tc.explanation) {
+                explanationHtml = `
+                    <div class="pt-1.5">
+                        <strong class="text-zinc-100 block text-xs font-bold mb-1">Explanation:</strong>
+                        <div class="surface-2 border border-theme/60 rounded-md px-3.5 py-2 text-zinc-200 font-sans text-[13.5px] select-text leading-relaxed">${escapeHtml(tc.explanation)}</div>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = `<div class="space-y-2.5">${inputHtml}${outputHtml}${explanationHtml}</div>`;
         }
 
         window.switchConsoleTab = function(tab) {
@@ -774,45 +858,231 @@
             const bodyResult = document.getElementById('consoleBodyResult');
 
             if (tab === 'testcase') {
-                tabTestcase.className = "text-xs font-semibold border-b-2 border-emerald-500 pb-1 text-emerald-500 flex items-center gap-1.5";
-                tabResult.className = "text-xs font-semibold muted pb-1 flex items-center gap-1.5 hover:text-white";
+                tabTestcase.className = "text-xs font-semibold border-b-2 border-emerald-500 pb-1 text-emerald-500 flex items-center gap-1.5 transition";
+                tabResult.className = "text-xs font-semibold muted pb-1 flex items-center gap-1.5 hover:text-white transition";
                 bodyTestcase.classList.remove('hidden');
                 bodyResult.classList.add('hidden');
             } else {
-                tabResult.className = "text-xs font-semibold border-b-2 border-emerald-500 pb-1 text-emerald-500 flex items-center gap-1.5";
-                tabTestcase.className = "text-xs font-semibold muted pb-1 flex items-center gap-1.5 hover:text-white";
+                tabResult.className = "text-xs font-semibold border-b-2 border-emerald-500 pb-1 text-emerald-500 flex items-center gap-1.5 transition";
+                tabTestcase.className = "text-xs font-semibold muted pb-1 flex items-center gap-1.5 hover:text-white transition";
                 bodyResult.classList.remove('hidden');
                 bodyTestcase.classList.add('hidden');
             }
         };
 
-        window.toggleConsole = function() {
-            const c = document.getElementById('console');
-            const icon = document.getElementById('consoleToggleIcon');
-            consoleOpen = !consoleOpen;
-            if (consoleOpen) {
-                c.style.height = '12rem';
-                icon.className = 'fa-solid fa-chevron-up text-xs';
-            } else {
-                c.style.height = '2.25rem';
-                icon.className = 'fa-solid fa-chevron-down text-xs';
+        // ──────────────────────────────────────────────
+        // LeetCode-style Dynamic Console Resizer
+        // ──────────────────────────────────────────────
+        let lastConsoleExpandedHeight = 230;
+
+        function initConsoleResizer() {
+            const resizer = document.getElementById('consoleResizer');
+            const consoleEl = document.getElementById('console');
+            const panelEditor = document.getElementById('panel-editor');
+            const toggleIcon = document.getElementById('consoleToggleIcon');
+
+            let isDragging = false;
+            let startY = 0;
+            let startHeight = 0;
+
+            // Restore saved height if available
+            const savedHeight = localStorage.getItem('contest_console_h');
+            if (savedHeight) {
+                const h = parseInt(savedHeight, 10);
+                if (h >= 60 && h < window.innerHeight - 120) {
+                    consoleEl.style.height = `${h}px`;
+                    lastConsoleExpandedHeight = h;
+                }
             }
-        };
+
+            resizer.addEventListener('mousedown', (e) => {
+                if (e.button !== 0) return;
+                isDragging = true;
+                startY = e.clientY;
+                startHeight = consoleEl.getBoundingClientRect().height;
+
+                document.body.style.cursor = 'row-resize';
+                document.body.style.userSelect = 'none';
+
+                window.addEventListener('mousemove', onMouseMove);
+                window.addEventListener('mouseup', onMouseUp);
+                e.preventDefault();
+            });
+
+            resizer.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1) {
+                    isDragging = true;
+                    startY = e.touches[0].clientY;
+                    startHeight = consoleEl.getBoundingClientRect().height;
+                    window.addEventListener('touchmove', onTouchMove, { passive: false });
+                    window.addEventListener('touchend', onTouchEnd);
+                }
+            });
+
+            function applyResize(currentY) {
+                // Moving upward (currentY < startY) increases console height
+                const deltaY = startY - currentY;
+                const totalHeight = panelEditor.getBoundingClientRect().height;
+                const minHeight = 38;
+                const maxHeight = totalHeight - 90;
+
+                let newHeight = Math.round(startHeight + deltaY);
+                newHeight = Math.max(minHeight, Math.min(maxHeight, newHeight));
+
+                consoleEl.style.height = `${newHeight}px`;
+
+                if (newHeight > 50) {
+                    consoleOpen = true;
+                    lastConsoleExpandedHeight = newHeight;
+                    if (toggleIcon) toggleIcon.className = 'fa-solid fa-chevron-up text-xs';
+                } else {
+                    consoleOpen = false;
+                    if (toggleIcon) toggleIcon.className = 'fa-solid fa-chevron-down text-xs';
+                }
+
+                if (editor) editor.refresh();
+            }
+
+            function onMouseMove(e) {
+                if (!isDragging) return;
+                applyResize(e.clientY);
+            }
+
+            function onTouchMove(e) {
+                if (!isDragging || e.touches.length !== 1) return;
+                e.preventDefault();
+                applyResize(e.touches[0].clientY);
+            }
+
+            function onMouseUp() {
+                if (!isDragging) return;
+                isDragging = false;
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+                window.removeEventListener('mousemove', onMouseMove);
+                window.removeEventListener('mouseup', onMouseUp);
+
+                const finalHeight = consoleEl.getBoundingClientRect().height;
+                if (finalHeight > 50) {
+                    localStorage.setItem('contest_console_h', finalHeight);
+                }
+                if (editor) editor.refresh();
+            }
+
+            function onTouchEnd() {
+                if (!isDragging) return;
+                isDragging = false;
+                window.removeEventListener('touchmove', onTouchMove);
+                window.removeEventListener('touchend', onTouchEnd);
+                if (editor) editor.refresh();
+            }
+
+            // Double click to toggle expand / collapse
+            resizer.addEventListener('dblclick', () => {
+                toggleConsole();
+            });
+
+            window.toggleConsole = function() {
+                const curH = consoleEl.getBoundingClientRect().height;
+                if (curH > 45) {
+                    // Collapse
+                    lastConsoleExpandedHeight = curH;
+                    consoleEl.style.height = '38px';
+                    consoleOpen = false;
+                    if (toggleIcon) toggleIcon.className = 'fa-solid fa-chevron-down text-xs';
+                } else {
+                    // Expand
+                    consoleEl.style.height = `${lastConsoleExpandedHeight || 230}px`;
+                    consoleOpen = true;
+                    if (toggleIcon) toggleIcon.className = 'fa-solid fa-chevron-up text-xs';
+                }
+                if (editor) setTimeout(() => editor.refresh(), 50);
+            };
+        }
+
+        // ──────────────────────────────────────────────
+        // LeetCode-style Horizontal Splitter (Problem vs Editor)
+        // ──────────────────────────────────────────────
+        function initWorkspaceResizer() {
+            const splitter = document.getElementById('horizontalSplitter');
+            const leftPanel = document.getElementById('panel-description');
+            const rightPanel = document.getElementById('panel-editor');
+            const container = document.getElementById('workspaceContainer');
+
+            if (!splitter || !leftPanel || !rightPanel) return;
+
+            let isDragging = false;
+
+            // Load saved width ratio
+            const savedRatio = localStorage.getItem('contest_left_ratio');
+            if (savedRatio && window.innerWidth >= 1024) {
+                const ratio = parseFloat(savedRatio);
+                if (ratio >= 20 && ratio <= 80) {
+                    leftPanel.style.width = `${ratio}%`;
+                    rightPanel.style.width = `${100 - ratio}%`;
+                }
+            }
+
+            splitter.addEventListener('mousedown', (e) => {
+                if (e.button !== 0) return;
+                isDragging = true;
+                document.body.style.cursor = 'col-resize';
+                document.body.style.userSelect = 'none';
+
+                window.addEventListener('mousemove', onMouseMove);
+                window.addEventListener('mouseup', onMouseUp);
+                e.preventDefault();
+            });
+
+            function onMouseMove(e) {
+                if (!isDragging) return;
+                const containerRect = container.getBoundingClientRect();
+                const offsetX = e.clientX - containerRect.left;
+                const percentage = (offsetX / containerRect.width) * 100;
+
+                if (percentage >= 20 && percentage <= 80) {
+                    leftPanel.style.width = `${percentage}%`;
+                    rightPanel.style.width = `${100 - percentage}%`;
+                    if (editor) editor.refresh();
+                }
+            }
+
+            function onMouseUp() {
+                if (!isDragging) return;
+                isDragging = false;
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+                window.removeEventListener('mousemove', onMouseMove);
+                window.removeEventListener('mouseup', onMouseUp);
+
+                const containerRect = container.getBoundingClientRect();
+                const leftRect = leftPanel.getBoundingClientRect();
+                const ratio = (leftRect.width / containerRect.width) * 100;
+                localStorage.setItem('contest_left_ratio', ratio.toFixed(2));
+                if (editor) editor.refresh();
+            }
+        }
 
         // ──────────────────────────────────────────────
         // Execution: RUN CODE (POST /api/judge/run)
         // ──────────────────────────────────────────────
+        let activeResultCaseIdx = 0;
+        let lastRunResults = null;
+
         async function executeRun() {
             if (!currentProblem) return;
 
-            if (!consoleOpen) toggleConsole();
+            const consoleEl = document.getElementById('console');
+            if (consoleEl.getBoundingClientRect().height <= 45) {
+                toggleConsole();
+            }
             switchConsoleTab('result');
 
             const contentEl = document.getElementById('resultContent');
             contentEl.innerHTML = `
-                <div class="flex items-center gap-2 p-4 text-xs font-mono text-emerald-400">
-                    <i class="fa-solid fa-circle-notch fa-spin"></i>
-                    <span>Compiling & executing sample test cases...</span>
+                <div class="flex items-center gap-2.5 p-4 text-xs font-mono text-emerald-400">
+                    <i class="fa-solid fa-circle-notch fa-spin text-sm"></i>
+                    <span>Compiling & executing code against sample test cases...</span>
                 </div>
             `;
 
@@ -834,9 +1104,9 @@
 
                 if (!res.ok) {
                     contentEl.innerHTML = `
-                        <div class="p-3 bg-rose-500/10 border border-rose-500/30 rounded-lg space-y-2 text-xs">
+                        <div class="p-3.5 bg-rose-500/10 border border-rose-500/30 rounded-lg space-y-2 text-xs">
                             <div class="font-bold text-rose-400 flex items-center gap-1.5">
-                                <i class="fa-solid fa-circle-xmark"></i> ${escapeHtml(data.error || 'Execution Failed')}
+                                <i class="fa-solid fa-circle-xmark text-sm"></i> ${escapeHtml(data.error || 'Execution Failed')}
                             </div>
                         </div>
                     `;
@@ -844,44 +1114,92 @@
                     return;
                 }
 
+                lastRunResults = data;
+                activeResultCaseIdx = 0;
+                renderRunResultsView();
+
                 const allPassed = data.results.every(r => r.passed);
-                const runtime = data.executionTimeMs || 0;
-
-                contentEl.innerHTML = `
-                    <div class="space-y-3 font-mono text-xs">
-                        <div class="flex items-center justify-between border-b border-theme pb-2">
-                            <div class="flex items-center gap-2">
-                                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold border ${allPassed ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-rose-500/10 text-rose-400 border-rose-500/30'}">
-                                    <i class="fa-solid ${allPassed ? 'fa-check' : 'fa-xmark'} mr-1"></i>
-                                    ${allPassed ? 'Accepted' : 'Wrong Answer'}
-                                </span>
-                                <span class="muted">Runtime: ${runtime} ms</span>
-                            </div>
-                            <span class="text-[11px] muted">${data.results.filter(r=>r.passed).length} / ${data.results.length} passed</span>
-                        </div>
-
-                        <div class="space-y-2">
-                            ${data.results.map((r, i) => `
-                                <div class="surface-2 border border-theme rounded-md p-2.5 space-y-1">
-                                    <div class="flex items-center justify-between">
-                                        <span class="font-semibold ${r.passed ? 'text-emerald-400' : 'text-rose-400'}">Case ${i + 1}: ${r.passed ? 'Passed' : 'Failed'}</span>
-                                    </div>
-                                    <div><span class="muted">Input:</span> ${escapeHtml(JSON.stringify(r.input))}</div>
-                                    <div><span class="muted">Your Output:</span> <span class="${r.passed ? 'text-emerald-400' : 'text-rose-400'} font-semibold">${escapeHtml(JSON.stringify(r.actual))}</span></div>
-                                    <div><span class="muted">Expected:</span> <span class="text-amber-400">${escapeHtml(JSON.stringify(r.expected))}</span></div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
-
                 showToast(allPassed ? 'Sample cases passed!' : 'Some sample cases failed.', allPassed ? 'success' : 'error');
 
             } catch (err) {
-                contentEl.innerHTML = `<div class="text-rose-400 text-xs">Error: ${escapeHtml(err.message)}</div>`;
+                contentEl.innerHTML = `<div class="text-rose-400 text-xs p-3 font-mono">Execution request failed: ${escapeHtml(err.message)}</div>`;
                 showToast('Execution request failed.', 'error');
             }
         }
+
+        function renderRunResultsView() {
+            if (!lastRunResults) return;
+            const contentEl = document.getElementById('resultContent');
+            const data = lastRunResults;
+            const allPassed = data.results.every(r => r.passed);
+            const runtime = data.executionTimeMs || 0;
+            const passedCount = data.results.filter(r => r.passed).length;
+            const totalCount = data.results.length;
+
+            const r = data.results[activeResultCaseIdx] || data.results[0];
+
+            function formatVal(val) {
+                if (val === undefined || val === null) return '';
+                if (typeof val === 'object') return JSON.stringify(val, null, 2);
+                return String(val);
+            }
+
+            function formatInputVal(input) {
+                if (typeof input === 'object' && input !== null && !Array.isArray(input)) {
+                    return Object.entries(input).map(([k, v]) => `${k} = ${typeof v === 'object' ? JSON.stringify(v) : v}`).join('\n');
+                }
+                return formatVal(input);
+            }
+
+            contentEl.innerHTML = `
+                <div class="space-y-3 font-mono text-xs">
+                    <!-- SUMMARY HEADER -->
+                    <div class="flex items-center justify-between border-b border-theme/60 pb-2.5">
+                        <div class="flex items-center gap-2.5">
+                            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold border ${allPassed ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-rose-500/10 text-rose-400 border-rose-500/30'}">
+                                <i class="fa-solid ${allPassed ? 'fa-check' : 'fa-xmark'} mr-1"></i>
+                                ${allPassed ? 'Accepted' : 'Wrong Answer'}
+                            </span>
+                            <span class="muted text-[11px]"><i class="fa-regular fa-clock mr-1"></i>${runtime} ms</span>
+                        </div>
+                        <span class="text-[11px] ${allPassed ? 'text-emerald-400' : 'text-zinc-400'} font-semibold">${passedCount} / ${totalCount} sample cases passed</span>
+                    </div>
+
+                    <!-- CASE SELECTOR TABS -->
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                        ${data.results.map((res, i) => `
+                            <button onclick="switchResultCase(${i})" class="px-2.5 py-1 rounded text-xs font-semibold flex items-center gap-1.5 transition ${i === activeResultCaseIdx ? 'theme-btn text-white border-white/20' : 'muted hover:text-white hover:bg-white/5'}">
+                                <span>Case ${i + 1}</span>
+                                <span class="w-2 h-2 rounded-full ${res.passed ? 'bg-emerald-400 shadow-sm shadow-emerald-400/50' : 'bg-rose-500 shadow-sm shadow-rose-500/50'}"></span>
+                            </button>
+                        `).join('')}
+                    </div>
+
+                    <!-- ACTIVE CASE DETAIL -->
+                    <div class="surface-2 border border-theme rounded-lg p-3 space-y-2.5">
+                        <div>
+                            <span class="text-zinc-400 block text-[11px] font-semibold mb-1">Input:</span>
+                            <div class="surface border border-theme rounded-md px-3 py-1.5 text-zinc-300 font-mono text-xs whitespace-pre-wrap select-text leading-relaxed">${escapeHtml(formatInputVal(r.input))}</div>
+                        </div>
+
+                        <div>
+                            <span class="text-zinc-400 block text-[11px] font-semibold mb-1">Your Output:</span>
+                            <div class="surface border ${r.passed ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/5' : 'border-rose-500/30 text-rose-400 bg-rose-500/5'} rounded-md px-3 py-1.5 font-mono font-bold text-xs whitespace-pre-wrap select-text leading-relaxed">${escapeHtml(formatVal(r.actual))}</div>
+                        </div>
+
+                        <div>
+                            <span class="text-zinc-400 block text-[11px] font-semibold mb-1">Expected Output:</span>
+                            <div class="surface border border-amber-500/30 bg-amber-500/5 rounded-md px-3 py-1.5 text-amber-300 font-mono font-bold text-xs whitespace-pre-wrap select-text leading-relaxed">${escapeHtml(formatVal(r.expected))}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        window.switchResultCase = function(idx) {
+            activeResultCaseIdx = idx;
+            renderRunResultsView();
+        };
 
         // ──────────────────────────────────────────────
         // Execution: SUBMIT (POST /api/judge/submit)
@@ -889,7 +1207,10 @@
         async function executeSubmit() {
             if (!currentProblem) return;
 
-            if (!consoleOpen) toggleConsole();
+            const consoleEl = document.getElementById('console');
+            if (consoleEl.getBoundingClientRect().height <= 45) {
+                toggleConsole();
+            }
             switchConsoleTab('result');
 
             const contentEl = document.getElementById('resultContent');

@@ -104,7 +104,7 @@ async function getProblemsForAdmin() {
     const problemIds = result.rows.map(p => p.id);
 
     const testCaseResult = await db.query(
-        `SELECT id, problem_id, input_data, output_data, is_sample, order_index
+        `SELECT id, problem_id, input_data, output_data, is_sample, order_index, explanation
          FROM test_cases WHERE problem_id = ANY($1) ORDER BY problem_id, order_index ASC`,
         [problemIds]
     );

@@ -83,29 +83,17 @@ router.post('/register', authLimiter, async (req, res, next) => {
             return res.status(400).json({ error: 'Password must be at least 6 characters.' });
         }
 
-        // Registration number: use provided value or generate a simple identifier
+        // Registration number is completely optional — anyone can register
         const userRegNo = (reg_no && typeof reg_no === 'string' && reg_no.trim().length > 0)
             ? reg_no.trim()
-            : `REG${Math.floor(100000 + Math.random() * 900000)}`;
-
-        // Optional institution-specific validation (only if explicitly set in .env)
-        const regNoPattern = process.env.REG_NO_REGEX;
-        if (regNoPattern) {
-            const regex = new RegExp(regNoPattern);
-            if (!regex.test(userRegNo)) {
-                return res.status(400).json({ error: 'Invalid Registration Number format.' });
-            }
-        }
-
-        const emailDomain = process.env.ALLOWED_EMAIL_DOMAIN;
-        if (emailDomain && !email.toLowerCase().endsWith(emailDomain.toLowerCase())) {
-            return res.status(400).json({ error: `Email must belong to ${emailDomain}` });
-        }
+            : null;
 
         // ── Check for existing user ───────────
         const existing = await db.query(
-            'SELECT id FROM users WHERE email = $1 OR reg_no = $2',
-            [email.toLowerCase().trim(), userRegNo]
+            userRegNo 
+                ? 'SELECT id FROM users WHERE email = $1 OR (reg_no IS NOT NULL AND reg_no = $2)'
+                : 'SELECT id FROM users WHERE email = $1',
+            userRegNo ? [email.toLowerCase().trim(), userRegNo] : [email.toLowerCase().trim()]
         );
 
         if (existing.rowCount > 0) {
@@ -132,11 +120,11 @@ router.post('/register', authLimiter, async (req, res, next) => {
                 });
             }
 
-            return res.status(409).json({ error: 'An account with this email or registration number already exists.' });
+            return res.status(409).json({ error: 'An account with this email already exists.' });
         }
 
-        // ── Parse reg number ──────────────────
-        const { batchYear, department, className } = parseRegNo(userRegNo);
+        // ── Parse reg number if provided ──────
+        const { batchYear, department, className } = userRegNo ? parseRegNo(userRegNo) : { batchYear: null, department: null, className: null };
 
         // ── Create user ───────────────────────
         const hashedPassword = await bcrypt.hash(password, 12);
@@ -150,6 +138,123 @@ router.post('/register', authLimiter, async (req, res, next) => {
         return res.status(201).json({
             message: 'Registration successful. You can now log in.',
             user: result.rows[0]
+        });
+
+    } catch (error) {
+        next(error);
+    }
+});
+
+// GET /api/auth-config — public auth configuration (Google Client ID)
+router.get('/auth-config', (req, res) => {
+    res.json({
+        googleClientId: process.env.GOOGLE_CLIENT_ID || '507428935118-cf78r2mqf1qncltn52oeqgtpardjiqnq.apps.googleusercontent.com'
+    });
+});
+
+// ──────────────────────────────────────────────
+// POST /api/social-login (Google, GitHub, etc.)
+// ──────────────────────────────────────────────
+
+router.post('/social-login', authLimiter, async (req, res, next) => {
+    try {
+        let { provider, email, name, credential } = req.body;
+
+        // If official Google ID token credential is provided, decode and verify it
+        if (credential && typeof credential === 'string') {
+            try {
+                const verifyRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`);
+                if (verifyRes.ok) {
+                    const gData = await verifyRes.json();
+                    email = gData.email;
+                    name = gData.name || gData.given_name || (email ? email.split('@')[0] : 'User');
+                    provider = 'google';
+                } else {
+                    const parts = credential.split('.');
+                    if (parts.length === 3) {
+                        const payloadStr = Buffer.from(parts[1], 'base64').toString('utf8');
+                        const gData = JSON.parse(payloadStr);
+                        email = gData.email;
+                        name = gData.name || gData.given_name || (email ? email.split('@')[0] : 'User');
+                        provider = 'google';
+                    }
+                }
+            } catch (err) {
+                const parts = credential.split('.');
+                if (parts.length === 3) {
+                    const payloadStr = Buffer.from(parts[1], 'base64').toString('utf8');
+                    const gData = JSON.parse(payloadStr);
+                    email = gData.email;
+                    name = gData.name || gData.given_name || (email ? email.split('@')[0] : 'User');
+                    provider = 'google';
+                }
+            }
+        }
+
+        if (!email || typeof email !== 'string' || !email.includes('@')) {
+            return res.status(400).json({ error: 'Valid email is required for social authentication.' });
+        }
+
+        const cleanEmail = email.toLowerCase().trim();
+        const displayName = (name && typeof name === 'string' && name.trim().length > 0)
+            ? name.trim()
+            : cleanEmail.split('@')[0];
+
+        // 1. Check if user already exists
+        let userResult = await db.query(
+            'SELECT * FROM users WHERE email = $1',
+            [cleanEmail]
+        );
+
+        let user;
+        if (userResult.rowCount === 0) {
+            // 2. Create new user in PostgreSQL
+            const crypto = require('crypto');
+            const randomPassword = crypto.randomBytes(24).toString('hex');
+            const hashedPassword = await bcrypt.hash(randomPassword, 12);
+
+            const insertResult = await db.query(
+                `INSERT INTO users (name, email, password_hash, role, reg_no, is_active)
+                 VALUES ($1, $2, $3, 'student', NULL, TRUE)
+                 RETURNING id, name, email, role, reg_no, batch_year, department, class_name`,
+                [displayName, cleanEmail, hashedPassword]
+            );
+            user = insertResult.rows[0];
+        } else {
+            user = userResult.rows[0];
+            if (!user.is_active) {
+                return res.status(403).json({ error: 'Account is deactivated. Please contact support.' });
+            }
+        }
+
+        // 3. Issue 24h JWT token
+        const payload = {
+            id:         user.id,
+            email:      user.email,
+            role:       user.role,
+            name:       user.name,
+            reg_no:     user.reg_no,
+            batch_year: user.batch_year,
+            department: user.department,
+            class_name: user.class_name,
+            provider:   provider || 'google'
+        };
+
+        const token = jwt.sign(payload, getJwtSecret(), { expiresIn: '24h' });
+
+        return res.json({
+            message: 'Authenticated successfully.',
+            token,
+            user: {
+                id:         user.id,
+                name:       user.name,
+                email:      user.email,
+                role:       user.role,
+                reg_no:     user.reg_no,
+                batch_year: user.batch_year,
+                department: user.department,
+                class_name: user.class_name
+            }
         });
 
     } catch (error) {

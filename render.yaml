@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: codeitanywhere-api
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/contests/active
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: codeitanywhere-db
+          property: connectionString
+      - key: GOOGLE_CLIENT_ID
+        value: 507428935118-cf78r2mqf1qncltn52oeqgtpardjiqnq.apps.googleusercontent.com
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+
+databases:
+  - name: codeitanywhere-db
+    plan: free
+    databaseName: coding_platform
+    user: postgres

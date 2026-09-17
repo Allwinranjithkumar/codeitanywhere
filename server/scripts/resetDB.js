@@ -54,7 +54,7 @@ async function resetDB() {
                 id            SERIAL PRIMARY KEY,
                 name          VARCHAR(255) NOT NULL,
                 email         VARCHAR(255) UNIQUE NOT NULL,
-                reg_no        VARCHAR(50)  UNIQUE NOT NULL,
+                reg_no        VARCHAR(50)  UNIQUE,
                 password_hash VARCHAR(255) NOT NULL,
                 role          VARCHAR(20)  NOT NULL DEFAULT 'student'
                               CHECK (role IN ('student', 'admin')),

@@ -66,7 +66,7 @@ async function initDB() {
             id            SERIAL PRIMARY KEY,
             name          VARCHAR(255) NOT NULL,
             email         VARCHAR(255) UNIQUE NOT NULL,
-            reg_no        VARCHAR(50)  UNIQUE NOT NULL,
+            reg_no        VARCHAR(50)  UNIQUE,
             password_hash VARCHAR(255) NOT NULL,
             role          VARCHAR(20)  NOT NULL DEFAULT 'student'
                           CHECK (role IN ('student', 'admin')),
@@ -200,6 +200,61 @@ async function initDB() {
         );
     `);
 
+    // ── AI Module Schema Extensions ─────────
+    await query(`
+        ALTER TABLE problems 
+            ADD COLUMN IF NOT EXISTS pattern_tags JSONB NOT NULL DEFAULT '[]'::jsonb,
+            ADD COLUMN IF NOT EXISTS input_format TEXT,
+            ADD COLUMN IF NOT EXISTS output_format TEXT,
+            ADD COLUMN IF NOT EXISTS ai_generated BOOLEAN NOT NULL DEFAULT FALSE,
+            ADD COLUMN IF NOT EXISTS source_reference VARCHAR(255),
+            ADD COLUMN IF NOT EXISTS reference_approach JSONB;
+    `);
+
+    // AI Generated Problems (Auto-Problem Studio staging/drafts)
+    await query(`
+        CREATE TABLE IF NOT EXISTS ai_generated_problems (
+            id                   SERIAL PRIMARY KEY,
+            title                VARCHAR(255) NOT NULL,
+            statement            TEXT NOT NULL,
+            input_format         TEXT NOT NULL,
+            output_format        TEXT NOT NULL,
+            constraints          JSONB NOT NULL DEFAULT '[]'::jsonb,
+            samples              JSONB NOT NULL DEFAULT '[]'::jsonb,
+            hidden_tests         JSONB NOT NULL DEFAULT '[]'::jsonb,
+            pattern_tags         JSONB NOT NULL DEFAULT '[]'::jsonb,
+            difficulty_estimate  VARCHAR(20) NOT NULL CHECK (difficulty_estimate IN ('easy', 'medium', 'hard', 'Easy', 'Medium', 'Hard')),
+            reference_approach   JSONB,
+            ai_generated         BOOLEAN NOT NULL DEFAULT TRUE,
+            source_reference     VARCHAR(255) DEFAULT 'CodeItAnywhere AI Studio',
+            status               VARCHAR(30) NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'published', 'archived')),
+            created_by           INTEGER REFERENCES users(id) ON DELETE SET NULL,
+            created_at           TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at           TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+    `);
+
+    // Ensure columns exist on ai_generated_problems
+    await query(`
+        ALTER TABLE ai_generated_problems 
+            ADD COLUMN IF NOT EXISTS function_name VARCHAR(100),
+            ADD COLUMN IF NOT EXISTS starter_code JSONB;
+    `);
+
+    // Post-Contest AI Analyses
+    await query(`
+        CREATE TABLE IF NOT EXISTS contest_ai_analyses (
+            id                   SERIAL PRIMARY KEY,
+            contest_id           INTEGER NOT NULL REFERENCES contests(id) ON DELETE CASCADE,
+            organizer_summary    TEXT NOT NULL,
+            key_insights         JSONB NOT NULL DEFAULT '[]'::jsonb,
+            suggestions          JSONB NOT NULL DEFAULT '[]'::jsonb,
+            participant_feedback JSONB NOT NULL DEFAULT '[]'::jsonb,
+            metrics_snapshot     JSONB,
+            created_at           TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+    `);
+
     // ── Indexes ──────────────────────────────
     await query(`CREATE INDEX IF NOT EXISTS idx_submissions_user_id    ON submissions(user_id);`);
     await query(`CREATE INDEX IF NOT EXISTS idx_submissions_contest_id  ON submissions(contest_id);`);
@@ -209,8 +264,12 @@ async function initDB() {
     await query(`CREATE INDEX IF NOT EXISTS idx_test_cases_problem_id   ON test_cases(problem_id);`);
     await query(`CREATE INDEX IF NOT EXISTS idx_problems_is_active      ON problems(is_active);`);
     await query(`CREATE INDEX IF NOT EXISTS idx_contests_status         ON contests(status);`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_problems_pattern_tags   ON problems USING GIN (pattern_tags);`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_ai_problems_pattern_tags ON ai_generated_problems USING GIN (pattern_tags);`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_ai_problems_status       ON ai_generated_problems (status);`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_contest_ai_analyses_contest ON contest_ai_analyses (contest_id);`);
 
-    console.log('[DB] Schema initialized successfully.');
+    console.log('[DB] Schema initialized successfully with AI Module extensions.');
 }
 
 module.exports = { query, initDB, pool };

@@ -19,6 +19,7 @@ const authRoutes    = require('./routes/auth.routes');
 const judgeRoutes   = require('./routes/judge.routes');
 const adminRoutes   = require('./routes/admin.routes');
 const contestRoutes = require('./routes/contest.routes');
+const aiRoutes      = require('./routes/ai.routes');
 
 // ──────────────────────────────────────────────
 // Startup Validation
@@ -31,6 +32,8 @@ if (!process.env.JWT_SECRET) {
     process.exit(1);
 }
 
+const cors     = require('cors');
+
 const app  = express();
 const PORT = process.env.PORT || 3000;
 const isProd = process.env.NODE_ENV === 'production';
@@ -39,6 +42,10 @@ const isProd = process.env.NODE_ENV === 'production';
 // Middleware
 // ──────────────────────────────────────────────
 
+app.use(cors({
+    origin: true,
+    credentials: true
+}));
 app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ extended: true, limit: '5mb' }));
 app.use(express.static(path.join(__dirname, '..', 'public')));
@@ -51,6 +58,7 @@ app.use('/api',          authRoutes);     // POST /api/login, POST /api/register
 app.use('/api/contests', contestRoutes);  // /api/contests/*
 app.use('/api/judge',    judgeRoutes);    // /api/judge/problems, /api/judge/run, /api/judge/submit
 app.use('/api/admin',    adminRoutes);    // /api/admin/*
+app.use('/api/ai',       aiRoutes);       // /api/ai/* (Problem Studio & Contest Analyst)
 
 // ──────────────────────────────────────────────
 // 404 Handler

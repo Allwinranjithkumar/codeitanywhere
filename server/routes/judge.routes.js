@@ -111,9 +111,19 @@ router.post('/submit', async (req, res, next) => {
         const total     = results.length;
         const allPassed = passed === total;
         const score     = allPassed ? problem.points : Math.floor((passed / total) * problem.points);
-        const status    = allPassed ? 'Accepted'
-                        : results.some(r => r.actual && String(r.actual).startsWith('Error:')) ? 'Runtime Error'
-                        : 'Wrong Answer';
+        
+        let status = 'Wrong Answer';
+        if (allPassed) {
+            status = 'Accepted';
+        } else if (results.some(r => r.status === 'Compilation Error' || r.status === 'Compile Error' || (r.error && r.error.includes('Compile Error')))) {
+            status = 'Compilation Error';
+        } else if (results.some(r => r.status === 'Time Limit Exceeded' || r.error === 'Time Limit Exceeded' || (r.actual && String(r.actual).includes('Time Limit Exceeded')))) {
+            status = 'Time Limit Exceeded';
+        } else if (results.some(r => r.status === 'Memory Limit Exceeded' || r.error === 'Memory Limit Exceeded' || (r.actual && String(r.actual).includes('Memory Limit Exceeded')))) {
+            status = 'Memory Limit Exceeded';
+        } else if (results.some(r => r.status === 'Runtime Error' || (r.actual && String(r.actual).startsWith('Error:')))) {
+            status = 'Runtime Error';
+        }
 
         // Find the first error message if any
         const errorMsg = results.find(r => r.error)?.error || null;
@@ -143,11 +153,13 @@ router.post('/submit', async (req, res, next) => {
         const safeResults = results.map((r, i) => {
             const isSample = problem.testCases[i]?.isSample;
             return {
-                passed:   r.passed,
-                input:    isSample ? r.input    : '[hidden]',
-                expected: isSample ? r.expected : '[hidden]',
-                actual:   r.actual,
-                error:    r.error  || null
+                passed:     r.passed,
+                status:     r.status || (r.passed ? 'Accepted' : 'Wrong Answer'),
+                durationMs: r.durationMs || 0,
+                input:      isSample ? r.input    : '[hidden]',
+                expected:   isSample ? r.expected : '[hidden]',
+                actual:     r.actual,
+                error:      r.error  || null
             };
         });
 
