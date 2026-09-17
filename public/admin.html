@@ -1550,111 +1550,131 @@
 
         <!-- ── AI CO-PROBLEM-SETTER (AUTO-PROBLEM STUDIO) ── -->
         <div id="tab-aistudio" class="tab-panel">
-            <div style="display:grid;grid-template-columns:1fr 1.3fr;gap:20px;align-items:start;">
-                <!-- Left: Studio Configurator -->
-                <div class="form-card" style="margin-bottom:0;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-                        <h3 style="margin:0;">Auto-Problem Studio</h3>
-                        <span style="font-size:0.75rem;background:#e0e7ff;color:#4338ca;padding:3px 8px;border-radius:12px;font-weight:600;">BYTS-SDE Taxonomy</span>
-                    </div>
-                    <p style="font-size:0.82rem;color:var(--muted);margin-bottom:14px;">
-                        Select algorithmic patterns from the BYTS taxonomy, target difficulty, and custom directives. The AI generates original problem statements, constraints, and edge-case suites.
-                    </p>
-
-                    <!-- Pattern Selector -->
-                    <label style="display:block;font-size:0.78rem;font-weight:700;color:#475569;margin-bottom:6px;">1. SELECT PATTERNS (Click to toggle)</label>
-                    <input type="text" id="aiPatternFilter" placeholder="Search patterns (e.g. Sliding Window, BFS)..." oninput="filterAIPatterns()" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.82rem;margin-bottom:8px;box-sizing:border-box;">
-                    <div id="aiPatternChips" style="max-height:160px;overflow-y:auto;display:flex;flex-wrap:wrap;gap:6px;padding:6px;border:1px solid #f1f5f9;border-radius:8px;background:#f8fafc;margin-bottom:16px;">
-                        <span style="font-size:0.8rem;color:var(--muted);padding:8px;">Loading patterns...</span>
-                    </div>
-
-                    <!-- Target Difficulty -->
-                    <label style="display:block;font-size:0.78rem;font-weight:700;color:#475569;margin-bottom:6px;">2. TARGET DIFFICULTY</label>
-                    <div style="display:flex;gap:12px;margin-bottom:16px;">
-                        <label style="display:flex;align-items:center;gap:6px;font-size:0.84rem;cursor:pointer;">
-                            <input type="radio" name="aiDifficulty" value="easy"> Easy
-                        </label>
-                        <label style="display:flex;align-items:center;gap:6px;font-size:0.84rem;cursor:pointer;">
-                            <input type="radio" name="aiDifficulty" value="medium" checked> Medium
-                        </label>
-                        <label style="display:flex;align-items:center;gap:6px;font-size:0.84rem;cursor:pointer;">
-                            <input type="radio" name="aiDifficulty" value="hard"> Hard
-                        </label>
-                    </div>
-
-                    <!-- Language Preference -->
-                    <label style="display:block;font-size:0.78rem;font-weight:700;color:#475569;margin-bottom:6px;">3. REFERENCE SOLUTION LANGUAGE</label>
-                    <select id="aiLangPref" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.84rem;margin-bottom:16px;box-sizing:border-box;">
-                        <option value="C++">C++ (Standard STL)</option>
-                        <option value="Python">Python 3</option>
-                        <option value="Java">Java</option>
-                    </select>
-
-                    <!-- Author Directives -->
-                    <label style="display:block;font-size:0.78rem;font-weight:700;color:#475569;margin-bottom:6px;">4. CONTEXT & SPECIAL DIRECTIVES</label>
-                    <textarea id="aiCustomNotes" rows="3" placeholder="e.g. Frame as a datacenter packet routing issue. Use large N up to 10^5. Multiple queries required." style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.82rem;font-family:inherit;margin-bottom:16px;box-sizing:border-box;resize:vertical;"></textarea>
-
-                    <button class="btn btn-primary" id="btnGenerateProblem" onclick="generateAIProblem()" style="width:100%;padding:12px;font-weight:700;font-size:0.9rem;display:flex;align-items:center;justify-content:center;gap:8px;">
-                        <span>Generate Problem with AI</span>
-                    </button>
-                    <div id="aiStudioStatus" style="margin-top:10px;font-size:0.82rem;font-weight:600;display:none;text-align:center;"></div>
-                </div>
-
-                <!-- Right: Workbench & Inspection -->
-                <div id="aiWorkbenchCard" class="form-card" style="margin-bottom:0;min-height:auto;">
-                    <div id="aiWorkbenchPlaceholder" style="text-align:center;padding:28px 16px;color:var(--muted);">
-                        
-                        <h4 style="font-size:1.1rem;color:#1e293b;margin:0 0 6px 0;">Auto-Problem Workbench Ready</h4>
-                        <p style="font-size:0.85rem;max-width:320px;margin:0 auto;">
-                            Configure patterns on the left and click <b>Generate Problem</b> to inspect and publish here.
+            <!-- Studio Configurator (Elaborated Full-Width) -->
+            <div class="form-card" style="margin-bottom:20px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+                    <div>
+                        <h3 style="margin:0;font-size:1.2rem;color:#0f172a;">Auto-Problem Studio</h3>
+                        <p style="font-size:0.85rem;color:var(--muted);margin:4px 0 0 0;">
+                            Configure algorithmic patterns, target difficulty, solution parameters, and scenario directives. The AI engine synthesizes original problem statements, verified constraints, and edge-case test suites.
                         </p>
                     </div>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <span id="aiPatternCountBadge" style="font-size:0.78rem;background:#f1f5f9;color:#475569;padding:4px 10px;border-radius:12px;font-weight:600;border:1px solid #e2e8f0;">0 Patterns Selected</span>
+                        <span style="font-size:0.75rem;background:#e0e7ff;color:#4338ca;padding:4px 10px;border-radius:12px;font-weight:700;">BYTS-SDE Taxonomy</span>
+                    </div>
+                </div>
 
-                    <div id="aiWorkbenchContent" style="display:none;">
-                        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;border-bottom:1px solid #f1f5f9;padding-bottom:12px;">
-                            <div>
+                <!-- 1. Algorithmic Patterns Selection -->
+                <div style="margin-top:16px;margin-bottom:18px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                        <label style="font-size:0.8rem;font-weight:700;color:#334155;text-transform:uppercase;letter-spacing:0.5px;">1. Select Algorithmic Patterns (Click to toggle)</label>
+                        <button type="button" onclick="clearSelectedPatterns()" style="background:none;border:none;color:#6366f1;font-size:0.78rem;font-weight:600;cursor:pointer;padding:0;">Clear Selection</button>
+                    </div>
+                    <input type="text" id="aiPatternFilter" placeholder="Filter patterns (e.g. Sliding Window, BFS, Dynamic Programming, Two Pointers)..." oninput="filterAIPatterns()" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:0.85rem;margin-bottom:10px;box-sizing:border-box;">
+                    <div id="aiPatternChips" style="max-height:190px;overflow-y:auto;display:flex;flex-wrap:wrap;gap:8px;padding:10px;border:1px solid #e2e8f0;border-radius:10px;background:#f8fafc;">
+                        <span style="font-size:0.82rem;color:var(--muted);padding:8px;">Loading patterns...</span>
+                    </div>
+                </div>
+
+                <!-- 2 & 3. Parameters Grid -->
+                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:16px;margin-bottom:18px;">
+                    <!-- Target Difficulty -->
+                    <div style="background:#f8fafc;padding:14px 16px;border-radius:10px;border:1px solid #e2e8f0;">
+                        <label style="display:block;font-size:0.8rem;font-weight:700;color:#334155;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px;">2. Target Difficulty</label>
+                        <div style="display:flex;gap:16px;align-items:center;">
+                            <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;font-weight:500;">
+                                <input type="radio" name="aiDifficulty" value="easy"> Easy
+                            </label>
+                            <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;font-weight:500;">
+                                <input type="radio" name="aiDifficulty" value="medium" checked> Medium
+                            </label>
+                            <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;font-weight:500;">
+                                <input type="radio" name="aiDifficulty" value="hard"> Hard
+                            </label>
+                        </div>
+                        <p style="font-size:0.75rem;color:var(--muted);margin:8px 0 0 0;">Configures time-complexity bounds and constraint ceilings.</p>
+                    </div>
+
+                    <!-- Solution Language Preference -->
+                    <div style="background:#f8fafc;padding:14px 16px;border-radius:10px;border:1px solid #e2e8f0;">
+                        <label style="display:block;font-size:0.8rem;font-weight:700;color:#334155;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">3. Reference Solution Language</label>
+                        <select id="aiLangPref" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.85rem;box-sizing:border-box;background:#ffffff;">
+                            <option value="C++">C++ (Standard STL - Fast I/O)</option>
+                            <option value="Python">Python 3 (Standard Collections)</option>
+                            <option value="Java">Java (Java 17 Standard Library)</option>
+                            <option value="JavaScript">JavaScript (Node.js ES6+)</option>
+                        </select>
+                        <p style="font-size:0.75rem;color:var(--muted);margin:8px 0 0 0;">Language used for generating the canonical reference solution & proof.</p>
+                    </div>
+                </div>
+
+                <!-- 4. Special Directives & Context -->
+                <div style="margin-bottom:18px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                        <label style="display:block;font-size:0.8rem;font-weight:700;color:#334155;text-transform:uppercase;letter-spacing:0.5px;">4. Context & Special Directives (Optional)</label>
+                        <span style="font-size:0.75rem;color:var(--muted);">Narrative scenarios, scale constraints, edge conditions</span>
+                    </div>
+                    <textarea id="aiCustomNotes" rows="3" placeholder="e.g. Frame as a distributed cloud packet routing issue. Scale N up to 2*10^5 with O(N log N) limit. Require handling duplicate keys and negative values." style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:0.85rem;font-family:inherit;box-sizing:border-box;resize:vertical;line-height:1.5;"></textarea>
+                </div>
+
+                <button class="btn btn-primary" id="btnGenerateProblem" onclick="generateAIProblem()" style="width:100%;padding:13px;font-weight:700;font-size:0.95rem;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:8px;">
+                    <span>Generate Problem with AI</span>
+                </button>
+                <div id="aiStudioStatus" style="margin-top:12px;font-size:0.84rem;font-weight:600;display:none;text-align:center;"></div>
+            </div>
+
+            <!-- Full-Width Inspection Workbench (Rendered dynamically when draft is loaded or generated) -->
+            <div id="aiWorkbenchCard" class="form-card" style="display:none;margin-bottom:20px;border:1px solid #cbd5e1;box-shadow:0 4px 20px -2px rgba(0,0,0,0.06);">
+                <div id="aiWorkbenchContent">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;border-bottom:1px solid #f1f5f9;padding-bottom:14px;flex-wrap:wrap;gap:12px;">
+                        <div>
+                            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
                                 <span id="wbDiffBadge" class="ai-badge medium">Medium</span>
-                                <span id="wbTags" style="margin-left:8px;font-size:0.78rem;color:var(--muted);font-weight:600;"></span>
-                                <h2 id="wbTitle" style="font-size:1.25rem;font-weight:700;color:#0f172a;margin:8px 0 0 0;"></h2>
+                                <span id="wbTags" style="font-size:0.82rem;color:var(--muted);font-weight:600;"></span>
                             </div>
-                            <button class="btn btn-success" id="btnPublishProblem" onclick="publishActiveAIDraft()" style="display:flex;align-items:center;gap:6px;">
+                            <h2 id="wbTitle" style="font-size:1.35rem;font-weight:700;color:#0f172a;margin:10px 0 0 0;"></h2>
+                        </div>
+                        <div style="display:flex;gap:10px;align-items:center;">
+                            <button class="btn btn-secondary" onclick="document.getElementById('aiWorkbenchCard').style.display='none'" style="padding:8px 14px;font-size:0.85rem;">Close Workbench</button>
+                            <button class="btn btn-success" id="btnPublishProblem" onclick="publishActiveAIDraft()" style="display:flex;align-items:center;gap:6px;padding:8px 16px;font-size:0.85rem;">
                                 <span>Publish to Problem Bank</span>
                             </button>
                         </div>
+                    </div>
 
-                        <div style="margin-bottom:16px;">
-                            <label style="font-size:0.75rem;font-weight:700;color:#64748b;text-transform:uppercase;">Statement Preview</label>
-                            <div id="wbStatement" style="background:#f8fafc;padding:12px 16px;border-radius:8px;font-size:0.88rem;line-height:1.6;color:#334155;max-height:220px;overflow-y:auto;border:1px solid #e2e8f0;margin-top:4px;"></div>
-                        </div>
+                    <div style="margin-bottom:18px;">
+                        <label style="font-size:0.78rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Statement Preview</label>
+                        <div id="wbStatement" style="background:#f8fafc;padding:16px 18px;border-radius:8px;font-size:0.9rem;line-height:1.65;color:#334155;max-height:280px;overflow-y:auto;border:1px solid #e2e8f0;margin-top:6px;"></div>
+                    </div>
 
-                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
-                            <div>
-                                <label style="font-size:0.75rem;font-weight:700;color:#64748b;">INPUT FORMAT</label>
-                                <div id="wbInputFormat" style="background:#f8fafc;padding:8px 12px;border-radius:6px;font-size:0.8rem;border:1px solid #e2e8f0;white-space:pre-wrap;margin-top:4px;"></div>
-                            </div>
-                            <div>
-                                <label style="font-size:0.75rem;font-weight:700;color:#64748b;">OUTPUT FORMAT</label>
-                                <div id="wbOutputFormat" style="background:#f8fafc;padding:8px 12px;border-radius:6px;font-size:0.8rem;border:1px solid #e2e8f0;white-space:pre-wrap;margin-top:4px;"></div>
-                            </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px;">
+                        <div>
+                            <label style="font-size:0.78rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Input Format</label>
+                            <div id="wbInputFormat" style="background:#f8fafc;padding:10px 14px;border-radius:8px;font-size:0.84rem;border:1px solid #e2e8f0;white-space:pre-wrap;margin-top:6px;"></div>
                         </div>
+                        <div>
+                            <label style="font-size:0.78rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Output Format</label>
+                            <div id="wbOutputFormat" style="background:#f8fafc;padding:10px 14px;border-radius:8px;font-size:0.84rem;border:1px solid #e2e8f0;white-space:pre-wrap;margin-top:6px;"></div>
+                        </div>
+                    </div>
 
-                        <div style="margin-bottom:16px;">
-                            <label style="font-size:0.75rem;font-weight:700;color:#64748b;">CONSTRAINTS</label>
-                            <div id="wbConstraints" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;"></div>
-                        </div>
+                    <div style="margin-bottom:18px;">
+                        <label style="font-size:0.78rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Constraints</label>
+                        <div id="wbConstraints" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;"></div>
+                    </div>
 
-                        <div style="margin-bottom:16px;">
-                            <label style="font-size:0.75rem;font-weight:700;color:#64748b;">SAMPLES & HIDDEN TEST CASES</label>
-                            <div id="wbTestcases" style="margin-top:6px;display:flex;flex-direction:column;gap:8px;max-height:180px;overflow-y:auto;"></div>
-                        </div>
+                    <div style="margin-bottom:18px;">
+                        <label style="font-size:0.78rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Sample Cases & Hidden Edge Tests</label>
+                        <div id="wbTestcases" style="margin-top:8px;display:grid;grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));gap:10px;max-height:260px;overflow-y:auto;"></div>
+                    </div>
 
-                        <div style="background:#f1f5f9;padding:12px;border-radius:8px;border:1px solid #e2e8f0;">
-                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-                                <label style="font-size:0.75rem;font-weight:700;color:#475569;">REFERENCE APPROACH</label>
-                                <span id="wbComplexity" style="font-family:monospace;font-size:0.75rem;color:#4338ca;font-weight:700;"></span>
-                            </div>
-                            <p id="wbIdea" style="font-size:0.82rem;color:#334155;margin:0;line-height:1.4;"></p>
+                    <div style="background:#f1f5f9;padding:14px 16px;border-radius:8px;border:1px solid #e2e8f0;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:6px;">
+                            <label style="font-size:0.78rem;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.5px;">Canonical Reference Approach</label>
+                            <span id="wbComplexity" style="font-family:monospace;font-size:0.78rem;color:#4338ca;font-weight:700;"></span>
                         </div>
+                        <p id="wbIdea" style="font-size:0.85rem;color:#334155;margin:0;line-height:1.5;"></p>
                     </div>
                 </div>
             </div>
@@ -2816,6 +2836,7 @@
                 const isSel = selectedAIPatterns.has(p);
                 return `<div class="ai-chip ${isSel ? 'selected' : ''}" onclick="toggleAIPattern('${escapeHtml(p)}')">${escapeHtml(p)}</div>`;
             }).join('');
+            updatePatternCountBadge();
         }
 
         function toggleAIPattern(pattern) {
@@ -2825,6 +2846,23 @@
                 selectedAIPatterns.add(pattern);
             }
             filterAIPatterns();
+            updatePatternCountBadge();
+        }
+
+        function clearSelectedPatterns() {
+            selectedAIPatterns.clear();
+            filterAIPatterns();
+            updatePatternCountBadge();
+        }
+
+        function updatePatternCountBadge() {
+            const badge = document.getElementById('aiPatternCountBadge');
+            if (badge) {
+                const count = selectedAIPatterns.size;
+                badge.textContent = `${count} Pattern${count === 1 ? '' : 's'} Selected`;
+                badge.style.background = count > 0 ? '#e0e7ff' : '#f1f5f9';
+                badge.style.color = count > 0 ? '#4338ca' : '#475569';
+            }
         }
 
         function filterAIPatterns() {
@@ -2886,8 +2924,17 @@
 
         function renderAIWorkbench(prob) {
             activeAIDraft = prob;
-            document.getElementById('aiWorkbenchPlaceholder').style.display = 'none';
-            document.getElementById('aiWorkbenchContent').style.display = 'block';
+            const wbCard = document.getElementById('aiWorkbenchCard');
+            if (wbCard) {
+                wbCard.style.display = 'block';
+                setTimeout(() => {
+                    wbCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 60);
+            }
+            const placeholder = document.getElementById('aiWorkbenchPlaceholder');
+            if (placeholder) placeholder.style.display = 'none';
+            const content = document.getElementById('aiWorkbenchContent');
+            if (content) content.style.display = 'block';
 
             // Title & Badges
             document.getElementById('wbTitle').textContent = prob.title || 'Untitled';
@@ -3041,7 +3088,6 @@
                 const data = await res.json();
                 if (data.success && data.problem) {
                     renderAIWorkbench(data.problem);
-                    window.scrollTo({ top: 400, behavior: 'smooth' });
                 }
             } catch (err) {
                 alert('Could not load draft: ' + err.message);
