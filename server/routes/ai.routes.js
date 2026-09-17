@@ -273,35 +273,61 @@ router.post('/publish-problem/:id', async (req, res) => {
         const funcName = draft.function_name || toCamelCase(draft.title || 'solution');
         const starterCode = draft.starter_code || generateStarterTemplates(funcName);
 
-        // 1. Insert into main problems table
-        const insertProblemSql = `
-            INSERT INTO problems (
-                title, description, difficulty, points, function_name, constraints,
-                input_format, output_format, pattern_tags, ai_generated,
-                source_reference, reference_approach, created_by, is_active
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, TRUE, $10, $11, $12, TRUE)
-            RETURNING *;
-        `;
-
         const points = diffNormalized === 'Easy' ? 10 : (diffNormalized === 'Medium' ? 20 : 30);
         const constraintsStr = Array.isArray(draft.constraints) ? draft.constraints.join('\n') : JSON.stringify(draft.constraints);
 
-        const { rows: newProblems } = await db.query(insertProblemSql, [
-            draft.title,
-            draft.statement,
-            diffNormalized,
-            points,
-            funcName,
-            constraintsStr,
-            draft.input_format,
-            draft.output_format,
-            JSON.stringify(draft.pattern_tags),
-            draft.source_reference,
-            JSON.stringify(draft.reference_approach),
-            req.user?.id || null
-        ]);
+        const existingProb = await db.query(`SELECT id FROM problems WHERE title = $1`, [draft.title]);
+        let publishedProblem;
 
-        const publishedProblem = newProblems[0];
+        if (existingProb.rowCount > 0) {
+            const updateSql = `
+                UPDATE problems
+                SET description = $1, difficulty = $2, points = $3, function_name = $4, constraints = $5,
+                    input_format = $6, output_format = $7, pattern_tags = $8, ai_generated = TRUE,
+                    source_reference = $9, reference_approach = $10, is_active = TRUE, updated_at = NOW()
+                WHERE id = $11
+                RETURNING *;
+            `;
+            const { rows } = await db.query(updateSql, [
+                draft.statement,
+                diffNormalized,
+                points,
+                funcName,
+                constraintsStr,
+                draft.input_format,
+                draft.output_format,
+                JSON.stringify(draft.pattern_tags),
+                draft.source_reference,
+                JSON.stringify(draft.reference_approach),
+                existingProb.rows[0].id
+            ]);
+            publishedProblem = rows[0];
+            await db.query('DELETE FROM test_cases WHERE problem_id = $1', [publishedProblem.id]);
+        } else {
+            const insertProblemSql = `
+                INSERT INTO problems (
+                    title, description, difficulty, points, function_name, constraints,
+                    input_format, output_format, pattern_tags, ai_generated,
+                    source_reference, reference_approach, created_by, is_active
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, TRUE, $10, $11, $12, TRUE)
+                RETURNING *;
+            `;
+            const { rows: newProblems } = await db.query(insertProblemSql, [
+                draft.title,
+                draft.statement,
+                diffNormalized,
+                points,
+                funcName,
+                constraintsStr,
+                draft.input_format,
+                draft.output_format,
+                JSON.stringify(draft.pattern_tags),
+                draft.source_reference,
+                JSON.stringify(draft.reference_approach),
+                req.user?.id || null
+            ]);
+            publishedProblem = newProblems[0];
+        }
 
         // 2. Insert Starter Code for multi-language judge
         for (const [lang, code] of Object.entries(starterCode)) {
