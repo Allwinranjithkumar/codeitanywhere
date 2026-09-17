@@ -255,6 +255,17 @@ async function initDB() {
         );
     `);
 
+    // Complete Post-Event Contest AI Reports
+    await query(`
+        CREATE TABLE IF NOT EXISTS contest_ai_reports (
+            id                     SERIAL PRIMARY KEY,
+            contest_id             INTEGER NOT NULL REFERENCES contests(id) ON DELETE CASCADE,
+            report_data            JSONB NOT NULL,
+            deterministic_metrics  JSONB NOT NULL,
+            created_at             TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+    `);
+
     // ── Indexes ──────────────────────────────
     await query(`CREATE INDEX IF NOT EXISTS idx_submissions_user_id    ON submissions(user_id);`);
     await query(`CREATE INDEX IF NOT EXISTS idx_submissions_contest_id  ON submissions(contest_id);`);
@@ -268,6 +279,7 @@ async function initDB() {
     await query(`CREATE INDEX IF NOT EXISTS idx_ai_problems_pattern_tags ON ai_generated_problems USING GIN (pattern_tags);`);
     await query(`CREATE INDEX IF NOT EXISTS idx_ai_problems_status       ON ai_generated_problems (status);`);
     await query(`CREATE INDEX IF NOT EXISTS idx_contest_ai_analyses_contest ON contest_ai_analyses (contest_id);`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_contest_ai_reports_contest  ON contest_ai_reports (contest_id);`);
 
     // Ensure problem constraints and mathematical descriptions are fully populated
     try {

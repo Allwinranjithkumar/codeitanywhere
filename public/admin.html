@@ -858,41 +858,221 @@
         .ai-card-glow {
             background: white;
             border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            border-radius: 14px;
+            padding: 22px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.03);
+            margin-bottom: 22px;
+        }
+        .report-sec-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .report-sec-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 0;
+        }
+        /* Scorecard Grid */
+        .scorecard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 14px;
             margin-bottom: 20px;
         }
-        .ai-badge {
-            display: inline-block;
-            padding: 3px 8px;
-            border-radius: 6px;
+        .scorecard-tile {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 14px 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .scorecard-tile:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 14px rgba(0,0,0,0.04);
+        }
+        .scorecard-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+        .scorecard-val {
+            font-size: 1.45rem;
+            font-weight: 800;
+            color: #0f172a;
+            line-height: 1.1;
+        }
+        .scorecard-sub {
+            font-size: 0.78rem;
+            color: #475569;
+            margin-top: 6px;
+            line-height: 1.35;
+        }
+
+        /* Status & Difficulty Badges */
+        .pill-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 9px;
+            border-radius: 99px;
             font-size: 0.72rem;
             font-weight: 700;
             text-transform: uppercase;
+            letter-spacing: 0.3px;
         }
-        .ai-badge.easy { background: #dcfce7; color: #15803d; }
-        .ai-badge.medium { background: #fef3c7; color: #b45309; }
-        .ai-badge.hard { background: #fee2e2; color: #b91c1c; }
-        .insight-card {
+        .pill-badge.green { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+        .pill-badge.yellow { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+        .pill-badge.red { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+        .pill-badge.purple { background: #ede9fe; color: #6d28d9; border: 1px solid #ddd6fe; }
+        .pill-badge.gray { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+
+        /* Problem-wise Table */
+        .report-table-wrap {
+            overflow-x: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            background: white;
+        }
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.84rem;
+        }
+        .report-table th {
             background: #f8fafc;
-            border-left: 4px solid #6366f1;
-            border-radius: 0 8px 8px 0;
-            padding: 12px 16px;
-            margin-bottom: 10px;
-            font-size: 0.88rem;
-            line-height: 1.5;
-            color: #1e293b;
+            padding: 10px 14px;
+            text-align: left;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid #e2e8f0;
+            white-space: nowrap;
         }
-        .suggestion-card {
-            background: #ecfdf5;
-            border-left: 4px solid #10b981;
-            border-radius: 0 8px 8px 0;
-            padding: 12px 16px;
+        .report-table td {
+            padding: 12px 14px;
+            border-bottom: 1px solid #f1f5f9;
+            color: #1e293b;
+            vertical-align: top;
+            line-height: 1.45;
+        }
+        .report-table tr:hover td {
+            background: #fdfdfd;
+        }
+
+        /* DSA Pattern 3-Column Grid */
+        .pattern-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+        }
+        .pattern-col {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px;
+        }
+        .pattern-col-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .pattern-item {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            font-size: 0.82rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+
+        /* Integrity Review Section */
+        .integrity-box {
+            background: #fffbeb;
+            border: 1px solid #fef3c7;
+            border-left: 5px solid #f59e0b;
+            border-radius: 10px;
+            padding: 16px;
+        }
+        .integrity-evidence-list {
+            list-style: none;
+            padding: 0;
+            margin: 10px 0 0 0;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .integrity-evidence-list li {
+            font-size: 0.82rem;
+            color: #92400e;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .integrity-disclaimer {
+            font-size: 0.76rem;
+            color: #78350f;
+            font-style: italic;
+            margin-top: 12px;
+            padding-top: 8px;
+            border-top: 1px dashed #fde68a;
+        }
+
+        /* Actionable Recommendations */
+        .rec-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 14px;
+        }
+        .rec-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+        }
+        .rec-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             margin-bottom: 10px;
+        }
+        .rec-action {
             font-size: 0.88rem;
-            line-height: 1.5;
-            color: #065f46;
+            font-weight: 600;
+            color: #0f172a;
+            line-height: 1.45;
+            margin-bottom: 10px;
+        }
+        .rec-evidence {
+            font-size: 0.78rem;
+            color: #64748b;
+            background: #f8fafc;
+            border-radius: 6px;
+            padding: 8px 10px;
+            line-height: 1.35;
         }
     </style>
 </head>
@@ -1529,55 +1709,161 @@
                 <div id="analystStatus" style="margin-top:10px;font-size:0.82rem;font-weight:600;display:none;"></div>
             </div>
 
-            <!-- Analyst Report Display -->
-            <div id="analystReportWrap" style="display:none;">
-                <!-- Executive Summary -->
-                <div class="ai-card-glow" style="border-top:4px solid #6366f1;">
-                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-                        <span style="font-size:1.4rem;">📋</span>
-                        <h3 style="margin:0;font-size:1.1rem;color:#0f172a;">Executive Contest Summary</h3>
+            <!-- Analyst Report Display (7 Dedicated Sections) -->
+            <div id="analystReportWrap" style="display:none;margin-top:20px;">
+
+                <!-- 1. Executive Contest Summary -->
+                <div class="ai-card-glow" style="border-top:4px solid #4f46e5;">
+                    <div class="report-sec-header">
+                        <div class="report-sec-title">
+                            <span style="font-size:1.4rem;">📋</span>
+                            <span>1. Executive Contest Summary</span>
+                        </div>
+                        <span id="anReportBadge" class="pill-badge purple">AI Verified</span>
                     </div>
-                    <p id="anExecutiveSummary" style="font-size:0.92rem;line-height:1.65;color:#334155;margin:0;"></p>
+                    <p id="anExecutiveSummary" style="font-size:0.95rem;line-height:1.75;color:#334155;margin:0;font-weight:450;"></p>
                 </div>
 
-                <!-- Insights & Suggestions Grid -->
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
-                    <div class="ai-card-glow" style="margin-bottom:0;">
-                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-                            <span style="font-size:1.2rem;">🔍</span>
-                            <h3 style="margin:0;font-size:1rem;color:#0f172a;">Key Quantitative Insights</h3>
+                <!-- 2. Contest Health Scorecard -->
+                <div class="ai-card-glow" style="border-top:4px solid #06b6d4;">
+                    <div class="report-sec-header">
+                        <div class="report-sec-title">
+                            <span style="font-size:1.4rem;">📊</span>
+                            <span>2. Contest Health Scorecard</span>
                         </div>
-                        <div id="anKeyInsights"></div>
+                        <span style="font-size:0.75rem;color:var(--muted);font-weight:600;">Deterministic Backend Telemetry</span>
                     </div>
-                    <div class="ai-card-glow" style="margin-bottom:0;">
-                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-                            <span style="font-size:1.2rem;">💡</span>
-                            <h3 style="margin:0;font-size:1rem;color:#0f172a;">Actionable Recommendations</h3>
-                        </div>
-                        <div id="anSuggestions"></div>
+                    <div class="scorecard-grid" id="anScorecardGrid">
+                        <!-- Rendered dynamically -->
                     </div>
                 </div>
 
-                <!-- Student Diagnostics Table -->
-                <div class="table-card">
-                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-                        <span style="font-size:1.2rem;">🎓</span>
-                        <h3 style="margin:0;font-size:1rem;">Participant Diagnostic Feedback Samples</h3>
+                <!-- 3. Problem-Wise Analysis -->
+                <div class="ai-card-glow" style="border-top:4px solid #8b5cf6;">
+                    <div class="report-sec-header">
+                        <div class="report-sec-title">
+                            <span style="font-size:1.4rem;">🧩</span>
+                            <span>3. Problem-Wise Analysis & Verdict Breakdown</span>
+                        </div>
+                        <span style="font-size:0.75rem;color:var(--muted);font-weight:600;">Observed vs Expected Difficulty & Bottlenecks</span>
                     </div>
-                    <div class="table-wrap">
-                        <table>
+                    <div class="report-table-wrap">
+                        <table class="report-table">
                             <thead>
                                 <tr>
-                                    <th style="width:140px;">Participant ID</th>
-                                    <th>Personalized Pedagogical Tip</th>
+                                    <th style="min-width:140px;">Problem</th>
+                                    <th style="min-width:110px;">Pattern Tags</th>
+                                    <th style="min-width:90px;">Expected</th>
+                                    <th style="min-width:90px;">Observed</th>
+                                    <th style="min-width:80px;">Solve Rate</th>
+                                    <th style="min-width:120px;">Failure Pattern</th>
+                                    <th style="min-width:240px;">AI Interpretation</th>
+                                    <th style="min-width:220px;">Recommendation</th>
                                 </tr>
                             </thead>
-                            <tbody id="anFeedbackBody">
-                                <tr><td colspan="2" class="empty">No individual participant notes available.</td></tr>
+                            <tbody id="anProblemsTableBody">
+                                <tr><td colspan="8" class="empty">No problem metrics available.</td></tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
+
+                <!-- 4. DSA Pattern & Skill Insights -->
+                <div class="ai-card-glow" style="border-top:4px solid #10b981;">
+                    <div class="report-sec-header">
+                        <div class="report-sec-title">
+                            <span style="font-size:1.4rem;">🧠</span>
+                            <span>4. DSA Pattern & Skill Insights</span>
+                        </div>
+                        <span style="font-size:0.75rem;background:#ecfdf5;color:#047857;padding:3px 8px;border-radius:12px;font-weight:600;">CodeItAnywhere Skill Matrix</span>
+                    </div>
+                    <p style="font-size:0.84rem;color:#64748b;margin-bottom:14px;">
+                        Aggregated mastery across algorithmic paradigms based on participants' attempts, verdict distributions, and solve success rates.
+                    </p>
+                    <div class="pattern-grid" id="anPatternsGrid">
+                        <!-- Rendered dynamically into Strengths, Developing, Improvement Needed -->
+                    </div>
+                </div>
+
+                <!-- 5. Integrity Review -->
+                <div class="ai-card-glow" id="anIntegritySection" style="border-top:4px solid #f59e0b;background:#fffdfa;">
+                    <div class="report-sec-header">
+                        <div class="report-sec-title">
+                            <span style="font-size:1.4rem;">🛡️</span>
+                            <span>5. Contest Integrity & Proctored Signal Review</span>
+                        </div>
+                        <span id="anIntegrityRiskBadge" class="pill-badge yellow">Risk: Medium</span>
+                    </div>
+                    
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:12px;margin-bottom:16px;" id="anIntegrityCountsGrid">
+                        <!-- Dynamic counters for tab switches, pastes, flagged sessions, similarity pairs -->
+                    </div>
+
+                    <div style="background:#ffffff;border:1px solid #fed7aa;border-radius:8px;padding:14px;margin-bottom:14px;">
+                        <h4 style="margin:0 0 6px 0;font-size:0.9rem;color:#9a3412;">Diagnostic Summary</h4>
+                        <p id="anIntegritySummary" style="font-size:0.86rem;line-height:1.55;color:#334155;margin:0;"></p>
+                    </div>
+
+                    <div style="margin-bottom:14px;">
+                        <h4 style="margin:0 0 6px 0;font-size:0.85rem;color:#475569;text-transform:uppercase;letter-spacing:0.5px;">Flagged Evidence & Patterns</h4>
+                        <ul id="anIntegrityEvidenceList" style="margin:0;padding-left:20px;font-size:0.84rem;color:#475569;line-height:1.6;">
+                        </ul>
+                    </div>
+
+                    <div style="background:#fef3c7;border-left:4px solid #f59e0b;padding:10px 14px;border-radius:0 8px 8px 0;margin-bottom:14px;">
+                        <b style="font-size:0.82rem;color:#92400e;">Recommended Organizer Action:</b>
+                        <span id="anIntegrityAction" style="font-size:0.82rem;color:#78350f;margin-left:4px;"></span>
+                    </div>
+
+                    <div style="font-size:0.75rem;color:#94a3b8;font-style:italic;border-top:1px solid #ffedd5;padding-top:8px;">
+                        ⚠️ <span id="anIntegrityDisclaimer">Integrity signals are indicators for review only. They do not establish misconduct or plagiarism.</span>
+                    </div>
+                </div>
+
+                <!-- 6. Actionable Recommendations -->
+                <div class="ai-card-glow" style="border-top:4px solid #3b82f6;">
+                    <div class="report-sec-header">
+                        <div class="report-sec-title">
+                            <span style="font-size:1.4rem;">💡</span>
+                            <span>6. Actionable Pedagogical & Operational Recommendations</span>
+                        </div>
+                        <span style="font-size:0.75rem;color:var(--muted);font-weight:600;">Evidence-Based Organizer Actions</span>
+                    </div>
+                    <div class="rec-grid" id="anRecommendationsGrid">
+                        <!-- Rendered dynamically with Category, Priority, Action, Evidence -->
+                    </div>
+                </div>
+
+                <!-- 7. Optional Participant Feedback (Private) -->
+                <div class="table-card" style="border-top:4px solid #64748b;">
+                    <div class="report-sec-header" style="margin-bottom:10px;">
+                        <div class="report-sec-title">
+                            <span style="font-size:1.4rem;">🎓</span>
+                            <span>7. Participant Pedagogical Feedback (Private & Role-Gated)</span>
+                        </div>
+                        <span style="font-size:0.74rem;background:#f1f5f9;color:#475569;padding:3px 8px;border-radius:12px;font-weight:600;">Authorized View Only</span>
+                    </div>
+                    <p style="font-size:0.82rem;color:#64748b;margin-bottom:14px;">
+                        Confidential individual tips generated to guide student growth without shaming or penalty disclosure.
+                    </p>
+                    <div class="report-table-wrap">
+                        <table class="report-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:130px;">Participant ID</th>
+                                    <th style="width:120px;">Performance Band</th>
+                                    <th style="width:160px;">Key Strengths</th>
+                                    <th style="width:160px;">Improvement Areas</th>
+                                    <th>Pedagogical Guidance & Practice Tip</th>
+                                </tr>
+                            </thead>
+                            <tbody id="anFeedbackBody">
+                                <tr><td colspan="5" class="empty">No participant feedback available.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
             </div>
         </div>
 
@@ -2726,8 +3012,42 @@
 
                 sel.innerHTML = '<option value="">Select a contest to analyze...</option>' + 
                     contests.map(c => `<option value="${c.id}">#${c.id} - ${escapeHtml(c.name)} (${c.status})</option>`).join('');
+                
+                sel.onchange = onSelectContestForAnalysis;
             } catch (err) {
                 console.error('Error loading contests for analyst:', err);
+            }
+        }
+
+        async function onSelectContestForAnalysis() {
+            const contestId = document.getElementById('analystContestSelect')?.value;
+            const wrap = document.getElementById('analystReportWrap');
+            const statusEl = document.getElementById('analystStatus');
+            if (!contestId) {
+                if (wrap) wrap.style.display = 'none';
+                if (statusEl) statusEl.style.display = 'none';
+                return;
+            }
+
+            statusEl.style.display = 'block';
+            statusEl.style.color = '#4f46e5';
+            statusEl.textContent = 'Checking for existing contest intelligence report...';
+
+            try {
+                const res = await authFetch(`/api/ai/contest-analysis/${contestId}`);
+                const data = await res.json();
+                if (res.ok && data.success && data.report) {
+                    statusEl.style.color = '#10b981';
+                    statusEl.textContent = `✅ Loaded existing report from ${new Date(data.created_at).toLocaleString()}`;
+                    renderContestAnalysisReport(data.report, data.metrics);
+                } else {
+                    if (wrap) wrap.style.display = 'none';
+                    statusEl.style.color = '#64748b';
+                    statusEl.textContent = 'ℹ️ No post-event report generated yet. Click "Generate Post-Mortem Report" below.';
+                }
+            } catch (err) {
+                if (wrap) wrap.style.display = 'none';
+                statusEl.style.display = 'none';
             }
         }
 
@@ -2749,10 +3069,10 @@
             try {
                 const res = await authFetch(`/api/ai/analyze-contest/${contestId}`, { method: 'POST' });
                 const data = await res.json();
-                if (res.ok && data.success && data.analysis) {
+                if (res.ok && data.success && (data.report || data.analysis)) {
                     statusEl.style.color = '#10b981';
                     statusEl.textContent = '✅ Analysis completed and persisted!';
-                    renderContestAnalysisReport(data.analysis);
+                    renderContestAnalysisReport(data.report || data.analysis, data.metrics);
                 } else {
                     statusEl.style.color = '#ef4444';
                     statusEl.textContent = '❌ ' + (data.error || 'Failed to analyze contest.');
@@ -2766,34 +3086,289 @@
             }
         }
 
-        function renderContestAnalysisReport(an) {
+        function renderContestAnalysisReport(rawReport, metrics) {
+            if (!rawReport) return;
+            const report = rawReport;
+            const m = metrics || {};
             document.getElementById('analystReportWrap').style.display = 'block';
-            document.getElementById('anExecutiveSummary').textContent = an.organizer_summary || 'No summary available.';
 
-            // Key insights
-            const insights = Array.isArray(an.key_insights) ? an.key_insights : [];
-            document.getElementById('anKeyInsights').innerHTML = insights.map(i => 
-                `<div class="insight-card"><b>•</b> ${escapeHtml(i)}</div>`
-            ).join('') || '<p style="color:var(--muted);font-size:0.85rem;">No insights generated.</p>';
+            // ── Section 1: Executive Summary ──
+            const summaryEl = document.getElementById('anExecutiveSummary');
+            summaryEl.textContent = report.executive_summary || report.organizer_summary || 'No summary available.';
 
-            // Suggestions
-            const suggestions = Array.isArray(an.suggestions) ? an.suggestions : [];
-            document.getElementById('anSuggestions').innerHTML = suggestions.map(s => 
-                `<div class="suggestion-card"><b>✓</b> ${escapeHtml(s)}</div>`
-            ).join('') || '<p style="color:var(--muted);font-size:0.85rem;">No suggestions generated.</p>';
+            // ── Section 2: Contest Health Scorecard ──
+            const scGrid = document.getElementById('anScorecardGrid');
+            const p = m.participation || {};
+            const c = m.completion || {};
+            const ch = report.contest_health || {};
+            const ir = report.integrity_review || {};
 
-            // Feedback table
-            const feedbackList = Array.isArray(an.participant_feedback) ? an.participant_feedback : [];
-            const tbody = document.getElementById('anFeedbackBody');
-            if (feedbackList.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="2" class="empty">No specific participant feedback generated.</td></tr>';
+            // Difficulty balance
+            const diffLabel = ch.difficulty_balance?.label || m.difficulty_balance?.label || 'Balanced';
+            const diffBadgeClass = diffLabel.includes('Balanced') ? 'green' : (diffLabel.includes('Imbalanced') ? 'red' : 'yellow');
+            const diffExpl = ch.difficulty_balance?.explanation || m.difficulty_balance?.explanation || '';
+
+            // Engagement
+            const engLabel = ch.engagement?.label || m.engagement?.label || 'Medium';
+            const engBadgeClass = engLabel === 'High' ? 'green' : (engLabel === 'Medium' ? 'purple' : 'yellow');
+            const engExpl = ch.engagement?.explanation || m.engagement?.explanation || '';
+
+            // Integrity risk
+            const riskLevel = ir.risk_level || m.integrity_risk?.risk_level || 'Low';
+            const riskBadgeClass = riskLevel === 'Low' ? 'green' : (riskLevel === 'Medium' ? 'yellow' : (riskLevel === 'High' ? 'red' : 'gray'));
+
+            scGrid.innerHTML = `
+                <div class="scorecard-tile">
+                    <div>
+                        <div class="scorecard-label">👥 Total Participants</div>
+                        <div class="scorecard-val">${p.total_participants ?? m.contest?.total_participants ?? 0}</div>
+                    </div>
+                    <div class="scorecard-sub">${p.total_submissions ?? m.contest?.total_submissions ?? 0} total submissions submitted</div>
+                </div>
+                <div class="scorecard-tile">
+                    <div>
+                        <div class="scorecard-label">⚡ Submissions / User</div>
+                        <div class="scorecard-val">${p.submissions_per_participant != null ? p.submissions_per_participant : 'N/A'}</div>
+                    </div>
+                    <div class="scorecard-sub">Average submission volume per contestant</div>
+                </div>
+                <div class="scorecard-tile">
+                    <div>
+                        <div class="scorecard-label">🎯 Average Solved</div>
+                        <div class="scorecard-val">${c.average_problems_solved != null ? c.average_problems_solved : 'N/A'}</div>
+                    </div>
+                    <div class="scorecard-sub">Median solves: ${c.median_problems_solved != null ? c.median_problems_solved : 'N/A'} problems</div>
+                </div>
+                <div class="scorecard-tile">
+                    <div>
+                        <div class="scorecard-label">⚠️ Zero-Solve Rate</div>
+                        <div class="scorecard-val" style="color:${(c.zero_solve_percentage || 0) > 30 ? '#dc2626' : '#0f172a'}">${c.zero_solve_percentage != null ? c.zero_solve_percentage + '%' : '0%'}</div>
+                    </div>
+                    <div class="scorecard-sub">${m.participant_distribution?.solved_0 || 0} participants did not solve any problem</div>
+                </div>
+                <div class="scorecard-tile">
+                    <div>
+                        <div class="scorecard-label">⚖️ Difficulty Balance</div>
+                        <div style="margin:4px 0;"><span class="pill-badge ${diffBadgeClass}">${escapeHtml(diffLabel)}</span></div>
+                    </div>
+                    <div class="scorecard-sub">${escapeHtml(diffExpl)}</div>
+                </div>
+                <div class="scorecard-tile">
+                    <div>
+                        <div class="scorecard-label">🔥 Engagement Level</div>
+                        <div style="margin:4px 0;"><span class="pill-badge ${engBadgeClass}">${escapeHtml(engLabel)}</span></div>
+                    </div>
+                    <div class="scorecard-sub">${escapeHtml(engExpl)}</div>
+                </div>
+                <div class="scorecard-tile">
+                    <div>
+                        <div class="scorecard-label">🛡️ Integrity Risk</div>
+                        <div style="margin:4px 0;"><span class="pill-badge ${riskBadgeClass}">Risk: ${escapeHtml(riskLevel)}</span></div>
+                    </div>
+                    <div class="scorecard-sub">Manual review advised for suspicious flags</div>
+                </div>
+            `;
+
+            // ── Section 3: Problem-Wise Analysis ──
+            const probTbody = document.getElementById('anProblemsTableBody');
+            const probInsights = Array.isArray(report.problem_insights) ? report.problem_insights : [];
+            if (probInsights.length === 0) {
+                probTbody.innerHTML = '<tr><td colspan="8" class="empty">No problem-level metrics available.</td></tr>';
             } else {
-                tbody.innerHTML = feedbackList.map(fb => `
-                    <tr>
-                        <td><b>Participant #${fb.participant_id}</b></td>
-                        <td style="color:#334155;line-height:1.4;">${escapeHtml(fb.feedback)}</td>
-                    </tr>
+                probTbody.innerHTML = probInsights.map(pi => {
+                    const expDiff = (pi.expected_difficulty || 'unknown').toLowerCase();
+                    const obsDiff = (pi.observed_difficulty || 'unknown').toLowerCase();
+
+                    const expBadge = expDiff === 'easy' ? 'green' : (expDiff === 'medium' ? 'yellow' : (expDiff === 'hard' ? 'red' : 'gray'));
+                    const obsBadge = obsDiff === 'easy' ? 'green' : (obsDiff === 'medium' ? 'yellow' : (obsDiff === 'hard' ? 'red' : 'gray'));
+
+                    const tags = Array.isArray(pi.pattern_tags) ? pi.pattern_tags : [];
+                    const tagsHtml = tags.map(t => `<span class="pill-badge gray" style="margin:2px 2px 2px 0;">${escapeHtml(t)}</span>`).join('') || '<span style="color:var(--muted);">-</span>';
+
+                    // Solve rate display
+                    let srText = 'N/A';
+                    if (pi.solve_rate_percent != null) {
+                        srText = `${pi.solve_rate_percent}%`;
+                    }
+
+                    return `
+                        <tr>
+                            <td>
+                                <b style="color:#0f172a;font-size:0.86rem;">#${escapeHtml(String(pi.problem_id))}</b><br>
+                                <span style="font-weight:600;color:#334155;">${escapeHtml(pi.title || 'Problem')}</span>
+                            </td>
+                            <td>${tagsHtml}</td>
+                            <td><span class="pill-badge ${expBadge}">${expDiff.toUpperCase()}</span></td>
+                            <td><span class="pill-badge ${obsBadge}">${obsDiff.toUpperCase()}</span></td>
+                            <td><b style="color:${(pi.solve_rate_percent || 0) < 30 ? '#dc2626' : '#15803d'}">${srText}</b></td>
+                            <td><span style="font-weight:700;font-size:0.8rem;color:#475569;">${escapeHtml(pi.main_failure_pattern || 'Balanced')}</span></td>
+                            <td style="color:#334155;font-size:0.82rem;line-height:1.5;">${escapeHtml(pi.ai_interpretation || 'No interpretation generated.')}</td>
+                            <td style="color:#1e293b;font-size:0.82rem;line-height:1.5;background:#f8fafc;border-radius:6px;padding:8px 10px;">💡 ${escapeHtml(pi.recommendation || 'No specific recommendation.')}</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            // ── Section 4: DSA Pattern & Skill Insights ──
+            const patGrid = document.getElementById('anPatternsGrid');
+            const patternList = Array.isArray(report.pattern_insights) ? report.pattern_insights : [];
+
+            // Group patterns into Strengths, Developing, Improvement Needed
+            const strengths = [];
+            const developing = [];
+            const needsImprovement = [];
+
+            patternList.forEach(pat => {
+                const cls = (pat.skill_classification || '').toLowerCase();
+                if (cls.includes('strength')) {
+                    strengths.push(pat);
+                } else if (cls.includes('developing')) {
+                    developing.push(pat);
+                } else {
+                    needsImprovement.push(pat);
+                }
+            });
+
+            function renderPatternCards(items, emptyMsg) {
+                if (items.length === 0) {
+                    return `<div style="color:var(--muted);font-size:0.82rem;font-style:italic;padding:8px 0;">${emptyMsg}</div>`;
+                }
+                return items.map(it => `
+                    <div class="pattern-item">
+                        <div class="pattern-item-title">${escapeHtml(it.pattern)}</div>
+                        <div class="pattern-item-desc">${escapeHtml(it.ai_interpretation || '')}</div>
+                        ${it.recommended_practice ? `<div class="pattern-item-rec">🎯 <b>Next:</b> ${escapeHtml(it.recommended_practice)}</div>` : ''}
+                    </div>
                 `).join('');
+            }
+
+            patGrid.innerHTML = `
+                <div class="pattern-col">
+                    <div class="pattern-col-header">
+                        <span style="font-weight:700;font-size:0.85rem;color:#15803d;">🌟 Strengths (≥65% Solve Rate)</span>
+                        <span class="pill-badge green">${strengths.length}</span>
+                    </div>
+                    ${renderPatternCards(strengths, 'No patterns categorized under strength.')}
+                </div>
+                <div class="pattern-col">
+                    <div class="pattern-col-header">
+                        <span style="font-weight:700;font-size:0.85rem;color:#6d28d9;">🌱 Developing (30%–64% Solve Rate)</span>
+                        <span class="pill-badge purple">${developing.length}</span>
+                    </div>
+                    ${renderPatternCards(developing, 'No patterns in developing range.')}
+                </div>
+                <div class="pattern-col">
+                    <div class="pattern-col-header">
+                        <span style="font-weight:700;font-size:0.85rem;color:#b91c1c;">⚠️ Improvement Needed (<30% Solve Rate)</span>
+                        <span class="pill-badge red">${needsImprovement.length}</span>
+                    </div>
+                    ${renderPatternCards(needsImprovement, 'No critical pattern bottlenecks detected.')}
+                </div>
+            `;
+
+            // ── Section 5: Integrity Review ──
+            const integRiskBadge = document.getElementById('anIntegrityRiskBadge');
+            integRiskBadge.className = `pill-badge ${riskBadgeClass}`;
+            integRiskBadge.textContent = `Risk: ${riskLevel}`;
+
+            const integCountsGrid = document.getElementById('anIntegrityCountsGrid');
+            const sigs = m.integrity_signals || m.integrity_risk || {};
+            const pairsCount = Array.isArray(sigs.high_similarity_pairs) ? sigs.high_similarity_pairs.length : 0;
+
+            integCountsGrid.innerHTML = `
+                <div style="background:#fff;border:1px solid #fed7aa;border-radius:8px;padding:10px 14px;">
+                    <div style="font-size:0.72rem;color:#9a3412;font-weight:700;text-transform:uppercase;">Flagged Sessions</div>
+                    <div style="font-size:1.3rem;font-weight:800;color:#c2410c;">${sigs.flagged_sessions_count ?? 0}</div>
+                </div>
+                <div style="background:#fff;border:1px solid #fed7aa;border-radius:8px;padding:10px 14px;">
+                    <div style="font-size:0.72rem;color:#9a3412;font-weight:700;text-transform:uppercase;">Tab Switch Events</div>
+                    <div style="font-size:1.3rem;font-weight:800;color:#c2410c;">${sigs.tab_switch_events ?? 0}</div>
+                </div>
+                <div style="background:#fff;border:1px solid #fed7aa;border-radius:8px;padding:10px 14px;">
+                    <div style="font-size:0.72rem;color:#9a3412;font-weight:700;text-transform:uppercase;">Paste Events</div>
+                    <div style="font-size:1.3rem;font-weight:800;color:#c2410c;">${sigs.paste_events ?? 0}</div>
+                </div>
+                <div style="background:#fff;border:1px solid #fed7aa;border-radius:8px;padding:10px 14px;">
+                    <div style="font-size:0.72rem;color:#9a3412;font-weight:700;text-transform:uppercase;">High Similarity Pairs</div>
+                    <div style="font-size:1.3rem;font-weight:800;color:#c2410c;">${pairsCount}</div>
+                </div>
+            `;
+
+            document.getElementById('anIntegritySummary').textContent = ir.summary || 'No integrity anomalies detected in participant telemetry.';
+            
+            const evidenceList = Array.isArray(ir.evidence) ? ir.evidence : [];
+            const evEl = document.getElementById('anIntegrityEvidenceList');
+            if (evidenceList.length === 0) {
+                evEl.innerHTML = '<li>No abnormal activity patterns recorded.</li>';
+            } else {
+                evEl.innerHTML = evidenceList.map(e => `<li>${escapeHtml(e)}</li>`).join('');
+            }
+
+            document.getElementById('anIntegrityAction').textContent = ir.recommended_action || 'Proceed with standard final standings validation.';
+            document.getElementById('anIntegrityDisclaimer').textContent = ir.disclaimer || 'Integrity signals are indicators for review only. They do not establish misconduct or plagiarism.';
+
+            // ── Section 6: Actionable Recommendations ──
+            const recGrid = document.getElementById('anRecommendationsGrid');
+            const recs = Array.isArray(report.recommendations) ? report.recommendations : [];
+            
+            // Clean filtering to ensure no stray ":" or "suggestions" strings
+            const validRecs = recs.filter(r => r && typeof r === 'object' && r.action);
+
+            if (validRecs.length === 0) {
+                recGrid.innerHTML = '<div style="color:var(--muted);font-size:0.85rem;">No actionable recommendations generated.</div>';
+            } else {
+                recGrid.innerHTML = validRecs.map(rec => {
+                    const prio = (rec.priority || 'Medium').toLowerCase();
+                    const prioBadge = prio === 'high' ? 'red' : (prio === 'medium' ? 'yellow' : 'green');
+                    return `
+                        <div class="rec-card">
+                            <div class="rec-card-header">
+                                <span class="rec-category-badge">${escapeHtml(rec.category || 'Contest Operational')}</span>
+                                <span class="pill-badge ${prioBadge}">${escapeHtml(rec.priority || 'Medium')} Priority</span>
+                            </div>
+                            <div class="rec-action">${escapeHtml(rec.action)}</div>
+                            <div class="rec-evidence">
+                                <b>Linked Evidence:</b> ${escapeHtml(rec.evidence || 'Contest telemetry observation')}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // ── Section 7: Optional Participant Feedback ──
+            const fbTbody = document.getElementById('anFeedbackBody');
+            const fbList = Array.isArray(report.participant_feedback) ? report.participant_feedback : [];
+            
+            if (fbList.length === 0) {
+                fbTbody.innerHTML = '<tr><td colspan="5" class="empty">No individualized participant feedback records generated.</td></tr>';
+            } else {
+                fbTbody.innerHTML = fbList.map(fb => {
+                    const band = (fb.performance_band || 'developing').toLowerCase();
+                    const bandBadge = band === 'advanced' ? 'green' : (band === 'developing' ? 'purple' : 'yellow');
+
+                    const strengths = Array.isArray(fb.strengths) ? fb.strengths : [];
+                    const strHtml = strengths.map(s => `<span class="pill-badge green" style="margin:2px;">${escapeHtml(s)}</span>`).join('') || '<span style="color:var(--muted);">-</span>';
+
+                    const imp = Array.isArray(fb.improvement_areas) ? fb.improvement_areas : [];
+                    const impHtml = imp.map(i => `<span class="pill-badge yellow" style="margin:2px;">${escapeHtml(i)}</span>`).join('') || '<span style="color:var(--muted);">-</span>';
+
+                    return `
+                        <tr>
+                            <td><b>Participant #${escapeHtml(String(fb.participant_id))}</b></td>
+                            <td><span class="pill-badge ${bandBadge}">${escapeHtml(band.toUpperCase())}</span></td>
+                            <td>${strHtml}</td>
+                            <td>${impHtml}</td>
+                            <td style="line-height:1.5;color:#334155;">
+                                ${escapeHtml(fb.feedback || '')}
+                                ${fb.next_practice_recommendation ? `
+                                    <div style="margin-top:6px;padding:6px 10px;background:#eef2ff;border-radius:6px;color:#4338ca;font-size:0.8rem;font-weight:600;">
+                                        🎯 Recommended Practice: ${escapeHtml(fb.next_practice_recommendation)}
+                                    </div>
+                                ` : ''}
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
             }
         }
 

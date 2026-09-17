@@ -348,8 +348,10 @@ router.post('/publish-problem/:id', async (req, res) => {
     }
 });
 
+const { generateContestReport, getLatestContestReport } = require('../services/reportService');
+
 // ─────────────────────────────────────────────────────────────────────────────
-// POST /api/ai/analyze-contest/:contestId — AI Post-Contest Intelligence
+// POST /api/ai/analyze-contest/:contestId — AI Post-Contest Intelligence Report
 // ─────────────────────────────────────────────────────────────────────────────
 router.post('/analyze-contest/:contestId', async (req, res) => {
     try {
@@ -358,194 +360,50 @@ router.post('/analyze-contest/:contestId', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Invalid contest ID.' });
         }
 
-        // 1. Contest Details
-        const contestRes = await db.query(
-            `SELECT id, name, description, start_time, end_time, duration_minutes, status 
-             FROM contests WHERE id = $1`,
-            [contestId]
-        );
-        if (contestRes.rows.length === 0) {
-            return res.status(404).json({ success: false, error: 'Contest not found.' });
-        }
-        const contest = contestRes.rows[0];
-
-        // 2. Problem Performance Metrics
-        const problemStatsQuery = `
-            SELECT 
-                p.id,
-                p.title,
-                p.difficulty,
-                COALESCE(p.pattern_tags, '[]'::jsonb) AS pattern_tags,
-                COUNT(s.id) AS total_submissions,
-                COUNT(DISTINCT CASE WHEN s.status = 'Accepted' THEN s.user_id END) AS solve_count,
-                COALESCE(
-                    ROUND(AVG(
-                        EXTRACT(EPOCH FROM (s.submitted_at - c.start_time))
-                    ) FILTER (WHERE s.status = 'Accepted')), 
-                    0
-                ) AS avg_time_to_first_ac_seconds,
-                COALESCE(
-                    jsonb_object_agg(s.status, s.status_count) FILTER (WHERE s.status IS NOT NULL), 
-                    '{}'::jsonb
-                ) AS wrong_verdicts_distribution
-            FROM contest_problems cp
-            JOIN problems p ON p.id = cp.problem_id
-            JOIN contests c ON c.id = cp.contest_id
-            LEFT JOIN (
-                SELECT 
-                    id, contest_id, problem_id, user_id, status, submitted_at,
-                    COUNT(*) OVER (PARTITION BY problem_id, status) AS status_count
-                FROM submissions
-                WHERE contest_id = $1
-            ) s ON s.problem_id = p.id
-            WHERE cp.contest_id = $1
-            GROUP BY p.id, p.title, p.difficulty, p.pattern_tags;
-        `;
-        const problemStatsRes = await db.query(problemStatsQuery, [contestId]);
-
-        // 3. Participant Telemetry (Leaderboard Sample)
-        const participantsLeaderboardQuery = `
-            SELECT 
-                u.id AS participant_id,
-                u.name,
-                COUNT(DISTINCT CASE WHEN s.status = 'Accepted' THEN s.problem_id END) AS problems_solved,
-                COALESCE(SUM(s.score), 0) AS total_score,
-                COALESCE(ROUND(SUM(EXTRACT(EPOCH FROM (s.submitted_at - c.start_time)))), 0) AS total_time_seconds
-            FROM contest_participants cp
-            JOIN users u ON u.id = cp.user_id
-            JOIN contests c ON c.id = cp.contest_id
-            LEFT JOIN submissions s ON s.contest_id = cp.contest_id AND s.user_id = u.id
-            WHERE cp.contest_id = $1
-            GROUP BY u.id, u.name, c.start_time
-            ORDER BY problems_solved DESC, total_score DESC, total_time_seconds ASC;
-        `;
-        const leaderboardRes = await db.query(participantsLeaderboardQuery, [contestId]);
-        const participants = leaderboardRes.rows;
-        const totalParticipants = participants.length;
-
-        const topParticipants = participants.slice(0, 3);
-        const bottomParticipants = participants.length > 3 ? participants.slice(-3) : [];
-
-        // 4. Anti-cheat / Violations
-        const violationsRes = await db.query(
-            `SELECT type, metadata, occurred_at FROM violations WHERE contest_id = $1`,
-            [contestId]
-        );
-
-        const telemetrySnapshot = {
-            contest_id: contest.id,
-            contest_name: contest.name,
-            num_participants: totalParticipants,
-            duration_minutes: contest.duration_minutes,
-            problems: problemStatsRes.rows,
-            plagiarism_flags: violationsRes.rows,
-            top_participants: topParticipants,
-            bottom_participants: bottomParticipants
-        };
-
-        // 5. Build Prompts
-        const systemMessage = {
-            role: 'system',
-            content: `You are an executive contest director, psychometrics analyst, and algorithmic coach for CodeItAnywhere.
-Ground your analysis strictly on the provided contest telemetry. Produce actionable, constructive post-mortem intelligence.
-Output STRICTLY a valid JSON object.`
-        };
-
-        const userMessage = {
-            role: 'user',
-            content: `Analyze the post-contest telemetry for Contest #${contest.id}: "${contest.name}".
-
-Telemetry Data:
-${JSON.stringify(telemetrySnapshot, null, 2)}
-
-Produce a JSON response strictly conforming to:
-{
-  "organizer_summary": "3-6 sentences reviewing turnout, problem balance, difficulty trajectory, and bottlenecks.",
-  "key_insights": [
-    "3-5 deep quantitative insights directly referencing problem titles, pattern tags, and verdicts."
-  ],
-  "suggestions": [
-    "2-3 concrete pedagogical and operational suggestions for faculty/organizers for future contests."
-  ],
-  "participant_feedback": [
-    {
-      "participant_id": 1,
-      "feedback": "constructive, encouraging 1-2 sentence tip tailored to performance"
-    }
-  ]
-}`
-        };
-
-        // 6. Call LLM
-        let rawAnalysis;
-        try {
-            rawAnalysis = await callLLM([systemMessage, userMessage], { responseFormatJson: true });
-        } catch (llmErr) {
-            console.error('[AI Analyst] LLM call failed:', llmErr.message);
-            return res.status(502).json({
-                success: false,
-                error: `Analysis failed: ${llmErr.message}`
-            });
-        }
-
-        // 7. Parse JSON
-        let parsedAnalysis;
-        try {
-            parsedAnalysis = parseJsonSafely(rawAnalysis);
-        } catch (err) {
-            return res.status(502).json({
-                success: false,
-                error: 'Could not parse AI analysis into valid JSON.',
-                raw: rawAnalysis
-            });
-        }
-
-        // 8. Save into contest_ai_analyses Table
-        const insertAnalysisQuery = `
-            INSERT INTO contest_ai_analyses (
-                contest_id, organizer_summary, key_insights,
-                suggestions, participant_feedback, metrics_snapshot
-            ) VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING *;
-        `;
-
-        const { rows: savedRows } = await db.query(insertAnalysisQuery, [
-            contestId,
-            parsedAnalysis.organizer_summary || 'Analysis generated successfully.',
-            JSON.stringify(parsedAnalysis.key_insights || []),
-            JSON.stringify(parsedAnalysis.suggestions || []),
-            JSON.stringify(parsedAnalysis.participant_feedback || []),
-            JSON.stringify(telemetrySnapshot)
-        ]);
+        const result = await generateContestReport(contestId);
 
         res.status(200).json({
             success: true,
-            analysis: savedRows[0]
+            message: 'Contest intelligence report generated and persisted.',
+            report: result.report_data,
+            metrics: result.deterministic_metrics,
+            analysis: result.report_data,
+            id: result.id,
+            created_at: result.created_at
         });
 
     } catch (err) {
-        console.error('[AI Analyst] Unexpected error:', err);
-        res.status(500).json({ success: false, error: 'Internal Server Error' });
+        console.error('[AI Analyst] Report generation error:', err);
+        res.status(500).json({ success: false, error: err.message || 'Internal Server Error' });
     }
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GET /api/ai/contest-analysis/:contestId — Fetch latest analysis
+// GET /api/ai/contest-analysis/:contestId — Fetch latest report
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/contest-analysis/:contestId', async (req, res) => {
     try {
         const contestId = parseInt(req.params.contestId, 10);
-        const { rows } = await db.query(
-            `SELECT * FROM contest_ai_analyses WHERE contest_id = $1 ORDER BY created_at DESC LIMIT 1`,
-            [contestId]
-        );
-
-        if (rows.length === 0) {
-            return res.status(404).json({ success: false, error: 'No analysis found for this contest yet.' });
+        if (isNaN(contestId)) {
+            return res.status(400).json({ success: false, error: 'Invalid contest ID.' });
         }
 
-        res.json({ success: true, analysis: rows[0] });
+        const reportRecord = await getLatestContestReport(contestId);
+
+        if (!reportRecord) {
+            return res.status(404).json({ success: false, error: 'No report found for this contest yet.' });
+        }
+
+        res.json({
+            success: true,
+            report: reportRecord.report_data,
+            metrics: reportRecord.deterministic_metrics,
+            analysis: reportRecord.report_data,
+            id: reportRecord.id,
+            created_at: reportRecord.created_at
+        });
     } catch (err) {
+        console.error('[AI Analyst] Fetch report error:', err);
         res.status(500).json({ success: false, error: err.message });
     }
 });
