@@ -328,16 +328,27 @@ body::after{
   line-height:1.6;margin-bottom:20px;
 }
 
-/* Highlights Grid */
-.highlights-grid{
-  display:flex;flex-wrap:wrap;justify-content:center;gap:12px;max-width:540px;
+/* Minimal Creator Signature */
+.crafted-by{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:7px 18px;border-radius:99px;
+  background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);
+  font-family:'JetBrains Mono', monospace;font-size:11.5px;color:#94a3b8;
+  letter-spacing:0.04em;margin-top:14px;
+  transition:all 0.25s ease;
+  box-shadow:0 2px 10px rgba(0,0,0,0.3);
 }
-.highlight-pill{
-  display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:10px;
-  background:rgba(18,18,24,0.6);border:1px solid rgba(255,255,255,0.08);
-  font-family:'JetBrains Mono',monospace;font-size:11px;color:#cbd5e1;
+.crafted-by:hover{
+  background:rgba(239,68,68,0.08);
+  border-color:rgba(239,68,68,0.35);
+  color:#f1f5f9;
+  transform:translateY(-1px);
+  box-shadow:0 4px 18px rgba(239,68,68,0.18);
 }
-.highlight-pill i{color:#ef4444}
+.crafted-by strong{
+  color:#ffffff;
+  font-weight:700;
+}
 
 /* ──────────────────────────────────────────────
    RIGHT AUTH: DEDICATED LOGIN & REGISTER CARD
@@ -598,15 +609,9 @@ body::after{
 ============================================================ -->
 <main class="split-layout">
 
-  <!-- LEFT HERO SECTION: CodeItAnywhere Logo & Grid Background Stuff -->
+  <!-- LEFT HERO SECTION: CodeItAnywhere Minimal Hero & 3D Logo -->
   <section class="left-hero">
-    <!-- Top Interactive Badge -->
-    <div class="interactive-badge">
-      <span class="pulse-dot"></span>
-      <span>INTERACTIVE // Drag the CodeItAnywhere logo anywhere</span>
-    </div>
-
-    <!-- Concentric Orbital Target Rings (From previous version) -->
+    <!-- Concentric Orbital Target Rings -->
     <div class="rings-container">
       <span class="orbit-ring orbit-ring--1"></span>
       <span class="orbit-ring orbit-ring--2"></span>
@@ -628,33 +633,17 @@ body::after{
       <span>Snap Logo Back</span>
     </button>
 
-    <!-- Bottom Tag & Headlines -->
-    <div class="hero-tag-badge">
-      <span class="pulse-dot"></span>
-      <span>ONLINE CODE JUDGE & ANTI-CHEAT CONTESTS</span>
-    </div>
-
     <h1 class="hero-headline">
       Fluid interaction meets <span class="red-text">engineering precision.</span>
     </h1>
     <p class="hero-subtext">
-      Cloud-native coding contest platform with automated sandboxed evaluation, Docker execution, and anti-cheat proctoring.
+      Cloud-native coding contest platform with automated sandboxed evaluation and proctoring.
     </p>
 
-    <!-- Highlights Grid -->
-    <div class="highlights-grid">
-      <div class="highlight-pill">
-        <i class="fa-brands fa-docker"></i>
-        <span>Sandboxed Docker Judge</span>
-      </div>
-      <div class="highlight-pill">
-        <i class="fa-solid fa-shield-halved"></i>
-        <span>Real-Time Proctoring</span>
-      </div>
-      <div class="highlight-pill">
-        <i class="fa-solid fa-bolt"></i>
-        <span>Sub-second Verdicts</span>
-      </div>
+    <!-- Minimal Creator Credit -->
+    <div class="crafted-by">
+      <span class="pulse-dot"></span>
+      <span>Crafted by <strong>Allwin</strong> & <strong>Rakesh</strong></span>
     </div>
   </section>
 
