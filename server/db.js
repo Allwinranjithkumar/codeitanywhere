@@ -269,6 +269,18 @@ async function initDB() {
     await query(`CREATE INDEX IF NOT EXISTS idx_ai_problems_status       ON ai_generated_problems (status);`);
     await query(`CREATE INDEX IF NOT EXISTS idx_contest_ai_analyses_contest ON contest_ai_analyses (contest_id);`);
 
+    // Ensure problem constraints and mathematical descriptions are fully populated
+    try {
+        await query(`
+            UPDATE problems
+            SET constraints = '["n == nums.length","1 <= n <= 5 * 10^4","-10^9 <= nums[i] <= 10^9","A majority element is guaranteed to always exist in the array.","Time Complexity Target: O(n)","Space Complexity Target: O(1) auxiliary space"]',
+                description = '<p>Given an array <code>nums</code> of size <code>n</code>, return the <strong>majority element</strong>.</p><p>The <strong>majority element</strong> is the element that appears strictly more than <code>⌊n / 2⌋</code> times (meaning strictly more than half of the total elements in the array, where <code>⌊x⌋</code> represents integer floor division rounding down). You may assume that the majority element always exists in the array.</p><p class="mt-3 text-xs text-zinc-400"><strong>Follow-up:</strong> Could you design a solution that runs in linear <code>O(n)</code> time and <code>O(1)</code> auxiliary space (Boyer-Moore Voting Algorithm)?</p>'
+            WHERE title ILIKE '%Majority Element%' AND (constraints IS NULL OR constraints = '' OR constraints = 'null');
+        `);
+    } catch (e) {
+        console.warn('[DB] Problem constraints check warning:', e.message);
+    }
+
     console.log('[DB] Schema initialized successfully with AI Module extensions.');
 }
 

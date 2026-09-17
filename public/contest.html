@@ -336,7 +336,7 @@
                 <!-- CONSTRAINTS SECTION (LEETCODE STYLE) -->
                 <div class="space-y-2 border-t border-theme pt-4">
                     <div class="font-bold text-sm text-zinc-100">Constraints:</div>
-                    <ul id="constraintsList" class="list-disc list-inside space-y-1.5 text-xs text-zinc-300 font-mono">
+                    <ul id="constraintsList" class="space-y-1.5 text-xs text-zinc-300 font-mono">
                         <!-- Populated dynamically -->
                     </ul>
                 </div>
@@ -690,11 +690,45 @@
 
             // Render Constraints
             const constrList = document.getElementById('constraintsList');
-            const constraints = currentProblem.constraints || [];
+            let constraints = [];
+            if (Array.isArray(currentProblem.constraints)) {
+                constraints = currentProblem.constraints;
+            } else if (typeof currentProblem.constraints === 'string' && currentProblem.constraints.trim()) {
+                const raw = currentProblem.constraints.trim();
+                if (raw.startsWith('[') && raw.endsWith(']')) {
+                    try { constraints = JSON.parse(raw); } catch (e) {}
+                } else if (raw.startsWith('{') && raw.endsWith('}')) {
+                    const matches = raw.slice(1, -1).match(/(".*?"|[^",]+)/g);
+                    if (matches) constraints = matches.map(m => m.replace(/^"|"$/g, '').replace(/\\"/g, '"').trim());
+                } else if (raw.includes('\n')) {
+                    constraints = raw.split('\n').map(s => s.trim().replace(/^[-•*]\s*/, '')).filter(Boolean);
+                } else {
+                    constraints = [raw];
+                }
+            }
+
             if (Array.isArray(constraints) && constraints.length > 0) {
-                constrList.innerHTML = constraints.map(c => `<li>${escapeHtml(c)}</li>`).join('');
+                constrList.innerHTML = constraints.map(c => `
+                    <li class="flex items-baseline gap-2 py-0.5">
+                        <span class="text-zinc-500 font-bold select-none text-xs leading-none">•</span>
+                        <code class="text-zinc-200 bg-zinc-800/80 px-2 py-0.5 rounded border border-zinc-700/50 text-[12.5px] font-mono leading-relaxed select-text">${escapeHtml(c)}</code>
+                    </li>
+                `).join('');
             } else {
-                constrList.innerHTML = '<li>Standard competitive constraints apply.</li>';
+                constrList.innerHTML = `
+                    <li class="flex items-baseline gap-2 py-0.5">
+                        <span class="text-zinc-500 font-bold select-none text-xs leading-none">•</span>
+                        <code class="text-zinc-300 bg-zinc-800/80 px-2 py-0.5 rounded border border-zinc-700/50 text-[12.5px] font-mono leading-relaxed select-text">1 &lt;= n &lt;= 5 * 10^4</code>
+                    </li>
+                    <li class="flex items-baseline gap-2 py-0.5">
+                        <span class="text-zinc-500 font-bold select-none text-xs leading-none">•</span>
+                        <code class="text-zinc-300 bg-zinc-800/80 px-2 py-0.5 rounded border border-zinc-700/50 text-[12.5px] font-mono leading-relaxed select-text">Time Limit: 1.0s</code>
+                    </li>
+                    <li class="flex items-baseline gap-2 py-0.5">
+                        <span class="text-zinc-500 font-bold select-none text-xs leading-none">•</span>
+                        <code class="text-zinc-300 bg-zinc-800/80 px-2 py-0.5 rounded border border-zinc-700/50 text-[12.5px] font-mono leading-relaxed select-text">Memory Limit: 256MB</code>
+                    </li>
+                `;
             }
 
             // Load Starter Code

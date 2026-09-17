@@ -16,6 +16,43 @@
 
 const db = require('../db');
 
+function normalizeConstraints(raw) {
+    if (!raw) return [];
+    if (Array.isArray(raw)) {
+        return raw.map(s => String(s).trim()).filter(Boolean);
+    }
+    if (typeof raw === 'string') {
+        const trimmed = raw.trim();
+        if (!trimmed) return [];
+        // JSON array format e.g. ["1 <= n <= 10^5", ...]
+        if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+            try {
+                const parsed = JSON.parse(trimmed);
+                if (Array.isArray(parsed)) return parsed.map(s => String(s).trim()).filter(Boolean);
+            } catch (e) {}
+        }
+        // PostgreSQL array literal format e.g. {"1 <= n <= 1000","s consists..."}
+        if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+            const inner = trimmed.slice(1, -1);
+            const matches = inner.match(/(".*?"|[^",]+)/g);
+            if (matches) {
+                return matches
+                    .map(m => m.replace(/^"|"$/g, '').replace(/\\"/g, '"').trim())
+                    .filter(Boolean);
+            }
+        }
+        // Newline-separated list
+        if (trimmed.includes('\n')) {
+            return trimmed
+                .split('\n')
+                .map(s => s.trim().replace(/^[-•*]\s*/, ''))
+                .filter(Boolean);
+        }
+        return [trimmed.replace(/^[-•*]\s*/, '')];
+    }
+    return [];
+}
+
 // ──────────────────────────────────────────────
 // Student-facing: sample cases only, no hidden test data
 // ──────────────────────────────────────────────
@@ -81,7 +118,7 @@ async function getProblemsForStudent(contestId = null) {
             difficulty:   problem.difficulty,
             points:       problem.points,
             functionName: problem.function_name,
-            constraints:  problem.constraints,
+            constraints:  normalizeConstraints(problem.constraints),
             starterCode,
             // Only sample test cases — hidden test cases are NEVER sent here
             testCases
@@ -120,7 +157,12 @@ async function getProblemsForAdmin() {
         starterCodeResult.rows.filter(sc => sc.problem_id === problem.id)
             .forEach(sc => { starterCode[sc.language] = sc.code; });
 
-        return { ...problem, testCases, starterCode };
+        return { 
+            ...problem, 
+            constraints: normalizeConstraints(problem.constraints),
+            testCases, 
+            starterCode 
+        };
     });
 }
 
@@ -145,6 +187,7 @@ async function getProblemWithTestCases(problemId) {
 
     return {
         ...problem,
+        constraints: normalizeConstraints(problem.constraints),
         functionName: problem.function_name,
         testCases: testCasesResult.rows.map(tc => ({
             input: tc.input_data,
@@ -349,6 +392,7 @@ module.exports = {
     deactivateProblem,
     migrateFromJson: upsertFromJson,
     upsertFromJson,
-    exportProblemsJson
+    exportProblemsJson,
+    normalizeConstraints
 };
 

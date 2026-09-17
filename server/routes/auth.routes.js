@@ -22,7 +22,7 @@ const rateLimit = require('express-rate-limit');
 
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 20,                   // max 20 auth requests per window per IP
+    max: process.env.NODE_ENV === 'development' ? 5000 : 1000, // Accommodate college lab NAT IPs and multi-student testing
     standardHeaders: true,
     legacyHeaders: false,
     message: { error: 'Too many authentication attempts. Please try again in 15 minutes.' }
