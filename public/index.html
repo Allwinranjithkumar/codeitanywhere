@@ -674,22 +674,9 @@ body::after{
         <button class="auth-tab" id="tabBtnRegister" onclick="switchAuthTab('register')">Register</button>
       </div>
 
-      <!-- Social Login Buttons (Google & GitHub) -->
-      <div class="social-login-group">
-        <button type="button" class="btn-social" onclick="handleGoogleLoginClick()">
-          <svg class="social-icon" viewBox="0 0 24 24" width="18" height="18">
-            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-          </svg>
-          <span>Continue with Google</span>
-        </button>
-
-        <button type="button" class="btn-social" onclick="promptSocialLogin('github')">
-          <i class="fa-brands fa-github social-icon text-lg"></i>
-          <span>Continue with GitHub</span>
-        </button>
+      <!-- Official Google Sign-In (Traditional Google OAuth) -->
+      <div class="social-login-group" style="display:flex;justify-content:center;margin-bottom:14px;">
+        <div id="googleSignInBtn" style="display:flex;justify-content:center;width:100%;min-height:44px;"></div>
       </div>
 
       <!-- Divider -->
@@ -743,6 +730,11 @@ body::after{
         </div>
 
         <div class="form-group">
+          <label class="form-label" for="regNo">REGISTER / ROLL NUMBER (OPTIONAL)</label>
+          <input class="form-input" id="regNo" type="text" placeholder="e.g. 21CS101 (Optional)">
+        </div>
+
+        <div class="form-group">
           <label class="form-label" for="regPassword">PASSWORD (MIN 6 CHARACTERS)</label>
           <div class="form-input-wrapper">
             <input class="form-input" id="regPassword" type="password" placeholder="Create a secure password" minlength="6" required autocomplete="new-password">
@@ -770,53 +762,6 @@ body::after{
   </section>
 
 </main>
-
-<!-- ============================================================
-     GOOGLE / SOCIAL ACCOUNT SELECTOR MODAL
-============================================================ -->
-<div class="social-modal" id="socialModal" onclick="closeSocialModal(event)">
-  <div class="social-modal-card" onclick="event.stopPropagation()">
-    <button class="social-modal-close" onclick="closeSocialModal()">&times;</button>
-    
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
-      <div id="socialModalIcon"></div>
-      <div>
-        <h3 style="font-size:16px;font-weight:700" id="socialModalTitle">Sign in with Social</h3>
-        <p style="font-size:12px;color:#94a3b8">Choose or enter your account to continue</p>
-      </div>
-    </div>
-
-    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
-      <!-- Quick Select 1 -->
-      <button type="button" class="btn-social" onclick="executeSocialAuth('developer@codeitanywhere.com', 'Code Dev')">
-        <i class="fa-solid fa-user-astronaut text-red-500" style="color:#ef4444"></i>
-        <div style="text-align:left;line-height:1.3">
-          <div style="font-size:13px;font-weight:700">Code Dev</div>
-          <div style="font-size:11px;color:#94a3b8">developer@codeitanywhere.com</div>
-        </div>
-      </button>
-
-      <!-- Quick Select 2 -->
-      <button type="button" class="btn-social" onclick="executeSocialAuth('coder@gmail.com', 'Alex Coder')">
-        <i class="fa-solid fa-circle-user text-emerald-400" style="color:#34d399"></i>
-        <div style="text-align:left;line-height:1.3">
-          <div style="font-size:13px;font-weight:700">Alex Coder</div>
-          <div style="font-size:11px;color:#94a3b8">coder@gmail.com</div>
-        </div>
-      </button>
-    </div>
-
-    <div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:14px">
-      <label class="form-label" style="margin-bottom:6px;display:block">OR USE ANY EMAIL</label>
-      <div style="display:flex;gap:8px">
-        <input class="form-input" id="customSocialEmail" type="email" placeholder="you@example.com" style="padding:10px 12px;font-size:13px">
-        <button type="button" class="btn-submit" style="width:auto;padding:10px 16px;font-size:12px" onclick="submitCustomSocial()">
-          Connect
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
 
 <!-- ============================================================
      SCRIPTS: Splash Controller, Logo Motion & Auth Logic
@@ -930,10 +875,10 @@ let resetLogoPosition;
 const GOOGLE_CLIENT_ID = '507428935118-cf78r2mqf1qncltn52oeqgtpardjiqnq.apps.googleusercontent.com';
 let currentSocialProvider = 'google';
 
-// ── Google Identity Services (One-Tap & Native Auth) ──
+// ── Google Identity Services (Official Google Sign-In) ──
 function initGoogleIdentity() {
   if (typeof google === 'undefined' || !google.accounts || !google.accounts.id) {
-    setTimeout(initGoogleIdentity, 300);
+    setTimeout(initGoogleIdentity, 200);
     return;
   }
 
@@ -945,31 +890,29 @@ function initGoogleIdentity() {
       cancel_on_tap_outside: true
     });
 
-    // Auto-prompt Google 1-Tap on page load
+    const btn = document.getElementById('googleSignInBtn');
+    if (btn) {
+      google.accounts.id.renderButton(btn, {
+        theme: 'filled_black',
+        size: 'large',
+        type: 'standard',
+        text: 'continue_with',
+        shape: 'pill',
+        width: 320
+      });
+    }
+
+    // Google One-Tap Browser Prompt
     google.accounts.id.prompt();
   } catch (err) {
-    console.warn('[GSI] Initialization notice:', err.message);
+    console.warn('[GSI] Notice:', err.message);
   }
 }
 
-// Triggered when user clicks "Continue with Google"
-function handleGoogleLoginClick() {
-  if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
-    google.accounts.id.prompt((notification) => {
-      // If 1-tap is suppressed by browser policy or closed, open the account modal
-      if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-        promptSocialLogin('google');
-      }
-    });
-  } else {
-    promptSocialLogin('google');
-  }
-}
-
-// Handler for Google Credential Token (One-Tap & Google Auth)
+// Handler for Official Google Credential Token
 async function handleGoogleCredentialResponse(response) {
   if (!response || !response.credential) return;
-  showAuthAlert('Verifying Google credentials...', 'success');
+  showAuthAlert('Verifying Google credentials with backend...', 'success');
 
   try {
     const res = await fetch('/api/social-login', {
@@ -985,81 +928,21 @@ async function handleGoogleCredentialResponse(response) {
     if (res.ok) {
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
-      showAuthAlert(`Authenticated as ${data.user.name || 'Google User'}! Entering arena...`, 'success');
+      showAuthAlert(`Welcome ${data.user.name || 'Coder'}! Entering arena...`, 'success');
       setTimeout(() => {
         window.location.href = data.user.role === 'admin' ? '/admin.html' : '/contest.html';
-      }, 500);
+      }, 400);
     } else {
       showAuthAlert(data.error || 'Google authentication failed.');
     }
   } catch (err) {
-    showAuthAlert('Network error during Google authentication.');
+    showAuthAlert('Network error connecting to backend authentication service.');
   }
 }
 
 window.addEventListener('DOMContentLoaded', () => {
   initGoogleIdentity();
 });
-
-function promptSocialLogin(provider) {
-  currentSocialProvider = provider;
-  const modal = document.getElementById('socialModal');
-  const title = document.getElementById('socialModalTitle');
-  const icon = document.getElementById('socialModalIcon');
-
-  if (provider === 'google') {
-    title.textContent = 'Sign in with Google';
-    icon.innerHTML = `<svg viewBox="0 0 24 24" width="24" height="24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>`;
-  } else {
-    title.textContent = 'Sign in with GitHub';
-    icon.innerHTML = `<i class="fa-brands fa-github text-2xl text-white"></i>`;
-  }
-  modal.classList.add('visible');
-}
-
-function closeSocialModal() {
-  document.getElementById('socialModal').classList.remove('visible');
-}
-
-function submitCustomSocial() {
-  const email = document.getElementById('customSocialEmail').value.trim();
-  if (!email || !email.includes('@')) {
-    return alert('Please enter a valid email address.');
-  }
-  const name = email.split('@')[0];
-  executeSocialAuth(email, name);
-}
-
-async function executeSocialAuth(email, name) {
-  closeSocialModal();
-  showAuthAlert('Connecting with ' + currentSocialProvider + '...', 'success');
-
-  try {
-    const res = await fetch('/api/social-login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        provider: currentSocialProvider,
-        email: email,
-        name: name
-      })
-    });
-    const data = await res.json();
-
-    if (res.ok) {
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      showAuthAlert('Authenticated! Entering arena...', 'success');
-      setTimeout(() => {
-        window.location.href = data.user.role === 'admin' ? '/admin.html' : '/contest.html';
-      }, 500);
-    } else {
-      showAuthAlert(data.error || 'Social login failed.');
-    }
-  } catch (err) {
-    showAuthAlert('Network error connecting to social auth endpoint.');
-  }
-}
 
 function switchAuthTab(tab) {
   clearAuthAlert();
@@ -1156,6 +1039,7 @@ async function handleRegister(e) {
 
   const name = document.getElementById('regName').value.trim();
   const email = document.getElementById('regEmail').value.trim();
+  const reg_no = document.getElementById('regNo')?.value.trim() || null;
   const password = document.getElementById('regPassword').value;
   const btn = document.getElementById('regSubmitBtn');
 
@@ -1173,7 +1057,7 @@ async function handleRegister(e) {
     const res = await fetch('/api/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password })
+      body: JSON.stringify({ name, email, reg_no, password })
     });
     const data = await res.json();
 
