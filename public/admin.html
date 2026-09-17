@@ -1335,10 +1335,10 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Anti-Cheat</label>
+                        <label>Anti-Cheat Proctoring</label>
                         <select id="cAntiCheat">
-                            <option value="true">Enabled</option>
-                            <option value="false">Disabled</option>
+                            <option value="false" selected>Disabled (Off by default)</option>
+                            <option value="true">Enabled (Strict Monitoring)</option>
                         </select>
                     </div>
                 </div>
@@ -2321,16 +2321,40 @@
         <td><span class="badge ${c.status === 'ACTIVE' ? 'badge-success' : c.status === 'ENDED' ? 'badge-muted' : 'badge-info'}">${c.status}</span></td>
         <td>${new Date(c.start_time).toLocaleString()}</td>
         <td>${new Date(c.end_time).toLocaleString()}</td>
-        <td><span class="badge ${c.anti_cheat ? 'badge-success' : 'badge-danger'}">${c.anti_cheat ? 'On' : 'Off'}</span></td>
         <td>
-            <button class="btn btn-outline" style="padding:4px 10px;font-size:0.78rem;" onclick="editContest(${c.id})">Edit</button>
-            ${c.status !== 'ENDED' ? `<button class="btn btn-danger" style="padding:4px 10px;font-size:0.78rem;" onclick="endContest(${c.id})">End</button>` : ''}
+            <span class="badge ${c.anti_cheat ? 'badge-success' : 'badge-danger'}">${c.anti_cheat ? '🛡️ ON' : 'OFF'}</span>
+        </td>
+        <td>
+            <button class="btn btn-outline" style="padding:4px 8px;font-size:0.75rem;" onclick="editContest(${c.id})">Edit</button>
+            <button class="btn ${c.anti_cheat ? 'btn-danger' : 'btn-success'}" style="padding:4px 8px;font-size:0.75rem;" onclick="toggleContestAntiCheat(${c.id}, ${!c.anti_cheat})">
+                ${c.anti_cheat ? 'Disable Proctor' : 'Enable Proctor'}
+            </button>
+            ${c.status !== 'ENDED' ? `<button class="btn btn-danger" style="padding:4px 8px;font-size:0.75rem;" onclick="endContest(${c.id})">End</button>` : ''}
         </td>
     </tr>`).join('');
         }
 
+        async function toggleContestAntiCheat(id, enable) {
+            try {
+                const res = await authFetch(`/api/contests/${id}/anti-cheat`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ enabled: enable })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    alert(data.message);
+                    loadContests();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (err) {
+                alert('Request failed: ' + err.message);
+            }
+        }
+
         function showContestForm() {
             document.getElementById('contestFormId').value = '';
+            document.getElementById('cAntiCheat').value = 'false';
             document.getElementById('contestForm').style.display = 'block';
             document.getElementById('contestForm').scrollIntoView({ behavior: 'smooth' });
         }

@@ -240,6 +240,19 @@ router.post('/log-violation', async (req, res, next) => {
             return res.status(400).json({ error: 'Invalid violation type.' });
         }
 
+        // Check if anti-cheat is enabled for the contest
+        if (contestId) {
+            const contestRes = await db.query('SELECT anti_cheat FROM contests WHERE id = $1', [contestId]);
+            if (contestRes.rowCount > 0 && !contestRes.rows[0].anti_cheat) {
+                return res.json({ success: false, message: 'Anti-cheat is disabled for this contest.' });
+            }
+        } else {
+            const activeRes = await db.query("SELECT anti_cheat FROM contests WHERE status = 'ACTIVE' AND anti_cheat = TRUE LIMIT 1");
+            if (activeRes.rowCount === 0) {
+                return res.json({ success: false, message: 'Anti-cheat is currently turned off.' });
+            }
+        }
+
         await db.query(
             `INSERT INTO violations (user_id, contest_id, type, metadata)
              VALUES ($1, $2, $3, $4)`,

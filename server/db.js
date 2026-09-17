@@ -90,7 +90,7 @@ async function initDB() {
             duration_minutes INTEGER NOT NULL DEFAULT 60,
             status           VARCHAR(20) NOT NULL DEFAULT 'DRAFT'
                              CHECK (status IN ('DRAFT','UPCOMING','ACTIVE','ENDED')),
-            anti_cheat       BOOLEAN NOT NULL DEFAULT TRUE,
+            anti_cheat       BOOLEAN NOT NULL DEFAULT FALSE,
             created_by       INTEGER REFERENCES users(id) ON DELETE SET NULL,
             created_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP

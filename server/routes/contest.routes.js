@@ -123,7 +123,7 @@ router.post('/', authenticateToken, verifyAdmin, async (req, res, next) => {
         const contest = await contestService.createContest({
             name, description, startTime, endTime,
             durationMinutes: durationMinutes || 60,
-            antiCheat:       antiCheat !== false,
+            antiCheat:       antiCheat === true,
             createdBy:       req.user.id
         });
         res.status(201).json({ message: 'Contest created.', contest });
@@ -143,6 +143,24 @@ router.put('/:id', authenticateToken, verifyAdmin, async (req, res, next) => {
         });
         if (!updated) return res.status(404).json({ error: 'Contest not found.' });
         res.json({ message: 'Contest updated.', contest: updated });
+    } catch (err) { next(err); }
+});
+
+// PATCH /api/contests/:id/anti-cheat — 1-click toggle anti-cheat status by admin
+router.patch('/:id/anti-cheat', authenticateToken, verifyAdmin, async (req, res, next) => {
+    try {
+        const { enabled } = req.body;
+        const isEnabled = enabled === true;
+        const db = require('../db');
+        const result = await db.query(
+            'UPDATE contests SET anti_cheat = $1, updated_at = NOW() WHERE id = $2 RETURNING id, name, anti_cheat, status',
+            [isEnabled, req.params.id]
+        );
+        if (result.rowCount === 0) return res.status(404).json({ error: 'Contest not found.' });
+        res.json({
+            message: `Anti-cheat ${isEnabled ? 'ENABLED' : 'DISABLED'} for "${result.rows[0].name}".`,
+            contest: result.rows[0]
+        });
     } catch (err) { next(err); }
 });
 

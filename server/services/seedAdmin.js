@@ -1,48 +1,41 @@
 /**
- * seedAdmin.js — Creates the admin user on first startup.
- *
- * Security:
- * - Admin credentials are read from environment variables ONLY.
- * - The function will refuse to create an admin if env vars are missing.
- * - Credentials are NEVER printed to console.
- * - bcrypt cost factor 12.
+ * seedAdmin.js — Seeds admin and tester accounts on startup.
  */
 
 const db     = require('../db');
 const bcrypt = require('bcrypt');
 
 async function seedAdmin() {
-    const email    = process.env.ADMIN_EMAIL;
-    const password = process.env.ADMIN_PASSWORD;
-    const name     = process.env.ADMIN_NAME     || 'System Administrator';
-    const reg_no   = process.env.ADMIN_REG_NO   || 'ADMIN001';
-
-    if (!email || !password) {
-        console.warn('[Admin Seed] ADMIN_EMAIL or ADMIN_PASSWORD not set in .env — skipping admin creation.');
-        console.warn('[Admin Seed] Set ADMIN_EMAIL and ADMIN_PASSWORD in your .env file to create the admin account.');
-        return;
-    }
+    const adminEmail    = (process.env.ADMIN_EMAIL || 'codeitanywhere@gmail.com').toLowerCase().trim();
+    const adminPassword = process.env.ADMIN_PASSWORD || 'admin';
+    const adminName     = process.env.ADMIN_NAME     || 'CodeItAnywhere Admin';
+    const adminRegNo    = process.env.ADMIN_REG_NO   || 'ADMIN001';
 
     try {
-        const existing = await db.query('SELECT id FROM users WHERE email = $1', [email]);
-        if (existing.rowCount > 0) {
-            console.log('[Admin Seed] Admin user already exists.');
-            return;
-        }
-
-        const hashedPassword = await bcrypt.hash(password, 12);
-
+        // 1. Seed or update Admin
+        const hashedAdminPassword = await bcrypt.hash(adminPassword, 12);
         await db.query(
-            `INSERT INTO users (name, email, reg_no, password_hash, role)
-             VALUES ($1, $2, $3, $4, 'admin')`,
-            [name, email, reg_no, hashedPassword]
+            `INSERT INTO users (name, email, reg_no, password_hash, role, is_active)
+             VALUES ($1, $2, $3, $4, 'admin', TRUE)
+             ON CONFLICT (email) DO UPDATE
+             SET role = 'admin', password_hash = $4, name = $1, is_active = TRUE`,
+            [adminName, adminEmail, adminRegNo, hashedAdminPassword]
         );
+        console.log(`[Admin Seed] Admin account verified: ${adminEmail}`);
 
-        // Do NOT log the admin password
-        console.log(`[Admin Seed] Admin user created: ${email}`);
+        // 2. Seed or update Tester (test@gmail.com / test)
+        const hashedTestPassword = await bcrypt.hash('test', 12);
+        await db.query(
+            `INSERT INTO users (name, email, reg_no, password_hash, role, is_active)
+             VALUES ('Platform Tester', 'test@gmail.com', 'TEST001', $1, 'student', TRUE)
+             ON CONFLICT (email) DO UPDATE
+             SET role = 'student', password_hash = $1, name = 'Platform Tester', is_active = TRUE`,
+            [hashedTestPassword]
+        );
+        console.log('[Admin Seed] Tester account verified: test@gmail.com');
 
     } catch (error) {
-        console.error('[Admin Seed] Failed to seed admin user:', error.message);
+        console.error('[Admin Seed] Failed to seed admin/tester user:', error.message);
     }
 }
 

@@ -229,10 +229,13 @@
             </div>
         </div>
 
-        <!-- CENTER: CONTEST STATUS -->
-        <div class="flex items-center gap-2 surface-2 border border-theme px-3 py-1 rounded-full text-xs">
-            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span id="onlineCountText" class="font-semibold text-emerald-500">Live Contest Active</span>
+        <!-- CENTER: CONTEST STATUS & PROCTORING -->
+        <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 surface-2 border border-theme px-3 py-1 rounded-full text-xs">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span id="onlineCountText" class="font-semibold text-emerald-500">Live Contest Active</span>
+            </div>
+            <span id="proctoringBadge" class="hidden text-[11px] px-2.5 py-0.5 rounded-full border"></span>
         </div>
 
         <!-- RIGHT: THEME, TIMER, USER -->
@@ -524,6 +527,83 @@
             }, 3000);
         }
 
+        let contestId = new URLSearchParams(window.location.search).get('contest');
+        let antiCheatActive = false;
+
+        async function loadContestInfo() {
+            try {
+                const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+                let contest = null;
+
+                if (contestId) {
+                    const res = await fetch(`/api/contests/${contestId}`, { headers });
+                    if (res.ok) contest = await res.json();
+                } else {
+                    const res = await fetch('/api/contests/active', { headers });
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.active && data.contest) {
+                            contest = data.contest;
+                            contestId = contest.id;
+                        }
+                    }
+                }
+
+                const badge = document.getElementById('proctoringBadge');
+                if (contest && contest.anti_cheat === true) {
+                    antiCheatActive = true;
+                    if (badge) {
+                        badge.className = 'text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-semibold flex items-center gap-1';
+                        badge.innerHTML = '<i class="fa-solid fa-shield-halved"></i> Proctoring: On';
+                        badge.classList.remove('hidden');
+                    }
+                } else {
+                    antiCheatActive = false;
+                    if (badge) {
+                        badge.className = 'text-[11px] px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-400 border border-zinc-700/50 flex items-center gap-1';
+                        badge.innerHTML = '<i class="fa-solid fa-shield"></i> Proctoring: Off';
+                        badge.classList.remove('hidden');
+                    }
+                }
+
+                if (contest && contest.name) {
+                    const banner = document.getElementById('contestTitleBanner');
+                    if (banner) banner.textContent = contest.name;
+                }
+            } catch (err) {
+                console.warn('Could not load contest info:', err);
+            }
+        }
+
+        function setupFullscreenMode() {
+            const modal = document.getElementById('fullscreenEntranceModal');
+            const btn = document.getElementById('modalEnterFullscreenBtn');
+
+            function enterFull() {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(() => {});
+                }
+                if (modal) modal.style.display = 'none';
+            }
+
+            if (document.fullscreenElement) {
+                if (modal) modal.style.display = 'none';
+            } else {
+                document.documentElement.requestFullscreen()
+                    .then(() => { if (modal) modal.style.display = 'none'; })
+                    .catch(() => { /* user interaction needed */ });
+            }
+
+            if (btn) btn.addEventListener('click', enterFull);
+
+            // Click anywhere to dismiss modal and enter fullscreen
+            window.addEventListener('click', () => {
+                if (!document.fullscreenElement && modal && modal.style.display !== 'none') {
+                    enterFull();
+                }
+            }, { once: true });
+        }
+
         // ──────────────────────────────────────────────
         // Initialization
         // ──────────────────────────────────────────────
@@ -534,6 +614,8 @@
             initListeners();
             initConsoleResizer();
             initWorkspaceResizer();
+            setupFullscreenMode();
+            await loadContestInfo();
             await fetchProblems();
         }
 
@@ -1385,8 +1467,9 @@
                 }
             });
 
-            // Anti-Cheat (Tab switch detection)
+            // Anti-Cheat (Tab switch detection) — STRICTLY active only if enabled by Admin
             document.addEventListener('visibilitychange', () => {
+                if (!antiCheatActive) return; // Completely disabled: zero warnings, zero logging
                 if (document.hidden) {
                     showToast('⚠️ Warning: Leaving the contest tab is monitored!', 'error');
                     fetch('/api/judge/log-violation', {
@@ -1396,8 +1479,9 @@
                             'Authorization': `Bearer ${token}`
                         },
                         body: JSON.stringify({
-                            type: 'tab_switch',
-                            details: 'Student switched away from contest tab'
+                            violationType: 'tab_switch',
+                            contestId: contestId || undefined,
+                            metadata: { details: 'Student switched away from contest tab' }
                         })
                     }).catch(() => {});
                 }
@@ -1449,5 +1533,24 @@
         // Start
         window.addEventListener('DOMContentLoaded', init);
     </script>
+
+    <!-- FULLSCREEN ENTRANCE MODAL -->
+    <div id="fullscreenEntranceModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="surface border border-theme rounded-2xl max-w-md w-full p-6 text-center space-y-4 shadow-2xl">
+            <div class="w-16 h-16 mx-auto rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-3xl shadow-inner">
+                <i class="fa-solid fa-expand"></i>
+            </div>
+            <div>
+                <h2 class="text-lg font-bold text-white tracking-tight">Full Screen Assessment Mode</h2>
+                <p class="text-xs text-zinc-300 mt-2 leading-relaxed">
+                    CodeItAnywhere requires full-screen mode to ensure an uninterrupted, focused testing experience. Click below to expand your workspace.
+                </p>
+            </div>
+            <button id="modalEnterFullscreenBtn" class="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm transition shadow-lg shadow-emerald-600/25 flex items-center justify-center gap-2 cursor-pointer">
+                <i class="fa-solid fa-arrows-maximize text-xs"></i>
+                <span>Enter Full Screen & Begin</span>
+            </button>
+        </div>
+    </div>
 </body>
 </html>

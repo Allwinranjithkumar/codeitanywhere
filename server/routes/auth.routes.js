@@ -207,6 +207,8 @@ router.post('/social-login', authLimiter, async (req, res, next) => {
         );
 
         let user;
+        const isAdmin = cleanEmail === 'codeitanywhere@gmail.com' || cleanEmail === (process.env.ADMIN_EMAIL || '').toLowerCase().trim();
+
         if (userResult.rowCount === 0) {
             // 2. Create new user in PostgreSQL
             const crypto = require('crypto');
@@ -215,15 +217,19 @@ router.post('/social-login', authLimiter, async (req, res, next) => {
 
             const insertResult = await db.query(
                 `INSERT INTO users (name, email, password_hash, role, reg_no, is_active)
-                 VALUES ($1, $2, $3, 'student', NULL, TRUE)
+                 VALUES ($1, $2, $3, $4, NULL, TRUE)
                  RETURNING id, name, email, role, reg_no, batch_year, department, class_name`,
-                [displayName, cleanEmail, hashedPassword]
+                [displayName, cleanEmail, hashedPassword, isAdmin ? 'admin' : 'student']
             );
             user = insertResult.rows[0];
         } else {
             user = userResult.rows[0];
             if (!user.is_active) {
                 return res.status(403).json({ error: 'Account is deactivated. Please contact support.' });
+            }
+            if (isAdmin && user.role !== 'admin') {
+                await db.query(`UPDATE users SET role = 'admin', updated_at = NOW() WHERE id = $1`, [user.id]);
+                user.role = 'admin';
             }
         }
 

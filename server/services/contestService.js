@@ -72,7 +72,7 @@ async function createContest({ name, description, startTime, endTime, durationMi
         `INSERT INTO contests (name, description, start_time, end_time, duration_minutes, anti_cheat, created_by, status)
          VALUES ($1, $2, $3, $4, $5, $6, $7, 'UPCOMING')
          RETURNING *`,
-        [name, description || null, startTime, endTime, durationMinutes || 60, antiCheat !== false, createdBy]
+        [name, description || null, startTime, endTime, durationMinutes || 60, antiCheat === true, createdBy]
     );
     return result.rows[0];
 }
