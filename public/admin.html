@@ -1083,7 +1083,7 @@
     <div id="adminAuthOverlay" style="position:fixed;inset:0;background:rgba(15,20,26,0.92);backdrop-filter:blur(8px);z-index:9999;display:none;align-items:center;justify-content:center;padding:16px;">
         <div style="background:#1e222d;border:1px solid #374151;border-radius:16px;padding:32px;width:100%;max-width:380px;box-shadow:0 25px 50px rgba(0,0,0,0.6);">
             <div style="text-align:center;margin-bottom:20px;">
-                <div style="font-size:2rem;margin-bottom:8px;">⚡</div>
+                <div style="font-size:2rem;margin-bottom:8px;"></div>
                 <h2 style="color:white;font-size:1.25rem;font-weight:700;margin:0 0 6px 0;">Admin Sign In</h2>
                 <p style="color:#9ca3af;font-size:0.8rem;margin:0;">Administrator access required to view panel</p>
             </div>
@@ -1105,7 +1105,7 @@
     </div>
 
     <div class="header">
-        <h1>⚡ CodeItAnywhere — Admin Panel</h1>
+        <h1>CodeItAnywhere — Admin Panel</h1>
         <div style="display:flex;align-items:center;gap:12px;">
             <span class="admin-badge" id="adminName">Admin</span>
             <button class="btn-logout" onclick="logout()">Logout</button>
@@ -1145,20 +1145,20 @@
 
         <!-- Tabs -->
         <div class="tabs">
-            <button class="tab active" data-tab="leaderboard" onclick="switchTab('leaderboard',this)">📊 Leaderboard</button>
-            <button class="tab" data-tab="submissions" onclick="switchTab('submissions',this)">📝 Submissions</button>
-            <button class="tab" data-tab="violations" onclick="switchTab('violations',this)">⚠️ Violations</button>
-            <button class="tab" data-tab="problems" onclick="switchTab('problems',this)">🧩 Questions & JSON Upload</button>
-            <button class="tab" data-tab="contests" onclick="switchTab('contests',this)">🏁 Contests</button>
-            <button class="tab" data-tab="aistudio" onclick="switchTab('aistudio',this)">🤖 AI Problem Studio</button>
-            <button class="tab" data-tab="aianalyst" onclick="switchTab('aianalyst',this)">📈 AI Contest Analyst</button>
-            <button class="tab" data-tab="import" onclick="switchTab('import',this)">📥 Import/Export</button>
+            <button class="tab active" data-tab="leaderboard" onclick="switchTab('leaderboard',this)">Leaderboard</button>
+            <button class="tab" data-tab="submissions" onclick="switchTab('submissions',this)">Submissions</button>
+            <button class="tab" data-tab="violations" onclick="switchTab('violations',this)">Violations</button>
+            <button class="tab" data-tab="problems" onclick="switchTab('problems',this)">Questions & JSON Upload</button>
+            <button class="tab" data-tab="contests" onclick="switchTab('contests',this)">Contests</button>
+            <button class="tab" data-tab="aistudio" onclick="switchTab('aistudio',this)">AI Problem Studio</button>
+            <button class="tab" data-tab="aianalyst" onclick="switchTab('aianalyst',this)">AI Contest Analyst</button>
+            <button class="tab" data-tab="import" onclick="switchTab('import',this)">Import/Export</button>
         </div>
 
         <!-- ── LEADERBOARD ── -->
         <div id="tab-leaderboard" class="tab-panel active">
             <div class="toolbar">
-                <button class="btn btn-primary" onclick="loadLeaderboard()">🔄 Refresh</button>
+                <button class="btn btn-primary" onclick="loadLeaderboard()">Refresh</button>
             </div>
             <div class="table-wrap">
                 <table>
@@ -1198,9 +1198,9 @@
                     <option>ICE</option>
                 </select>
                 <button class="btn btn-outline" onclick="clearFilters()">Clear</button>
-                <button class="btn btn-success" onclick="exportExcel()" style="margin-left:auto;">📥 Export
+                <button class="btn btn-success" onclick="exportExcel()" style="margin-left:auto;"> Export
                     Excel</button>
-                <button class="btn btn-danger" onclick="resetData()" style="margin-left:4px;">⚠️ Reset Data</button>
+                <button class="btn btn-danger" onclick="resetData()" style="margin-left:4px;">Reset Data</button>
             </div>
             <div class="table-wrap">
                 <table>
@@ -1228,7 +1228,7 @@
         <!-- ── VIOLATIONS ── -->
         <div id="tab-violations" class="tab-panel">
             <div class="toolbar">
-                <button class="btn btn-primary" onclick="loadViolations()">🔄 Refresh</button>
+                <button class="btn btn-primary" onclick="loadViolations()">Refresh</button>
             </div>
             <div class="table-wrap">
                 <table>
@@ -1254,9 +1254,9 @@
         <div id="tab-problems" class="tab-panel">
             <div class="toolbar" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
                 <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-                    <button class="btn btn-outline" onclick="loadProblems()">🔄 Refresh List</button>
-                    <button class="btn btn-outline" onclick="exportAllProblemsJson()" style="color:#059669;border-color:#a7f3d0;background:#ecfdf5;">📥 Export All Questions (.json)</button>
-                    <button class="btn btn-outline" onclick="toggleManualForm()">✏️ Manual Form (Optional)</button>
+                    <button class="btn btn-outline" onclick="loadProblems()">Refresh List</button>
+                    <button class="btn btn-outline" onclick="exportAllProblemsJson()" style="color:#059669;border-color:#a7f3d0;background:#ecfdf5;"> Export All Questions (.json)</button>
+                    <button class="btn btn-outline" onclick="toggleManualForm()">Manual Form (Optional)</button>
                 </div>
                 <div style="font-size:0.85rem;color:var(--muted);background:white;padding:6px 14px;border-radius:20px;border:1px solid var(--border);">
                     Catalog Status: <strong id="problemCountBadge" style="color:var(--primary);font-size:0.92rem;">0 Questions</strong>
@@ -1271,7 +1271,7 @@
                     <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:10px;">
                         <div>
                             <div style="display:flex;align-items:center;gap:8px;">
-                                <span style="font-size:1.25rem;">📋</span>
+                                
                                 <h3 style="margin:0;font-size:1rem;font-weight:700;color:#1e40af;">Sample JSON Script (Exact Format)</h3>
                             </div>
                             <p style="margin:4px 0 0 0;font-size:0.78rem;color:#3b82f6;line-height:1.4;">
@@ -1279,8 +1279,8 @@
                             </p>
                         </div>
                         <div style="display:flex;gap:6px;">
-                            <button class="btn btn-primary" onclick="copySampleJson()" style="padding:6px 12px;font-size:0.78rem;background:#2563eb;">📋 Copy Format</button>
-                            <button class="btn btn-outline" onclick="downloadSampleJson()" style="padding:6px 12px;font-size:0.78rem;background:white;">📥 Download .json</button>
+                            <button class="btn btn-primary" onclick="copySampleJson()" style="padding:6px 12px;font-size:0.78rem;background:#2563eb;"> Copy Format</button>
+                            <button class="btn btn-outline" onclick="downloadSampleJson()" style="padding:6px 12px;font-size:0.78rem;background:white;"> Download .json</button>
                         </div>
                     </div>
 
@@ -1325,8 +1325,8 @@
   ]
 }</pre>
                     <div style="margin-top:10px;font-size:0.74rem;color:#64748b;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;">
-                        <span>💡 <strong>No boilerplate needed:</strong> Starter code for Python, C++, Java, JS & C is <strong>auto-generated</strong> from <code>functionName</code>!</span>
-                        <span style="color:#059669;font-weight:600;">✓ Auto-configures all 5 languages</span>
+                        <span><strong>No boilerplate needed:</strong> Starter code for Python, C++, Java, JS & C is <strong>auto-generated</strong> from <code>functionName</code>!</span>
+                        <span style="color:#059669;font-weight:600;"> Auto-configures all 5 languages</span>
                     </div>
                 </div>
 
@@ -1334,7 +1334,7 @@
                 <div style="background:#ffffff;border:1px solid #c7d2fe;border-radius:14px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,0.04);display:flex;flex-direction:column;">
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
                         <div style="display:flex;align-items:center;gap:8px;">
-                            <span style="font-size:1.25rem;">🚀</span>
+                            
                             <h3 style="margin:0;font-size:1rem;font-weight:700;color:#1e293b;">Upload Questions JSON</h3>
                         </div>
                         <span id="jsonFormatBadge" class="badge" style="background:#f1f5f9;color:#64748b;font-size:0.74rem;padding:3px 10px;">
@@ -1348,7 +1348,7 @@
                     <!-- File Dropzone -->
                     <div id="dropZone" style="border:2px dashed #94a3b8;border-radius:10px;padding:16px;text-align:center;background:#f8fafc;cursor:pointer;margin-bottom:12px;transition:all 0.2s;" onclick="document.getElementById('fileUploadInput').click()">
                         <input type="file" id="fileUploadInput" accept=".json" style="display:none;" onchange="handleFileSelect(event)">
-                        <span style="font-size:1.5rem;">📁</span>
+                        
                         <div style="font-size:0.84rem;font-weight:600;color:#1e293b;margin-top:2px;">Click to Select .json File or Drag & Drop Here</div>
                         <div id="selectedFileName" style="font-size:0.74rem;color:#64748b;margin-top:2px;">Accepts single question or array of multiple questions</div>
                     </div>
@@ -1364,7 +1364,7 @@
 
                     <!-- Upload Action Button & Status -->
                     <button id="btnUploadJson" class="btn btn-primary" onclick="uploadOrApplyJson()" style="width:100%;padding:12px;font-size:0.92rem;font-weight:700;background:linear-gradient(135deg,#2563eb,#4f46e5);border:none;border-radius:9px;cursor:pointer;box-shadow:0 4px 12px rgba(37,99,235,0.25);transition:all 0.2s;">
-                        🚀 Upload & Automatically Apply All Requirements
+                        Upload & Automatically Apply All Requirements
                     </button>
                     <div id="uploadStatusMsg" style="margin-top:8px;font-size:0.82rem;font-weight:600;min-height:22px;"></div>
                 </div>
@@ -1375,7 +1375,7 @@
             <div id="addProblemForm" class="form-card" style="display:none;margin-bottom:24px;">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
                     <h3 id="problemFormTitle" style="margin-bottom:0;">Manual Problem Editor</h3>
-                    <button class="btn btn-outline" style="padding:4px 10px;" onclick="document.getElementById('addProblemForm').style.display='none'">✕ Close</button>
+                    <button class="btn btn-outline" style="padding:4px 10px;" onclick="document.getElementById('addProblemForm').style.display='none'"> Close</button>
                 </div>
                 <input type="hidden" id="editProblemId">
 
@@ -1428,7 +1428,7 @@
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
                         <h4 style="font-size:0.95rem;font-weight:700;">Language Starter Code</h4>
                         <button type="button" class="btn btn-outline" style="font-size:0.78rem;padding:4px 10px;" onclick="autoGenerateStarterCode(false)">
-                            🪄 Auto-Generate Boilerplates
+                            Auto-Generate Boilerplates
                         </button>
                     </div>
 
@@ -1452,7 +1452,7 @@
                 <!-- Actions -->
                 <div style="display:flex;gap:10px;margin-top:24px;border-top:1px solid var(--border);padding-top:16px;">
                     <button class="btn btn-success" id="btnSaveProblem" onclick="saveProblem()" style="padding:10px 24px;font-size:0.9rem;">
-                        💾 Save Problem to PostgreSQL
+                        Save Problem to PostgreSQL
                     </button>
                     <button class="btn btn-outline" onclick="document.getElementById('addProblemForm').style.display='none'">
                         Cancel
@@ -1493,7 +1493,7 @@
         <div id="tab-contests" class="tab-panel">
             <div class="toolbar">
                 <button class="btn btn-primary" onclick="showContestForm()">+ New Contest</button>
-                <button class="btn btn-outline" onclick="loadContests()">🔄 Refresh</button>
+                <button class="btn btn-outline" onclick="loadContests()">Refresh</button>
             </div>
             <div id="contestForm" class="form-card" style="display:none;">
                 <h3>Create / Update Contest</h3>
@@ -1556,7 +1556,7 @@
                 <!-- Left: Studio Configurator -->
                 <div class="form-card" style="margin-bottom:0;">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-                        <h3 style="margin:0;">🤖 Auto-Problem Studio</h3>
+                        <h3 style="margin:0;">Auto-Problem Studio</h3>
                         <span style="font-size:0.75rem;background:#e0e7ff;color:#4338ca;padding:3px 8px;border-radius:12px;font-weight:600;">BYTS-SDE Taxonomy</span>
                     </div>
                     <p style="font-size:0.82rem;color:var(--muted);margin-bottom:14px;">
@@ -1565,7 +1565,7 @@
 
                     <!-- Pattern Selector -->
                     <label style="display:block;font-size:0.78rem;font-weight:700;color:#475569;margin-bottom:6px;">1. SELECT PATTERNS (Click to toggle)</label>
-                    <input type="text" id="aiPatternFilter" placeholder="🔍 Search patterns (e.g. Sliding Window, BFS)..." oninput="filterAIPatterns()" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.82rem;margin-bottom:8px;box-sizing:border-box;">
+                    <input type="text" id="aiPatternFilter" placeholder="Search patterns (e.g. Sliding Window, BFS)..." oninput="filterAIPatterns()" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.82rem;margin-bottom:8px;box-sizing:border-box;">
                     <div id="aiPatternChips" style="max-height:160px;overflow-y:auto;display:flex;flex-wrap:wrap;gap:6px;padding:6px;border:1px solid #f1f5f9;border-radius:8px;background:#f8fafc;margin-bottom:16px;">
                         <span style="font-size:0.8rem;color:var(--muted);padding:8px;">Loading patterns...</span>
                     </div>
@@ -1597,15 +1597,15 @@
                     <textarea id="aiCustomNotes" rows="3" placeholder="e.g. Frame as a datacenter packet routing issue. Use large N up to 10^5. Multiple queries required." style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.82rem;font-family:inherit;margin-bottom:16px;box-sizing:border-box;resize:vertical;"></textarea>
 
                     <button class="btn btn-primary" id="btnGenerateProblem" onclick="generateAIProblem()" style="width:100%;padding:12px;font-weight:700;font-size:0.9rem;display:flex;align-items:center;justify-content:center;gap:8px;">
-                        <span>⚡ Generate Problem with AI</span>
+                        <span>Generate Problem with AI</span>
                     </button>
                     <div id="aiStudioStatus" style="margin-top:10px;font-size:0.82rem;font-weight:600;display:none;text-align:center;"></div>
                 </div>
 
                 <!-- Right: Workbench & Inspection -->
-                <div id="aiWorkbenchCard" class="form-card" style="margin-bottom:0;min-height:550px;">
-                    <div id="aiWorkbenchPlaceholder" style="text-align:center;padding:80px 20px;color:var(--muted);">
-                        <div style="font-size:3rem;margin-bottom:12px;">💡</div>
+                <div id="aiWorkbenchCard" class="form-card" style="margin-bottom:0;min-height:auto;">
+                    <div id="aiWorkbenchPlaceholder" style="text-align:center;padding:28px 16px;color:var(--muted);">
+                        
                         <h4 style="font-size:1.1rem;color:#1e293b;margin:0 0 6px 0;">Auto-Problem Workbench Ready</h4>
                         <p style="font-size:0.85rem;max-width:320px;margin:0 auto;">
                             Configure patterns on the left and click <b>Generate Problem</b> to inspect and publish here.
@@ -1620,7 +1620,7 @@
                                 <h2 id="wbTitle" style="font-size:1.25rem;font-weight:700;color:#0f172a;margin:8px 0 0 0;"></h2>
                             </div>
                             <button class="btn btn-success" id="btnPublishProblem" onclick="publishActiveAIDraft()" style="display:flex;align-items:center;gap:6px;">
-                                <span>🚀 Publish to Problem Bank</span>
+                                <span>Publish to Problem Bank</span>
                             </button>
                         </div>
 
@@ -1664,8 +1664,8 @@
             <!-- Staged Drafts Table -->
             <div class="table-card" style="margin-top:20px;">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-                    <h3 style="margin:0;">📁 AI Staged Drafts History</h3>
-                    <button class="btn btn-secondary" onclick="loadAIDraftsTable()">🔄 Refresh History</button>
+                    <h3 style="margin:0;">AI Staged Drafts History</h3>
+                    <button class="btn btn-secondary" onclick="loadAIDraftsTable()">Refresh History</button>
                 </div>
                 <div class="table-wrap">
                     <table>
@@ -1692,7 +1692,7 @@
         <div id="tab-aianalyst" class="tab-panel">
             <div class="form-card" style="margin-bottom:20px;">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-                    <h3 style="margin:0;">📈 Post-Contest Intelligence & Post-Mortem Analyst</h3>
+                    <h3 style="margin:0;">Post-Contest Intelligence & Post-Mortem Analyst</h3>
                     <span style="font-size:0.75rem;background:#ecfdf5;color:#047857;padding:3px 8px;border-radius:12px;font-weight:600;">Faculty & Organizer Intelligence</span>
                 </div>
                 <p style="font-size:0.84rem;color:var(--muted);margin-bottom:16px;">
@@ -1703,7 +1703,7 @@
                         <option value="">Select a contest to analyze...</option>
                     </select>
                     <button class="btn btn-primary" id="btnRunContestAnalysis" onclick="runAIContestAnalysis()" style="white-space:nowrap;padding:10px 20px;font-weight:700;">
-                        📊 Generate Post-Mortem Report
+                        Generate Post-Mortem Report
                     </button>
                 </div>
                 <div id="analystStatus" style="margin-top:10px;font-size:0.82rem;font-weight:600;display:none;"></div>
@@ -1716,7 +1716,7 @@
                 <div class="ai-card-glow" style="border-top:4px solid #4f46e5;">
                     <div class="report-sec-header">
                         <div class="report-sec-title">
-                            <span style="font-size:1.4rem;">📋</span>
+                            
                             <span>1. Executive Contest Summary</span>
                         </div>
                         <span id="anReportBadge" class="pill-badge purple">AI Verified</span>
@@ -1728,7 +1728,7 @@
                 <div class="ai-card-glow" style="border-top:4px solid #06b6d4;">
                     <div class="report-sec-header">
                         <div class="report-sec-title">
-                            <span style="font-size:1.4rem;">📊</span>
+                            
                             <span>2. Contest Health Scorecard</span>
                         </div>
                         <span style="font-size:0.75rem;color:var(--muted);font-weight:600;">Deterministic Backend Telemetry</span>
@@ -1742,7 +1742,7 @@
                 <div class="ai-card-glow" style="border-top:4px solid #8b5cf6;">
                     <div class="report-sec-header">
                         <div class="report-sec-title">
-                            <span style="font-size:1.4rem;">🧩</span>
+                            
                             <span>3. Problem-Wise Analysis & Verdict Breakdown</span>
                         </div>
                         <span style="font-size:0.75rem;color:var(--muted);font-weight:600;">Observed vs Expected Difficulty & Bottlenecks</span>
@@ -1772,7 +1772,7 @@
                 <div class="ai-card-glow" style="border-top:4px solid #10b981;">
                     <div class="report-sec-header">
                         <div class="report-sec-title">
-                            <span style="font-size:1.4rem;">🧠</span>
+                            
                             <span>4. DSA Pattern & Skill Insights</span>
                         </div>
                         <span style="font-size:0.75rem;background:#ecfdf5;color:#047857;padding:3px 8px;border-radius:12px;font-weight:600;">CodeItAnywhere Skill Matrix</span>
@@ -1789,7 +1789,7 @@
                 <div class="ai-card-glow" id="anIntegritySection" style="border-top:4px solid #f59e0b;background:#fffdfa;">
                     <div class="report-sec-header">
                         <div class="report-sec-title">
-                            <span style="font-size:1.4rem;">🛡️</span>
+                            
                             <span>5. Contest Integrity & Proctored Signal Review</span>
                         </div>
                         <span id="anIntegrityRiskBadge" class="pill-badge yellow">Risk: Medium</span>
@@ -1816,7 +1816,7 @@
                     </div>
 
                     <div style="font-size:0.75rem;color:#94a3b8;font-style:italic;border-top:1px solid #ffedd5;padding-top:8px;">
-                        ⚠️ <span id="anIntegrityDisclaimer">Integrity signals are indicators for review only. They do not establish misconduct or plagiarism.</span>
+                        <span id="anIntegrityDisclaimer">Integrity signals are indicators for review only. They do not establish misconduct or plagiarism.</span>
                     </div>
                 </div>
 
@@ -1824,7 +1824,7 @@
                 <div class="ai-card-glow" style="border-top:4px solid #3b82f6;">
                     <div class="report-sec-header">
                         <div class="report-sec-title">
-                            <span style="font-size:1.4rem;">💡</span>
+                            
                             <span>6. Actionable Pedagogical & Operational Recommendations</span>
                         </div>
                         <span style="font-size:0.75rem;color:var(--muted);font-weight:600;">Evidence-Based Organizer Actions</span>
@@ -1838,7 +1838,7 @@
                 <div class="table-card" style="border-top:4px solid #64748b;">
                     <div class="report-sec-header" style="margin-bottom:10px;">
                         <div class="report-sec-title">
-                            <span style="font-size:1.4rem;">🎓</span>
+                            
                             <span>7. Participant Pedagogical Feedback (Private & Role-Gated)</span>
                         </div>
                         <span style="font-size:0.74rem;background:#f1f5f9;color:#475569;padding:3px 8px;border-radius:12px;font-weight:600;">Authorized View Only</span>
@@ -1870,16 +1870,16 @@
         <!-- ── IMPORT / EXPORT ── -->
         <div id="tab-import" class="tab-panel">
             <div class="form-card">
-                <h3>📗 Import Students from Excel</h3>
+                <h3>Import Students from Excel</h3>
                 <p style="font-size:0.85rem;color:var(--muted);margin-bottom:16px;">
                     Upload <code>data/allowed_users.xlsx</code> to the server, then click Sync. Students are created
                     with default password <code>student123</code>.
                 </p>
-                <button class="btn btn-primary" onclick="syncExcel()">🔄 Sync Excel File</button>
+                <button class="btn btn-primary" onclick="syncExcel()">Sync Excel File</button>
                 <div id="syncStatus" style="margin-top:12px;font-size:0.85rem;font-weight:600;"></div>
             </div>
             <div class="form-card">
-                <h3>📥 Export Student Report (Excel)</h3>
+                <h3>Export Student Report (Excel)</h3>
                 <div class="filters" style="border:none;padding:0;background:transparent;margin-bottom:16px;">
                     <label>Batch:</label>
                     <select id="eBatch">
@@ -1894,7 +1894,7 @@
                         <option>ICE</option>
                     </select>
                 </div>
-                <button class="btn btn-success" onclick="exportExcelFiltered()">📥 Download Excel</button>
+                <button class="btn btn-success" onclick="exportExcelFiltered()">Download Excel</button>
             </div>
         </div>
     </div>
@@ -2085,7 +2085,7 @@
                 const badge = document.getElementById('problemCountBadge');
                 if (badge) badge.textContent = `${adminProblemsCache.length} Questions`;
                 if (!data.length) {
-                    tbody.innerHTML = '<tr><td colspan="8"><div class="empty"><div class="icon">🧩</div>No questions yet. Upload or paste JSON above to add questions!</div></td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="8"><div class="empty">No questions yet. Upload or paste JSON above to add questions!</div></td></tr>';
                     return;
                 }
                 tbody.innerHTML = data.map(p => {
@@ -2102,9 +2102,9 @@
                         <td><span style="font-size:0.78rem;background:#f8fafc;padding:3px 8px;border-radius:6px;border:1px solid #e2e8f0;font-weight:600;">${totalTc} (${sampleTc} sample, ${hiddenTc} hidden)</span></td>
                         <td><span class="badge ${p.is_active ? 'badge-success' : 'badge-muted'}">${p.is_active ? 'Active' : 'Hidden'}</span></td>
                         <td style="white-space:nowrap;">
-                            <button class="btn btn-outline" style="padding:4px 8px;font-size:0.75rem;" onclick="copyProblemJsonById(${p.id})">📋 JSON</button>
-                            <button class="btn btn-outline" style="padding:4px 8px;font-size:0.75rem;" onclick="editProblemById(${p.id})">✏️ Edit</button>
-                            <button class="btn btn-danger" style="padding:4px 8px;font-size:0.75rem;" onclick="deleteProblem(${p.id},'${p.title.replace(/'/g, "\\'")}')">🗑️ Delete</button>
+                            <button class="btn btn-outline" style="padding:4px 8px;font-size:0.75rem;" onclick="copyProblemJsonById(${p.id})">JSON</button>
+                            <button class="btn btn-outline" style="padding:4px 8px;font-size:0.75rem;" onclick="editProblemById(${p.id})">Edit</button>
+                            <button class="btn btn-danger" style="padding:4px 8px;font-size:0.75rem;" onclick="deleteProblem(${p.id},'${p.title.replace(/'/g, "\\'")}')">Delete</button>
                         </td>
                     </tr>`;
                 }).join('');
@@ -2247,10 +2247,10 @@
             card.innerHTML = `
                 <div class="testcase-header">
                     <span class="tc-title" style="color:var(--text);font-weight:700;">
-                        ${isSample ? '📘 Sample Example' : '🔒 Hidden Judge Test'}
+                        ${isSample ? 'Sample Example' : 'Hidden Judge Test'}
                     </span>
                     <button type="button" class="btn btn-outline" style="color:#ef4444;border-color:transparent;padding:2px 8px;font-size:0.9rem;" onclick="document.getElementById('${cardId}').remove()">
-                        ✕ Delete
+                         Delete
                     </button>
                 </div>
                 <div class="form-row">
@@ -2282,7 +2282,7 @@
             if (!card) return;
             const titleEl = card.querySelector('.tc-title');
             if (titleEl) {
-                titleEl.textContent = isChecked ? '📘 Sample Example' : '🔒 Hidden Judge Test';
+                titleEl.textContent = isChecked ? 'Sample Example' : 'Hidden Judge Test';
             }
         }
 
@@ -2326,7 +2326,7 @@
         function copySampleJson() {
             const code = document.getElementById('sampleJsonCodeBlock').textContent;
             navigator.clipboard.writeText(code).then(() => {
-                alert('📋 Sample JSON script copied to clipboard!\nYou can paste this format into ChatGPT / Gemini / Claude to generate any question, or paste it directly on the right.');
+                alert(' Sample JSON script copied to clipboard!\nYou can paste this format into ChatGPT / Gemini / Claude to generate any question, or paste it directly on the right.');
             }).catch(() => {
                 alert('Could not copy automatically. Please select the text and copy manually.');
             });
@@ -2356,7 +2356,7 @@
         function handleFileSelect(event) {
             const file = event.target.files[0];
             if (!file) return;
-            document.getElementById('selectedFileName').textContent = `📄 Selected: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+            document.getElementById('selectedFileName').textContent = `Selected: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
             const reader = new FileReader();
             reader.onload = (e) => {
                 document.getElementById('jsonUploadText').value = e.target.result;
@@ -2386,18 +2386,18 @@
                 } else {
                     throw new Error('Expected a question object { title, ... } or array [ { ... } ]');
                 }
-                badge.textContent = `✓ Valid JSON (${count} question${count > 1 ? 's' : ''} detected)`;
+                badge.textContent = ` Valid JSON (${count} question${count > 1 ? 's' : ''} detected)`;
                 badge.style.background = '#ecfdf5';
                 badge.style.color = '#059669';
                 if (statusMsg) statusMsg.textContent = '';
                 return parsed;
             } catch (err) {
-                badge.textContent = `❌ Syntax Error`;
+                badge.textContent = `Syntax Error`;
                 badge.style.background = '#fef2f2';
                 badge.style.color = '#dc2626';
                 if (statusMsg) {
                     statusMsg.style.color = '#dc2626';
-                    statusMsg.textContent = `⚠️ Invalid JSON: ${err.message}`;
+                    statusMsg.textContent = `Invalid Invalid JSON: ${err.message}`;
                 }
                 return null;
             }
@@ -2421,7 +2421,7 @@
             const btn = document.getElementById('btnUploadJson');
             const status = document.getElementById('uploadStatusMsg');
             btn.disabled = true;
-            btn.textContent = '⏳ Uploading & Configuring All Requirements...';
+            btn.textContent = 'Uploading & Configuring All Requirements...';
             status.style.color = '#3b82f6';
             status.textContent = 'Saving questions, generating multi-language boilerplates & configuring test cases in PostgreSQL...';
 
@@ -2434,21 +2434,21 @@
 
                 if (res.ok) {
                     status.style.color = '#059669';
-                    status.innerHTML = `✅ <strong>Success:</strong> ${data.message}`;
-                    alert(`🎉 Upload Complete!\n\n${data.message}\n\nAll requirements (starter code in 5 languages, sample & hidden test cases, points, and constraints) have been configured!`);
+                    status.innerHTML = `<strong>Success:</strong> ${data.message}`;
+                    alert(`Upload Complete!\n\n${data.message}\n\nAll requirements (starter code in 5 languages, sample & hidden test cases, points, and constraints) have been configured!`);
                     loadProblems();
                 } else {
                     status.style.color = '#dc2626';
-                    status.textContent = `❌ Error: ${data.error || 'Failed to import JSON'}`;
+                    status.textContent = `Error: ${data.error || 'Failed to import JSON'}`;
                     alert('Error: ' + (data.error || 'Failed to upload JSON'));
                 }
             } catch (err) {
                 status.style.color = '#dc2626';
-                status.textContent = `❌ Connection Error: ${err.message}`;
+                status.textContent = `Connection Error: ${err.message}`;
                 alert('Connection error: ' + err.message);
             } finally {
                 btn.disabled = false;
-                btn.textContent = '🚀 Upload & Automatically Apply All Requirements';
+                btn.textContent = 'Upload & Automatically Apply All Requirements';
             }
         }
 
@@ -2483,7 +2483,7 @@
                 }))
             };
             navigator.clipboard.writeText(JSON.stringify(formatted, null, 2)).then(() => {
-                alert(`📋 JSON for "${p.title}" copied to clipboard!`);
+                alert(`JSON for "${p.title}" copied to clipboard!`);
             }).catch(() => {
                 alert('Could not copy to clipboard.');
             });
@@ -2572,7 +2572,7 @@
                 const data = await res.json();
 
                 if (res.ok) {
-                    alert('🎉 ' + (data.message || 'Problem saved successfully!'));
+                    alert('' + (data.message || 'Problem saved successfully!'));
                     loadProblems();
                     document.getElementById('addProblemForm').style.display = 'none';
                 } else {
@@ -2582,16 +2582,22 @@
                 alert('Connection error: ' + err.message);
             } finally {
                 btn.disabled = false;
-                btn.textContent = '💾 Save Problem to PostgreSQL';
+                btn.textContent = 'Save Problem to PostgreSQL';
             }
         }
 
         async function deleteProblem(id, title) {
-            if (!confirm(`Deactivate problem "${title}"?`)) return;
-            const res = await authFetch(`/api/admin/problems/${id}`, { method: 'DELETE' });
-            const data = await res.json();
-            if (res.ok) { alert(data.message); loadProblems(); }
-            else alert('Error: ' + data.error);
+            try {
+                const res = await authFetch(`/api/admin/problems/${id}`, { method: 'DELETE' });
+                const data = await res.json();
+                if (res.ok) {
+                    loadProblems();
+                } else {
+                    alert('Error: ' + (data.error || 'Failed to delete problem'));
+                }
+            } catch (err) {
+                console.error('Delete problem error:', err);
+            }
         }
 
 
@@ -2600,7 +2606,7 @@
             const res = await authFetch('/api/contests');
             const data = await res.json();
             const tbody = document.getElementById('contestsBody');
-            if (!data.length) { tbody.innerHTML = '<tr><td colspan="7"><div class="empty"><div class="icon">🏁</div>No contests</div></td></tr>'; return; }
+            if (!data.length) { tbody.innerHTML = '<tr><td colspan="7"><div class="empty">No contests</div></td></tr>'; return; }
             tbody.innerHTML = data.map(c => `<tr>
         <td>${c.id}</td>
         <td><strong>${c.name}</strong></td>
@@ -2608,7 +2614,7 @@
         <td>${new Date(c.start_time).toLocaleString()}</td>
         <td>${new Date(c.end_time).toLocaleString()}</td>
         <td>
-            <span class="badge ${c.anti_cheat ? 'badge-success' : 'badge-danger'}">${c.anti_cheat ? '🛡️ ON' : 'OFF'}</span>
+            <span class="badge ${c.anti_cheat ? 'badge-success' : 'badge-danger'}">${c.anti_cheat ? 'ON' : 'OFF'}</span>
         </td>
         <td>
             <button class="btn btn-outline" style="padding:4px 8px;font-size:0.75rem;" onclick="editContest(${c.id})">Edit</button>
@@ -2691,14 +2697,14 @@
         // ── Import/Export ─────────────────────────────
         async function syncExcel() {
             const status = document.getElementById('syncStatus');
-            status.textContent = '⏳ Syncing...';
+            status.textContent = 'Syncing...';
             try {
                 const res = await authFetch('/api/admin/sync-excel', { method: 'POST' });
                 const data = await res.json();
                 status.style.color = res.ok ? 'green' : 'red';
-                status.textContent = res.ok ? `✅ ${data.message}` : `❌ ${data.error}`;
+                status.textContent = res.ok ? `${data.message}` : `${data.error}`;
                 if (res.ok) loadStats();
-            } catch (e) { status.textContent = '❌ ' + e.message; }
+            } catch (e) { status.textContent = '' + e.message; }
         }
 
         function exportExcel() {
@@ -2732,11 +2738,11 @@
         }
 
         async function resetData() {
-            if (!confirm('⚠️ This will delete ALL submissions, violations, and participant records. This cannot be undone. Continue?')) return;
+            if (!confirm('This will delete ALL submissions, violations, and participant records. This cannot be undone. Continue?')) return;
             if (!confirm('Are you absolutely sure?')) return;
             const res = await authFetch('/api/admin/reset', { method: 'DELETE' });
             const data = await res.json();
-            alert(res.ok ? '✅ ' + data.message : '❌ ' + data.error);
+            alert(res.ok ? '' + data.message : '' + data.error);
             loadStats(); loadSubmissions(); loadViolations();
         }
 
@@ -2803,7 +2809,7 @@
             const statusEl = document.getElementById('aiStudioStatus');
 
             btn.disabled = true;
-            btn.innerHTML = '<span>⏳ Synthesizing Original Problem...</span>';
+            btn.innerHTML = '<span>Synthesizing Original Problem...</span>';
             statusEl.style.display = 'block';
             statusEl.style.color = '#4f46e5';
             statusEl.textContent = 'Generating original narrative, math-verified testcases & constraints...';
@@ -2822,19 +2828,19 @@
                 const data = await res.json();
                 if (res.ok && data.success && data.problem) {
                     statusEl.style.color = '#10b981';
-                    statusEl.textContent = '✅ Problem generated successfully!';
+                    statusEl.textContent = 'Problem generated successfully!';
                     renderAIWorkbench(data.problem);
                     loadAIDraftsTable();
                 } else {
                     statusEl.style.color = '#ef4444';
-                    statusEl.textContent = '❌ Generation error: ' + (data.error || 'Server error');
+                    statusEl.textContent = 'Generation error: ' + (data.error || 'Server error');
                 }
             } catch (err) {
                 statusEl.style.color = '#ef4444';
-                statusEl.textContent = '❌ Connection error: ' + err.message;
+                statusEl.textContent = 'Connection error: ' + err.message;
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = '<span>⚡ Generate Problem with AI</span>';
+                btn.innerHTML = '<span>Generate Problem with AI</span>';
             }
         }
 
@@ -2914,10 +2920,10 @@
             const pubBtn = document.getElementById('btnPublishProblem');
             if (prob.status === 'published') {
                 pubBtn.disabled = true;
-                pubBtn.innerHTML = '<span>✅ Already Published</span>';
+                pubBtn.innerHTML = '<span>Already Published</span>';
             } else {
                 pubBtn.disabled = false;
-                pubBtn.innerHTML = '<span>🚀 Publish to Problem Bank</span>';
+                pubBtn.innerHTML = '<span>Publish to Problem Bank</span>';
             }
         }
 
@@ -2931,20 +2937,20 @@
                 const res = await authFetch(`/api/ai/publish-problem/${activeAIDraft.id}`, { method: 'POST' });
                 const data = await res.json();
                 if (res.ok && data.success) {
-                    alert('🎉 Problem published to active problem bank! You can now assign it to any contest.');
+                    alert('Problem published to active problem bank! You can now assign it to any contest.');
                     activeAIDraft.status = 'published';
-                    btn.innerHTML = '<span>✅ Published</span>';
+                    btn.innerHTML = '<span>Published</span>';
                     loadAIDraftsTable();
                     loadStats();
                 } else {
-                    alert('❌ Failed to publish: ' + (data.error || 'Unknown error'));
+                    alert('Failed to publish: ' + (data.error || 'Unknown error'));
                     btn.disabled = false;
-                    btn.innerHTML = '<span>🚀 Publish to Problem Bank</span>';
+                    btn.innerHTML = '<span>Publish to Problem Bank</span>';
                 }
             } catch (err) {
                 alert('Connection error: ' + err.message);
                 btn.disabled = false;
-                btn.innerHTML = '<span>🚀 Publish to Problem Bank</span>';
+                btn.innerHTML = '<span>Publish to Problem Bank</span>';
             }
         }
 
@@ -3038,12 +3044,12 @@
                 const data = await res.json();
                 if (res.ok && data.success && data.report) {
                     statusEl.style.color = '#10b981';
-                    statusEl.textContent = `✅ Loaded existing report from ${new Date(data.created_at).toLocaleString()}`;
+                    statusEl.textContent = `Loaded existing report from ${new Date(data.created_at).toLocaleString()}`;
                     renderContestAnalysisReport(data.report, data.metrics);
                 } else {
                     if (wrap) wrap.style.display = 'none';
                     statusEl.style.color = '#64748b';
-                    statusEl.textContent = 'ℹ️ No post-event report generated yet. Click "Generate Post-Mortem Report" below.';
+                    statusEl.textContent = 'No post-event report generated yet. Click "Generate Post-Mortem Report" below.';
                 }
             } catch (err) {
                 if (wrap) wrap.style.display = 'none';
@@ -3061,7 +3067,7 @@
             const btn = document.getElementById('btnRunContestAnalysis');
             const statusEl = document.getElementById('analystStatus');
             btn.disabled = true;
-            btn.textContent = '⏳ Analyzing Telemetry...';
+            btn.textContent = 'Analyzing Telemetry...';
             statusEl.style.display = 'block';
             statusEl.style.color = '#4f46e5';
             statusEl.textContent = 'Crunching solve distributions, verdict bottlenecks & time-to-first-AC...';
@@ -3071,18 +3077,18 @@
                 const data = await res.json();
                 if (res.ok && data.success && (data.report || data.analysis)) {
                     statusEl.style.color = '#10b981';
-                    statusEl.textContent = '✅ Analysis completed and persisted!';
+                    statusEl.textContent = 'Analysis completed and persisted!';
                     renderContestAnalysisReport(data.report || data.analysis, data.metrics);
                 } else {
                     statusEl.style.color = '#ef4444';
-                    statusEl.textContent = '❌ ' + (data.error || 'Failed to analyze contest.');
+                    statusEl.textContent = '' + (data.error || 'Failed to analyze contest.');
                 }
             } catch (err) {
                 statusEl.style.color = '#ef4444';
-                statusEl.textContent = '❌ Error: ' + err.message;
+                statusEl.textContent = 'Error: ' + err.message;
             } finally {
                 btn.disabled = false;
-                btn.textContent = '📊 Generate Post-Mortem Report';
+                btn.textContent = 'Generate Post-Mortem Report';
             }
         }
 
@@ -3120,49 +3126,49 @@
             scGrid.innerHTML = `
                 <div class="scorecard-tile">
                     <div>
-                        <div class="scorecard-label">👥 Total Participants</div>
+                        <div class="scorecard-label">Total Participants</div>
                         <div class="scorecard-val">${p.total_participants ?? m.contest?.total_participants ?? 0}</div>
                     </div>
                     <div class="scorecard-sub">${p.total_submissions ?? m.contest?.total_submissions ?? 0} total submissions submitted</div>
                 </div>
                 <div class="scorecard-tile">
                     <div>
-                        <div class="scorecard-label">⚡ Submissions / User</div>
+                        <div class="scorecard-label">Submissions / User</div>
                         <div class="scorecard-val">${p.submissions_per_participant != null ? p.submissions_per_participant : 'N/A'}</div>
                     </div>
                     <div class="scorecard-sub">Average submission volume per contestant</div>
                 </div>
                 <div class="scorecard-tile">
                     <div>
-                        <div class="scorecard-label">🎯 Average Solved</div>
+                        <div class="scorecard-label">Average Solved</div>
                         <div class="scorecard-val">${c.average_problems_solved != null ? c.average_problems_solved : 'N/A'}</div>
                     </div>
                     <div class="scorecard-sub">Median solves: ${c.median_problems_solved != null ? c.median_problems_solved : 'N/A'} problems</div>
                 </div>
                 <div class="scorecard-tile">
                     <div>
-                        <div class="scorecard-label">⚠️ Zero-Solve Rate</div>
+                        <div class="scorecard-label">Zero-Solve Rate</div>
                         <div class="scorecard-val" style="color:${(c.zero_solve_percentage || 0) > 30 ? '#dc2626' : '#0f172a'}">${c.zero_solve_percentage != null ? c.zero_solve_percentage + '%' : '0%'}</div>
                     </div>
                     <div class="scorecard-sub">${m.participant_distribution?.solved_0 || 0} participants did not solve any problem</div>
                 </div>
                 <div class="scorecard-tile">
                     <div>
-                        <div class="scorecard-label">⚖️ Difficulty Balance</div>
+                        <div class="scorecard-label">Difficulty Balance</div>
                         <div style="margin:4px 0;"><span class="pill-badge ${diffBadgeClass}">${escapeHtml(diffLabel)}</span></div>
                     </div>
                     <div class="scorecard-sub">${escapeHtml(diffExpl)}</div>
                 </div>
                 <div class="scorecard-tile">
                     <div>
-                        <div class="scorecard-label">🔥 Engagement Level</div>
+                        <div class="scorecard-label">Engagement Level</div>
                         <div style="margin:4px 0;"><span class="pill-badge ${engBadgeClass}">${escapeHtml(engLabel)}</span></div>
                     </div>
                     <div class="scorecard-sub">${escapeHtml(engExpl)}</div>
                 </div>
                 <div class="scorecard-tile">
                     <div>
-                        <div class="scorecard-label">🛡️ Integrity Risk</div>
+                        <div class="scorecard-label">Integrity Risk</div>
                         <div style="margin:4px 0;"><span class="pill-badge ${riskBadgeClass}">Risk: ${escapeHtml(riskLevel)}</span></div>
                     </div>
                     <div class="scorecard-sub">Manual review advised for suspicious flags</div>
@@ -3203,7 +3209,7 @@
                             <td><b style="color:${(pi.solve_rate_percent || 0) < 30 ? '#dc2626' : '#15803d'}">${srText}</b></td>
                             <td><span style="font-weight:700;font-size:0.8rem;color:#475569;">${escapeHtml(pi.main_failure_pattern || 'Balanced')}</span></td>
                             <td style="color:#334155;font-size:0.82rem;line-height:1.5;">${escapeHtml(pi.ai_interpretation || 'No interpretation generated.')}</td>
-                            <td style="color:#1e293b;font-size:0.82rem;line-height:1.5;background:#f8fafc;border-radius:6px;padding:8px 10px;">💡 ${escapeHtml(pi.recommendation || 'No specific recommendation.')}</td>
+                            <td style="color:#1e293b;font-size:0.82rem;line-height:1.5;background:#f8fafc;border-radius:6px;padding:8px 10px;">${escapeHtml(pi.recommendation || 'No specific recommendation.')}</td>
                         </tr>
                     `;
                 }).join('');
@@ -3237,7 +3243,7 @@
                     <div class="pattern-item">
                         <div class="pattern-item-title">${escapeHtml(it.pattern)}</div>
                         <div class="pattern-item-desc">${escapeHtml(it.ai_interpretation || '')}</div>
-                        ${it.recommended_practice ? `<div class="pattern-item-rec">🎯 <b>Next:</b> ${escapeHtml(it.recommended_practice)}</div>` : ''}
+                        ${it.recommended_practice ? `<div class="pattern-item-rec"><b>Next:</b> ${escapeHtml(it.recommended_practice)}</div>` : ''}
                     </div>
                 `).join('');
             }
@@ -3245,21 +3251,21 @@
             patGrid.innerHTML = `
                 <div class="pattern-col">
                     <div class="pattern-col-header">
-                        <span style="font-weight:700;font-size:0.85rem;color:#15803d;">🌟 Strengths (≥65% Solve Rate)</span>
+                        <span style="font-weight:700;font-size:0.85rem;color:#15803d;">Strengths (≥65% Solve Rate)</span>
                         <span class="pill-badge green">${strengths.length}</span>
                     </div>
                     ${renderPatternCards(strengths, 'No patterns categorized under strength.')}
                 </div>
                 <div class="pattern-col">
                     <div class="pattern-col-header">
-                        <span style="font-weight:700;font-size:0.85rem;color:#6d28d9;">🌱 Developing (30%–64% Solve Rate)</span>
+                        <span style="font-weight:700;font-size:0.85rem;color:#6d28d9;">Developing (30%–64% Solve Rate)</span>
                         <span class="pill-badge purple">${developing.length}</span>
                     </div>
                     ${renderPatternCards(developing, 'No patterns in developing range.')}
                 </div>
                 <div class="pattern-col">
                     <div class="pattern-col-header">
-                        <span style="font-weight:700;font-size:0.85rem;color:#b91c1c;">⚠️ Improvement Needed (<30% Solve Rate)</span>
+                        <span style="font-weight:700;font-size:0.85rem;color:#b91c1c;">Improvement Needed (<30% Solve Rate)</span>
                         <span class="pill-badge red">${needsImprovement.length}</span>
                     </div>
                     ${renderPatternCards(needsImprovement, 'No critical pattern bottlenecks detected.')}
@@ -3362,7 +3368,7 @@
                                 ${escapeHtml(fb.feedback || '')}
                                 ${fb.next_practice_recommendation ? `
                                     <div style="margin-top:6px;padding:6px 10px;background:#eef2ff;border-radius:6px;color:#4338ca;font-size:0.8rem;font-weight:600;">
-                                        🎯 Recommended Practice: ${escapeHtml(fb.next_practice_recommendation)}
+                                        Recommended Practice: ${escapeHtml(fb.next_practice_recommendation)}
                                     </div>
                                 ` : ''}
                             </td>
