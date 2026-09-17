@@ -414,12 +414,42 @@ router.put('/problems/:id', async (req, res, next) => {
     } catch (err) { next(err); }
 });
 
-// DELETE /api/admin/problems/:id — soft-delete
+// PATCH /api/admin/problems/:id/toggle — toggle active / hidden status
+router.patch('/problems/:id/toggle', async (req, res, next) => {
+    try {
+        const { is_active } = req.body || {};
+        const problem = await problemService.toggleProblemActive(req.params.id, is_active !== undefined ? is_active : null);
+        res.json({
+            message: `Problem "${problem.title}" is now ${problem.is_active ? 'Active' : 'Hidden'}.`,
+            problem
+        });
+    } catch (err) { next(err); }
+});
+
+// DELETE /api/admin/problems/:id — soft-delete / hide
 router.delete('/problems/:id', async (req, res, next) => {
     try {
-        await problemService.deactivateProblem(req.params.id);
-        res.json({ message: 'Problem deactivated.' });
+        const problem = await problemService.toggleProblemActive(req.params.id, false);
+        res.json({ message: `Problem "${problem ? problem.title : req.params.id}" deactivated.` });
     } catch (err) { next(err); }
+});
+
+// GET /api/admin/export-contest-post-mortem/:contestId — Test-wise Excel export
+router.get('/export-contest-post-mortem/:contestId', async (req, res, next) => {
+    try {
+        const contestId = parseInt(req.params.contestId, 10);
+        if (isNaN(contestId)) {
+            return res.status(400).json({ error: 'Invalid contest ID.' });
+        }
+        const { exportContestPostMortemExcel } = require('../services/reportService');
+        const { buffer, filename } = await exportContestPostMortemExcel(contestId);
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.send(buffer);
+    } catch (err) {
+        console.error('Export contest report error:', err);
+        next(err);
+    }
 });
 
 // POST /api/admin/problems/:id/testcases — add test case

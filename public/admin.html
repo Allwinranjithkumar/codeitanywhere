@@ -1198,9 +1198,7 @@
                     <option>ICE</option>
                 </select>
                 <button class="btn btn-outline" onclick="clearFilters()">Clear</button>
-                <button class="btn btn-success" onclick="exportExcel()" style="margin-left:auto;"> Export
-                    Excel</button>
-                <button class="btn btn-danger" onclick="resetData()" style="margin-left:4px;">Reset Data</button>
+                <button class="btn btn-danger" onclick="resetData()" style="margin-left:auto;">Reset Data</button>
             </div>
             <div class="table-wrap">
                 <table>
@@ -1705,6 +1703,9 @@
                     <button class="btn btn-primary" id="btnRunContestAnalysis" onclick="runAIContestAnalysis()" style="white-space:nowrap;padding:10px 20px;font-weight:700;">
                         Generate Post-Mortem Report
                     </button>
+                    <button class="btn btn-success" id="btnExportContestAnalysis" onclick="exportActiveContestReport()" style="white-space:nowrap;padding:10px 18px;font-weight:700;">
+                        Export Post-Mortem (Excel)
+                    </button>
                 </div>
                 <div id="analystStatus" style="margin-top:10px;font-size:0.82rem;font-weight:600;display:none;"></div>
             </div>
@@ -1879,22 +1880,18 @@
                 <div id="syncStatus" style="margin-top:12px;font-size:0.85rem;font-weight:600;"></div>
             </div>
             <div class="form-card">
-                <h3>Export Student Report (Excel)</h3>
-                <div class="filters" style="border:none;padding:0;background:transparent;margin-bottom:16px;">
-                    <label>Batch:</label>
-                    <select id="eBatch">
-                        <option value="">All</option>
-                        <option>2023</option>
-                        <option>2024</option>
+                <h3>Export Contest Post-Mortem Report (Test-Wise)</h3>
+                <p style="font-size:0.85rem;color:var(--muted);margin-bottom:16px;">
+                    Select a contest or test to export its comprehensive AI post-mortem intelligence, problem analytics, DSA pattern matrix, recommendations, and student guidance into a clean Excel spreadsheet.
+                </p>
+                <div style="display:flex;gap:12px;align-items:center;max-width:650px;margin-bottom:16px;">
+                    <select id="exportContestSelect" style="flex:1;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.88rem;">
+                        <option value="">Select a contest / test to export...</option>
                     </select>
-                    <label>Dept:</label>
-                    <select id="eDept">
-                        <option value="">All</option>
-                        <option>EEE</option>
-                        <option>ICE</option>
-                    </select>
+                    <button class="btn btn-success" onclick="exportPostMortemExcel()" style="white-space:nowrap;padding:10px 20px;font-weight:700;">
+                        Download Post-Mortem (Excel)
+                    </button>
                 </div>
-                <button class="btn btn-success" onclick="exportExcelFiltered()">Download Excel</button>
             </div>
         </div>
     </div>
@@ -1983,6 +1980,7 @@
             if (name === 'contests') loadContests();
             if (name === 'aistudio') loadAIStudio();
             if (name === 'aianalyst') loadAIAnalyst();
+            if (name === 'import') loadExportContests();
         }
 
         // ── Load Stats ────────────────────────────────
@@ -2104,7 +2102,7 @@
                         <td style="white-space:nowrap;">
                             <button class="btn btn-outline" style="padding:4px 8px;font-size:0.75rem;" onclick="copyProblemJsonById(${p.id})">JSON</button>
                             <button class="btn btn-outline" style="padding:4px 8px;font-size:0.75rem;" onclick="editProblemById(${p.id})">Edit</button>
-                            <button class="btn btn-danger" style="padding:4px 8px;font-size:0.75rem;" onclick="deleteProblem(${p.id},'${p.title.replace(/'/g, "\\'")}')">Delete</button>
+                            <button class="btn ${p.is_active ? 'btn-outline' : 'btn-success'}" style="padding:4px 8px;font-size:0.75rem;min-width:62px;" onclick="toggleProblemActive(${p.id}, ${!p.is_active})">${p.is_active ? 'Hide' : 'Activate'}</button>
                         </td>
                     </tr>`;
                 }).join('');
@@ -2586,26 +2584,68 @@
             }
         }
 
-        async function deleteProblem(id, title) {
+        async function toggleProblemActive(id, forceStatus) {
             try {
-                const res = await authFetch(`/api/admin/problems/${id}`, { method: 'DELETE' });
+                const res = await authFetch(`/api/admin/problems/${id}/toggle`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ is_active: forceStatus })
+                });
                 const data = await res.json();
                 if (res.ok) {
                     loadProblems();
                 } else {
-                    alert('Error: ' + (data.error || 'Failed to delete problem'));
+                    alert('Error: ' + (data.error || 'Failed to toggle problem status'));
                 }
             } catch (err) {
-                console.error('Delete problem error:', err);
+                console.error('Toggle problem error:', err);
             }
         }
 
+        async function exportPostMortemExcel() {
+            const contestId = document.getElementById('exportContestSelect')?.value;
+            if (!contestId) {
+                alert('Please select a contest / test to export.');
+                return;
+            }
+            window.open(`/api/admin/export-contest-post-mortem/${contestId}`, '_blank');
+        }
+
+        async function exportActiveContestReport() {
+            const contestId = document.getElementById('analystContestSelect')?.value;
+            if (!contestId) {
+                alert('Please select a contest from the dropdown first.');
+                return;
+            }
+            window.open(`/api/admin/export-contest-post-mortem/${contestId}`, '_blank');
+        }
+
+        async function loadExportContests() {
+            try {
+                const res = await authFetch('/api/contests');
+                const contests = await res.json();
+                const sel = document.getElementById('exportContestSelect');
+                if (sel && Array.isArray(contests)) {
+                    sel.innerHTML = '<option value="">Select a contest / test to export...</option>' + 
+                        contests.map(c => `<option value="${c.id}">#${c.id} - ${escapeHtml(c.name)} (${c.status})</option>`).join('');
+                }
+            } catch (e) {
+                console.error('Failed to load export contests:', e);
+            }
+        }
 
         // ── Contests ──────────────────────────────────
         async function loadContests() {
             const res = await authFetch('/api/contests');
             const data = await res.json();
             const tbody = document.getElementById('contestsBody');
+            
+            // Also sync export dropdown
+            const expSel = document.getElementById('exportContestSelect');
+            if (expSel && Array.isArray(data)) {
+                expSel.innerHTML = '<option value="">Select a contest / test to export...</option>' + 
+                    data.map(c => `<option value="${c.id}">#${c.id} - ${escapeHtml(c.name)} (${c.status})</option>`).join('');
+            }
+
             if (!data.length) { tbody.innerHTML = '<tr><td colspan="7"><div class="empty">No contests</div></td></tr>'; return; }
             tbody.innerHTML = data.map(c => `<tr>
         <td>${c.id}</td>

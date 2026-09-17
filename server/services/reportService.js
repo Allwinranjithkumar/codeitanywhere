@@ -901,10 +901,129 @@ async function getLatestContestReport(contestId) {
     return res.rows[0];
 }
 
+/**
+ * 6. EXCEL POST-MORTEM EXPORT (CONTEST / TEST WISE)
+ */
+async function exportContestPostMortemExcel(contestId) {
+    const xlsx = require('xlsx');
+    const telemetry = await aggregateContestData(contestId);
+    let reportRecord = await getLatestContestReport(contestId);
+    let report = reportRecord ? reportRecord.report_data : generateDeterministicFallbackReport(telemetry);
+
+    const wb = xlsx.utils.book_new();
+
+    // 1. Executive Summary & Health Scorecard
+    const h = telemetry.health_scorecard;
+    const summaryRows = [
+        { 'Parameter': 'Contest Title', 'Value': telemetry.contest.title },
+        { 'Parameter': 'Contest ID', 'Value': telemetry.contest.id },
+        { 'Parameter': 'Start Time', 'Value': telemetry.contest.start_time },
+        { 'Parameter': 'End Time', 'Value': telemetry.contest.end_time },
+        { 'Parameter': 'Duration (Minutes)', 'Value': Math.round(telemetry.contest.duration_seconds / 60) },
+        { 'Parameter': 'Total Participants', 'Value': h.participation.total_participants },
+        { 'Parameter': 'Total Submissions', 'Value': h.participation.total_submissions },
+        { 'Parameter': 'Submissions / Participant', 'Value': h.participation.submissions_per_participant },
+        { 'Parameter': 'Average Problems Solved', 'Value': h.completion.average_problems_solved },
+        { 'Parameter': 'Median Problems Solved', 'Value': h.completion.median_problems_solved },
+        { 'Parameter': 'Zero-Solve Rate (%)', 'Value': h.completion.zero_solve_percentage + '%' },
+        { 'Parameter': 'Difficulty Balance', 'Value': report.contest_health?.difficulty_balance?.label || h.difficulty_balance.label },
+        { 'Parameter': 'Difficulty Rationale', 'Value': report.contest_health?.difficulty_balance?.explanation || h.difficulty_balance.explanation },
+        { 'Parameter': 'Engagement Level', 'Value': report.contest_health?.engagement?.label || h.engagement.label },
+        { 'Parameter': 'Integrity Risk Level', 'Value': report.integrity_review?.risk_level || h.integrity_risk.label },
+        { 'Parameter': 'Executive Contest Summary', 'Value': report.executive_summary || '' },
+        { 'Parameter': 'Overall Learning Outcome', 'Value': report.contest_health?.overall_learning_outcome || '' }
+    ];
+    const wsSummary = xlsx.utils.json_to_sheet(summaryRows);
+    xlsx.utils.book_append_sheet(wb, wsSummary, 'Contest Scorecard');
+
+    // 2. Problem Diagnostics
+    const probRows = (report.problem_insights || []).map(p => {
+        const rawStat = telemetry.problems.find(tp => String(tp.id) === String(p.problem_id).replace(/\D/g, '') || tp.problem_id === p.problem_id) || {};
+        return {
+            'Problem ID': p.problem_id,
+            'Title': p.title,
+            'Expected Difficulty': p.expected_difficulty,
+            'Observed Difficulty': p.observed_difficulty,
+            'Pattern Tags': Array.isArray(p.pattern_tags) ? p.pattern_tags.join(', ') : '',
+            'Total Attempts': rawStat.total_attempts ?? 0,
+            'Accepted Count': rawStat.accepted_count ?? 0,
+            'Solve Rate (%)': rawStat.solve_rate_percent != null ? rawStat.solve_rate_percent + '%' : 'N/A',
+            'Avg Time to 1st AC (sec)': rawStat.avg_time_to_first_ac_seconds ?? 'N/A',
+            'Wrong Answers': rawStat.wrong_answer_count ?? 0,
+            'Time Limit Exceeded': rawStat.time_limit_exceeded_count ?? 0,
+            'Runtime Errors': rawStat.runtime_error_count ?? 0,
+            'Main Failure Pattern': p.main_failure_pattern,
+            'AI Interpretation': p.ai_interpretation,
+            'Pedagogical Recommendation': p.recommendation
+        };
+    });
+    const wsProblems = xlsx.utils.json_to_sheet(probRows.length > 0 ? probRows : [{ 'Notice': 'No problem data' }]);
+    xlsx.utils.book_append_sheet(wb, wsProblems, 'Problem Diagnostics');
+
+    // 3. DSA Pattern Matrix
+    const patternRows = (report.pattern_insights || []).map(pat => ({
+        'Pattern Tag': pat.pattern,
+        'Skill Classification': pat.skill_classification,
+        'Pedagogical Interpretation': pat.ai_interpretation,
+        'Recommended Practice': pat.recommended_practice
+    }));
+    const wsPatterns = xlsx.utils.json_to_sheet(patternRows.length > 0 ? patternRows : [{ 'Notice': 'No pattern data' }]);
+    xlsx.utils.book_append_sheet(wb, wsPatterns, 'DSA Pattern Matrix');
+
+    // 4. Actionable Recommendations
+    const recRows = (report.recommendations || []).map(r => ({
+        'Priority': r.priority,
+        'Category': r.category,
+        'Recommended Action': r.action,
+        'Supporting Telemetry Evidence': r.evidence
+    }));
+    const wsRecs = xlsx.utils.json_to_sheet(recRows.length > 0 ? recRows : [{ 'Notice': 'No recommendations' }]);
+    xlsx.utils.book_append_sheet(wb, wsRecs, 'Recommendations');
+
+    // 5. Participant Diagnostics & Guidance
+    const partRows = (report.participant_feedback || []).map(pf => ({
+        'Participant ID': pf.participant_id,
+        'Performance Band': pf.performance_band,
+        'Demonstrated Strengths': Array.isArray(pf.strengths) ? pf.strengths.join(', ') : '',
+        'Improvement Areas': Array.isArray(pf.improvement_areas) ? pf.improvement_areas.join(', ') : '',
+        'Personalized Feedback': pf.feedback,
+        'Recommended Next Practice': pf.next_practice_recommendation
+    }));
+    const wsParts = xlsx.utils.json_to_sheet(partRows.length > 0 ? partRows : [{ 'Notice': 'No participant feedback' }]);
+    xlsx.utils.book_append_sheet(wb, wsParts, 'Participant Guidance');
+
+    // 6. Proctoring & Integrity Review
+    const ir = report.integrity_review || {};
+    const integRows = [
+        { 'Signal / Item': 'Integrity Risk Level', 'Detail': ir.risk_level || 'Low' },
+        { 'Signal / Item': 'Flagged Sessions Count', 'Detail': telemetry.integrity_signals.flagged_sessions_count },
+        { 'Signal / Item': 'Tab Switch Events', 'Detail': telemetry.integrity_signals.tab_switch_events },
+        { 'Signal / Item': 'External Paste Events', 'Detail': telemetry.integrity_signals.paste_events },
+        { 'Signal / Item': 'High Similarity Pairs', 'Detail': telemetry.integrity_signals.high_similarity_pairs.length },
+        { 'Signal / Item': 'Diagnostic Summary', 'Detail': ir.summary || '' },
+        { 'Signal / Item': 'Recommended Action', 'Detail': ir.recommended_action || '' },
+        { 'Signal / Item': 'Mandatory Disclaimer', 'Detail': ir.disclaimer || '' }
+    ];
+    if (Array.isArray(ir.evidence)) {
+        ir.evidence.forEach((ev, i) => {
+            integRows.push({ 'Signal / Item': `Evidence #${i + 1}`, 'Detail': ev });
+        });
+    }
+    const wsInteg = xlsx.utils.json_to_sheet(integRows);
+    xlsx.utils.book_append_sheet(wb, wsInteg, 'Integrity Review');
+
+    const buffer = xlsx.write(wb, { type: 'buffer', bookType: 'xlsx' });
+    const cleanTitle = (telemetry.contest.title || 'Contest').replace(/[^a-zA-Z0-9_-]/g, '_');
+    const filename = `PostMortem_Contest_${contestId}_${cleanTitle}.xlsx`;
+
+    return { buffer, filename };
+}
+
 module.exports = {
     aggregateContestData,
     generateDeterministicFallbackReport,
     validateAndNormalizeReport,
     generateContestReport,
-    getLatestContestReport
+    getLatestContestReport,
+    exportContestPostMortemExcel
 };

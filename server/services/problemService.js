@@ -259,6 +259,21 @@ async function deactivateProblem(id) {
     await db.query('UPDATE problems SET is_active=FALSE, updated_at=NOW() WHERE id=$1', [id]);
 }
 
+async function toggleProblemActive(id, forceStatus = null) {
+    if (forceStatus !== null && typeof forceStatus === 'boolean') {
+        const res = await db.query(
+            'UPDATE problems SET is_active = $1, updated_at = NOW() WHERE id = $2 RETURNING id, title, is_active',
+            [forceStatus, id]
+        );
+        return res.rows[0];
+    }
+    const res = await db.query(
+        'UPDATE problems SET is_active = NOT is_active, updated_at = NOW() WHERE id = $1 RETURNING id, title, is_active',
+        [id]
+    );
+    return res.rows[0];
+}
+
 // ──────────────────────────────────────────────
 // ──────────────────────────────────────────────
 // Migration / Bulk JSON Import & Update
@@ -390,6 +405,7 @@ module.exports = {
     createProblem,
     updateProblem,
     deactivateProblem,
+    toggleProblemActive,
     migrateFromJson: upsertFromJson,
     upsertFromJson,
     exportProblemsJson,
